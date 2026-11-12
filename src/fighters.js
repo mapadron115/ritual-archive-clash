@@ -1,5 +1,5 @@
 'use strict';
-// The five fighters. Technique and art names follow the Ritual Archive library; the fighters themselves are original.
+// The first five fighters. Technique and art names follow the Ritual Archive library; the fighters themselves are original.
 const CH = [
   { name: 'Isolde Varn', tech: 'Limitless', tag: 'Controls space', hp: 1000, speed: 5.2, melee: 1, regen: 0.115,
     look: { skin: '#f1d3bd', hair: '#e9f2ff', top: '#1c2440', pants: '#141a2e', accent: '#59c8ff', style: 'long' },

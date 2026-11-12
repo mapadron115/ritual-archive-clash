@@ -11,7 +11,7 @@ workflow does not apply here.
 - Repo: this folder, branch `main`, remote `origin` = https://github.com/mapadron115/ritual-archive-clash (public).
 - Live: https://mapadron115.github.io/ritual-archive-clash/ (GitHub Pages from `main`, root). The owner shares this with a friend.
 - **Publishing = `git push origin main`. Ask the owner before each publish** (they have said yes each time so far, per version).
-- Bump the `?v=N` on every `<script>` in `index.html` at each publish (now `v=4`), or browsers serve stale scripts.
+- Bump the `?v=N` on every `<script>` in `index.html` at each publish (now `v=5`), or browsers serve stale scripts.
 - git is not on PATH: `C:\Users\mapad\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd\git.exe`. gh: `C:\Program Files\GitHub CLI\gh.exe`
   (logged in as the owner). No node. Python 3 is there.
 - Local preview: `python -m http.server 8765 --bind 127.0.0.1 --directory <this folder>`, then the Browser pane at
@@ -58,7 +58,7 @@ The owner's ask was "improve the visuals again, still cartoony but a little more
 - Testing aid: the Browser pane's screenshot often times out. A tiny receiver that saves `cv.toDataURL()` posts to PNG files
   worked better (fetch POST to a local Python `http.server` subclass), then read the PNGs.
 
-Not done / ideas: the title screen still says "Five techniques"; no hand-played check of feel or frame rate; walk and attack
+Not done / ideas: no hand-played check of feel or frame rate; walk and attack
 motion were only seen as still frames.
 
 ## How I tested (the pane throttles animation, so nothing was played by hand)
