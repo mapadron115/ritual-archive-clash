@@ -12,25 +12,25 @@ const CH = [
   { name: 'Karasu Dain', tech: 'Shrine', tag: 'Cuts near and far', hp: 1000, speed: 5, melee: 1, regen: 0.11,
     look: { skin: '#d9a98a', hair: '#2a1418', top: '#7a1620', pants: '#1d1114', accent: '#ff4b4b', style: 'spiky' },
     arts: [
-      { id: 'dismantle', name: 'Dismantle', cost: 12, cd: 34, su: 9, re: 14, pose: 'slash', desc: 'A fast flying cut across the stage. 50' },
+      { id: 'dismantle', name: 'Dismantle', cost: 12, cd: 28, su: 8, re: 12, pose: 'slash', desc: 'A fast flying cut across the stage. 58' },
       { id: 'cleave', name: 'Cleave', cost: 25, cd: 150, su: 16, re: 22, pose: 'slash', desc: 'A close cut that goes through a guard and breaks it. 95',
         melee: { at: 16, reach: 125, dmg: 95, kb: 9, stun: 24, unblock: 1 } },
       { id: 'flame', name: 'Divine Flame: Open', cost: 40, cd: 300, su: 34, re: 22, pose: 'bow', desc: 'A slow fire arrow that explodes. 140' },
     ],
-    dom: { kind: 'shrine', name: 'Malevolent Shrine', desc: 'Cuts rain on the whole stage for 3 s. Up to 240; guarding takes most of it off' } },
+    dom: { kind: 'shrine', name: 'Malevolent Shrine', desc: 'Cuts rain on the whole stage for 3 s. Up to 200; guarding takes most of it off' } },
   { name: 'Bram Otieno', tech: 'Boogie Woogie', tag: 'Swaps places on a clap', hp: 1000, speed: 5.4, melee: 1.05, regen: 0.105,
     look: { skin: '#8a5a3c', hair: '#1a1a1a', top: '#e9b23a', pants: '#2a2f3a', accent: '#ffd866', style: 'top' },
     arts: [
       { id: 'boogie', name: 'Boogie Woogie', cost: 10, cd: 40, su: 3, re: 8, air: 1, pose: 'clap', desc: 'Clap: swap places with the foe. Their shots in between become yours' },
       { id: 'stone', name: 'Imbued Stone', cost: 15, cd: 60, su: 8, re: 12, pose: 'throw', desc: 'Throw a bouncing stone (30). Press again to swap places with it' },
-      { id: 'applause', name: 'Round of Applause', cost: 28, cd: 180, su: 6, re: 22, pose: 'clap', desc: 'Clap behind the foe and strike from their blind side. 95',
+      { id: 'applause', name: 'Round of Applause', cost: 28, cd: 230, su: 6, re: 22, pose: 'clap', desc: 'Clap behind the foe and strike from their blind side. 95',
         melee: { at: 13, reach: 110, dmg: 95, kb: 12, lift: 6, stun: 24 } },
     ],
-    dom: { kind: 'ovation', name: 'Standing Ovation', desc: 'Six claps, six blows from both sides. Up to 230; guarding takes most of it off' } },
+    dom: { kind: 'ovation', name: 'Standing Ovation', desc: 'Six claps, six blows from both sides. About 160; guarding takes most of it off' } },
   { name: 'Yuna Sable', tech: 'Ten Shadows', tag: 'Shikigami fight beside you', hp: 950, speed: 5.1, melee: 0.9, regen: 0.12,
     look: { skin: '#e8c7a8', hair: '#17131f', top: '#2b2440', pants: '#17131f', accent: '#a47bff', style: 'bob' },
     arts: [
-      { id: 'dogs', name: 'Divine Dogs', cost: 22, cd: 300, su: 12, re: 14, pose: 'sign', desc: 'Two hounds run the foe down and bite (26 each, 4 bites). A blow dispels them' },
+      { id: 'dogs', name: 'Divine Dogs', cost: 22, cd: 360, su: 12, re: 14, pose: 'sign', desc: 'Two hounds run the foe down and bite (22 each, 4 bites). A blow dispels them' },
       { id: 'nue', name: 'Nue', cost: 25, cd: 240, su: 12, re: 16, pose: 'sign', desc: 'A winged shikigami dives on the foe. 55 and a shock that stuns' },
       { id: 'toad', name: 'Toad', cost: 20, cd: 200, su: 12, re: 26, pose: 'sign', desc: 'A tongue drags the foe to you, through a guard. 20' },
     ],
@@ -38,7 +38,7 @@ const CH = [
   { name: 'Gideon Krail', tech: 'Cursed Cannon', tag: 'Raw long-range output', hp: 1100, speed: 4.3, melee: 1.05, regen: 0.115,
     look: { skin: '#c99b7a', hair: '#c7c2b8', top: '#3d4a3a', pants: '#252a24', accent: '#ffb347', style: 'buzz' },
     arts: [
-      { id: 'granite', name: 'Granite Blast', cost: 22, cd: 80, su: 18, re: 26, pose: 'cannon', desc: 'A beam across the whole stage. Jump it. 115' },
+      { id: 'granite', name: 'Granite Blast', cost: 22, cd: 80, su: 15, re: 26, pose: 'cannon', desc: 'A beam across the whole stage. Jump it. 115' },
       { id: 'grape', name: 'Grape Shot', cost: 25, cd: 130, su: 12, re: 20, pose: 'cannon', desc: 'Five pellets fanned upward, 30 each (three at most land)' },
       { id: 'guided', name: 'Guided Shell', cost: 30, cd: 300, su: 16, re: 20, pose: 'cannon', desc: 'A slow shell that follows the foe. 85' },
     ],
@@ -57,11 +57,11 @@ DOMAIN.void = { dur: 100, tick(S, d, f, o) {
 } };
 
 // ---------- Shrine
-ART.dismantle = (S, f) => { shoot(S, f, { k: 'cut', vx: f.face * 24, vy: 0, r: 18, life: 60, dmg: 50, kb: 3, stun: 13 }); ev(S, 'slash', f.x + f.face * 60, f.y - 78); };
+ART.dismantle = (S, f) => { shoot(S, f, { k: 'cut', vx: f.face * 24, vy: 0, r: 18, life: 60, dmg: 58, kb: 3, stun: 15 }); ev(S, 'slash', f.x + f.face * 60, f.y - 78); };
 ART.cleave = (S, f) => { ev(S, 'slash', f.x + f.face * 70, f.y - 78, 1); };
 ART.flame = (S, f) => { shoot(S, f, { k: 'flame', vx: f.face * 13, vy: 0, r: 22, life: 120, explode: { r: 130, dmg: 140, kb: 12, lift: 9, stun: 26, chip: 0.25 } }); ev(S, 'blast', f.x, f.y - 78); };
 DOMAIN.shrine = { dur: 192, tick(S, d, f, o) {
-  if (d.t % 16 === 0) { ev(S, 'rain', o.x, o.y - 70); hit(S, f.i, o, o.x - o.face, { dmg: 20, stun: 7, chip: 0.4, anyGuard: 1, dom: 1, guardDmg: 0.01 }); }
+  if (d.t % 16 === 0) { ev(S, 'rain', o.x, o.y - 70); hit(S, f.i, o, o.x - o.face, { dmg: 17, stun: 7, chip: 0.4, anyGuard: 1, dom: 1, guardDmg: 0.01 }); }
 } };
 
 // ---------- Boogie Woogie

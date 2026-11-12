@@ -22,6 +22,7 @@ function aiInput(S, i) {
   if (m.until > S.t) return m.b | (m.tap && S.t % 6 < 3 ? m.tap : 0);
   const plan = (b, n, tap) => { m.b = b; m.until = S.t + n; m.tap = tap || 0; return b; };
   if (!free(f)) return 0;
+  for (const e of S.ents) if (e.o !== i && e.k === 'dog' && Math.abs(e.x - f.x) < 100 && Math.random() < 0.5) return plan(0, 10, BTN.P);
   if (domReady(f) && f.y >= GROUND && R() < 0.5 && (f.ch !== 4 || dist < 650)) return BTN.DOM;
   const r = R(), pref = AI_RANGE[f.ch];
   // technique picks

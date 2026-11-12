@@ -219,13 +219,13 @@ function upFighter(S, f, o, b) {
   }
   if (f.x < LEFT || f.x > RIGHT) {
     f.x = clamp(f.x, LEFT, RIGHT);
-    if ((f.st === 'hit' || f.st === 'ko') && Math.abs(f.vx) > 7) {
+    if ((f.st === 'hit' || f.st === 'ko' || f.st === 'down') && (Math.abs(f.vx) > 7 || f.wall)) {
       ev(S, 'wall', f.x, f.y - 70);
       if (f.wall) { const w = f.wall; f.wall = 0; rawDmg(S, f, w); }
       f.vx *= -0.4;
     }
   }
-  if (f.st !== 'hit') f.wall = 0;
+  if (f.st !== 'hit' && !(f.st === 'down' && f.stT > 24)) f.wall = 0;
 }
 
 function upProj(S) {
@@ -268,7 +268,7 @@ function upEnts(S) {
       if (Math.abs(dx) > 46) e.x += e.face * 7.5;
       else if (e.cd <= 0 && t.y > GROUND - 90 && t.st !== 'ko' && t.st !== 'down') {
         e.cd = 44; e.bite = 10;
-        hit(S, e.o, t, e.x, { dmg: 26, stun: 12, kb: 2 }); if (--e.n <= 0) e.life = Math.min(e.life, 12);
+        hit(S, e.o, t, e.x, { dmg: 22, stun: 12, kb: 2 }); if (--e.n <= 0) e.life = Math.min(e.life, 12);
       }
       if (e.bite > 0) e.bite--;
     } else if (e.k === 'nue') {
