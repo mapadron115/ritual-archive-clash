@@ -30,7 +30,7 @@ function aiInput(S, i) {
     switch (f.ch) {
       case 0: if (can(0) && dist > 180 && dist < 460 && R() < 0.6) return BTN.A1; if (can(1) && dist < 380) return BTN.A2; break;
       case 1: if (can(1) && dist < 125 && (o.st === 'guard' || R() < 0.4)) return BTN.A2; if (can(2) && dist > 420 && R() < 0.4) return BTN.A3; if (can(0) && dist > 160) return BTN.A1; break;
-      case 2: if (can(2) && dist < 420 && (o.st === 'guard' || R() < 0.4)) return BTN.A3; if (can(0) && dist > 260 && R() < 0.6) return BTN.A1; if (can(1) && dist > 200 && R() < 0.4) return BTN.A2; break;
+      case 2: if (can(2) && dist < 170 && (o.st === 'guard' || R() < 0.4)) return BTN.A3; if (can(0) && dist > 260 && R() < 0.6) return BTN.A1; if (can(1) && dist > 200 && R() < 0.4) return BTN.A2; break;
       case 3: if (can(0) && R() < 0.7) return BTN.A1; if (can(2) && dist > 140 && dist < 480 && R() < 0.6) return BTN.A3; if (can(1)) return BTN.A2; break;
       case 4: if (can(1) && dist < 240) return BTN.A2; if (can(0) && dist > 200 && R() < 0.7) return BTN.A1; if (can(2)) return BTN.A3; break;
     }

@@ -23,10 +23,10 @@ const CH = [
     arts: [
       { id: 'boogie', name: 'Boogie Woogie', cost: 10, cd: 40, su: 3, re: 8, air: 1, pose: 'clap', desc: 'Clap: swap places with the foe. Their shots in between become yours' },
       { id: 'stone', name: 'Imbued Stone', cost: 15, cd: 60, su: 8, re: 12, pose: 'throw', desc: 'Throw a bouncing stone (30). Press again to swap places with it' },
-      { id: 'applause', name: 'Round of Applause', cost: 28, cd: 230, su: 6, re: 22, pose: 'clap', desc: 'Clap behind the foe and strike from their blind side. 95',
+      { id: 'applause', name: 'Round of Applause', cost: 28, cd: 230, su: 6, re: 22, pose: 'clap', desc: 'Clap: swap places with the foe and lunge at their turned back. Best up close. 95',
         melee: { at: 13, reach: 110, dmg: 95, kb: 12, lift: 6, stun: 24 } },
     ],
-    dom: { kind: 'ovation', name: 'Standing Ovation', desc: 'Six claps, six blows from both sides. About 160; guarding takes most of it off' } },
+    dom: { kind: 'ovation', name: 'Standing Ovation', desc: 'Scatter imbued stones round the foe and swap between them: six claps, six blows. About 160; guarding takes most of it off' } },
   { name: 'Yuna Sable', tech: 'Ten Shadows', tag: 'Shikigami fight beside you', hp: 950, speed: 5.1, melee: 0.9, regen: 0.12,
     look: { skin: '#e8c7a8', hair: '#17131f', top: '#2b2440', pants: '#17131f', accent: '#a47bff', style: 'bob' },
     arts: [
@@ -88,17 +88,18 @@ ART.stone_re = (S, f) => {
 };
 ART.applause = (S, f, o) => {
   ev(S, 'clap', f.x + f.face * 20, f.y - 85);
-  if (o.st === 'ko' || o.st === 'down') return;
-  const side = f.x < o.x ? 1 : -1; let nx = o.x + side * 62;
-  if (nx < LEFT || nx > RIGHT) nx = o.x - side * 62;
-  ev(S, 'swap', f.x, f.y - 70, nx, o.y - 70);
-  f.x = nx; f.y = GROUND; f.vy = 0; f.face = o.x >= f.x ? 1 : -1; o.dis = 16;
+  if (o.st === 'ko' || o.st === 'down' || o.inf > 0) { if (o.inf > 0) ev(S, 'inf', o.x, o.y - 70); return; }
+  swapPlaces(S, f, o);   // the foe now has its back to you
+  f.vx = f.face * 22;    // and you lunge in for the blow
 };
+// Standing Ovation: imbued stones are scattered round the foe; each clap swaps you with one of them.
 DOMAIN.ovation = { dur: 96, tick(S, d, f, o) {
   d.hold = d.t < 90; f.st = 'cast'; f.vx = 0;
+  if (d.t === 1) for (const s of [-1, 1]) S.zones.push({ k: 'pebble', o: f.i, x: clamp(o.x + s * 60, LEFT, RIGHT), y: GROUND - 14, t: 0, dur: 14 });
   if (d.t % 14 === 1 && d.n < 6) {
     d.n++; const side = d.n % 2 ? 1 : -1; let nx = clamp(o.x + side * 60, LEFT, RIGHT);
     ev(S, 'clap', f.x, f.y - 85); ev(S, 'swap', f.x, f.y - 70, nx, o.y - 70);
+    S.zones.push({ k: 'pebble', o: f.i, x: f.x, y: GROUND - 14, t: 0, dur: 30 });   // the stone lands where you stood
     f.x = nx; f.y = GROUND; f.vy = 0; f.face = o.x >= f.x ? 1 : -1; d.pose = d.t;
     hit(S, f.i, o, f.x, d.n < 6 ? { dmg: 38, stun: 15, chip: 0.4, anyGuard: 1, dom: 1, guardDmg: 0.01 } : { dmg: 40, stun: 24, kb: 14, lift: 8, chip: 0.4, anyGuard: 1, dom: 1, guardDmg: 0.01 });
   }

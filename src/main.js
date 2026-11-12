@@ -93,7 +93,7 @@ function buildSelect() {
 function pickMode(m) { G.mode = m; show('select'); buildSelect(); }
 function startFight() {
   G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); POSE_CACHE[0] = POSE_CACHE[1] = null; FX.parts = []; FX.banner = null;
-  AI_MEM[0] = {}; AI_MEM[1] = {}; G.paused = false; G.running = true; G.over = false; G.acc = 0; G.remoteIn = 0;
+  AI_MEM[0] = {}; AI_MEM[1] = {}; FX.stars = []; FX.puffs = []; FX.nums = []; FX.lines = []; FX.silent = false; G.paused = false; G.running = true; G.over = false; G.acc = 0; G.remoteIn = 0;
   if (G.mode === 'host') netSend({ t: 'start', p: G.pick });
   show('none'); initAudio();
 }
@@ -159,7 +159,14 @@ function endMatch() {
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(100, now - G.last); G.last = now;
-  if (!G.running || !G.S) return;
+  if (!G.running || !G.S) {   // a computer match plays behind the menus
+    if (!G.demo || G.demo.phase === 'over') { const a = Math.random() * 5 | 0; G.demo = newMatch(a, (a + 1 + (Math.random() * 4 | 0)) % 5, (Math.random() * 1e9) | 0); AI_MEM[0] = {}; AI_MEM[1] = {}; POSE_CACHE[0] = POSE_CACHE[1] = null; }
+    FX.silent = true; G.acc += dt; let n = 0;
+    while (G.acc >= 1000 / TPS && n++ < 3) { G.acc -= 1000 / TPS; step(G.demo, [aiInput(G.demo, 0), aiInput(G.demo, 1)]); for (const e of G.demo.ev) fxEvent(G.demo, e); G.demo.ev.length = 0; fxTick(); }
+    if (n > 3) G.acc = 0;
+    FX.banner = null; drawWorld(ctx, G.demo); FX.silent = false;
+    return;
+  }
   const S = G.S;
   if (G.mode === 'guest') {
     const b = readKeys(BIND.solo); if (b !== G.lastSent || ++G.sendT > 6) { netSend({ t: 'in', b }); G.lastSent = b; G.sendT = 0; }
