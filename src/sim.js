@@ -3,6 +3,7 @@
 const W = 1280, H = 720, GROUND = 612, LEFT = 60, RIGHT = 1220, MAXCE = 100, TPS = 60;
 const BTN = { L: 1, R: 2, U: 4, G: 8, P: 16, K: 32, A1: 64, A2: 128, A3: 256, DOM: 512 };
 const DOM_HP = 0.3, GAUGE_MAX = 100, ROUND_TICKS = 99 * 60;
+const BF_CHANCE = 0.06, BF_ZONE = 0.2, BF_MULT = 2.2, BF_ZONE_TICKS = 480;
 
 const BASIC = {
   p1: { su: 4, ac: 3, re: 8, dmg: 32, reach: 86, stun: 15, kb: 3, next: 'p2', pose: 'punch' },
@@ -23,7 +24,7 @@ function ev(S, k, x, y, a, b) { S.ev.push({ k, x: Math.round(x || 0), y: Math.ro
 function newFighter(i, ch) {
   return { i, ch, x: i ? 880 : 400, y: GROUND, vx: 0, vy: 0, face: i ? -1 : 1, hp: CH[ch].hp, ghost: CH[ch].hp, ce: 50,
     gauge: 0, guardHp: 100, st: 'idle', stT: 0, move: null, mt: 0, hitDone: 0, comboN: 0, cd: [0, 0, 0], domUsed: 0,
-    prev: 0, buf: 0, bufT: 0, inf: 0, inv: 0, armor: 0, dis: 0, voided: 0, grab: 0, grabX: 0, air: 0, wall: 0, volley: 0, volleyN: 0, walkT: 0, res: 0, counter: 0, abs: 0, gum: 0, nails: 0, big: 0, buff: 0, chg: 0, hist: [], hurtT: -999, sling: 0, leap: 0 };
+    prev: 0, buf: 0, bufT: 0, inf: 0, inv: 0, armor: 0, dis: 0, voided: 0, grab: 0, grabX: 0, air: 0, wall: 0, volley: 0, volleyN: 0, walkT: 0, res: 0, counter: 0, abs: 0, gum: 0, nails: 0, big: 0, buff: 0, chg: 0, hist: [], hurtT: -999, sling: 0, leap: 0, zone: 0 };
 }
 function newMatch(c0, c1, seed) {
   const S = { t: 0, seed: seed || 12345, phase: 'intro', phaseT: 0, round: 1, timer: ROUND_TICKS, wins: [0, 0], f: [newFighter(0, c0), newFighter(1, c1)],
@@ -83,6 +84,9 @@ function hit(S, by, f, sx, o) {
   if (inCombo) f.comboN++; else f.comboN = 0;
   dmg *= Math.max(0.35, 1 - 0.12 * f.comboN);
   if (f.voided > 0 && !o.dom) dmg *= 0.6;
+  // Black Flash: a punch or kick that lands has a small chance to distort space. It opens the Zone, where the chance is far higher.
+  let flash = false;
+  if (atk && o.basic && rnd(S) < (atk.zone > 0 ? BF_ZONE : BF_CHANCE)) { flash = true; dmg *= BF_MULT; atk.zone = BF_ZONE_TICKS; atk.ce = Math.min(MAXCE, atk.ce + 25); atk.gauge = Math.min(GAUGE_MAX, atk.gauge + 10); o = Object.assign({}, o, { kb: (o.kb || 0) + 10, lift: Math.max(o.lift || 0, 7), stun: 30 }); }
   if (guarding && o.unblock) { f.guardHp = 60; o = Object.assign({}, o, { stun: 45 }); ev(S, 'break', hx, hy); }
   if (atk) { atk.ce = Math.min(MAXCE, atk.ce + dmg * 0.06); atk.gauge = Math.min(GAUGE_MAX, atk.gauge + dmg * 0.07); }
   rawDmg(S, f, dmg); f.hurtT = S.t;
@@ -90,7 +94,8 @@ function hit(S, by, f, sx, o) {
   if (CH[f.ch].hurt) CH[f.ch].hurt(S, f, dmg);
   if (atk && CH[atk.ch].dealt) CH[atk.ch].dealt(S, atk, dmg, f, o);
   ev(S, 'hit', hx, hy, dmg, dir);
-  S.hitstop = Math.max(S.hitstop, o.dom ? 2 : dmg > 80 ? 9 : dmg > 45 ? 6 : 4);
+  if (flash) ev(S, 'blackflash', hx, hy, atk.i);
+  S.hitstop = Math.max(S.hitstop, flash ? 20 : o.dom ? 2 : dmg > 80 ? 9 : dmg > 45 ? 6 : 4);
   if (f.st === 'ko') { f.vx = dir * 9; return 2; }
   if (f.armor || (f.big > 0 && dmg < 70 && !o.dom)) return 2;
   if (f.voided > 0 && o.dom) return 2;
@@ -144,7 +149,7 @@ function meleeCheck(S, f, o, m) {
     if (ex > -20 && ex < m.reach + 20 && Math.abs(e.y - f.y) < 110) { e.hp = 0; ev(S, 'poof', e.x, e.y - 30); }
   }
   if (dx > -24 && dx < m.reach + 22 && dy < 96) {
-    const r = hit(S, f.i, o, f.x, { dmg: m.dmg, kb: m.kb, lift: m.lift, stun: m.stun, guardDmg: m.guardDmg, unblock: m.unblock, melee: 1, chip: m.chip });
+    const r = hit(S, f.i, o, f.x, { dmg: m.dmg, kb: m.kb, lift: m.lift, stun: m.stun, guardDmg: m.guardDmg, unblock: m.unblock, melee: 1, chip: m.chip, basic: BASIC[f.move] ? 1 : 0 });
     if (r || o.inf > 0) f.hitDone = 1;
   }
 }
@@ -162,6 +167,7 @@ function upFighter(S, f, o, b) {
   if (f.inv > 0) f.inv--;
   if (f.dis > 0) f.dis--;
   if (f.voided > 0) f.voided--;
+  if (f.zone > 0) f.zone--;
   if (f.counter > 0) f.counter--; if (f.abs > 0) f.abs--; if (f.gum > 0) f.gum--; if (f.big > 0) f.big--; if (f.buff > 0) f.buff--;
   if (c.tick) c.tick(S, f, o);
   if (f.ghost > f.hp) f.ghost = Math.max(f.hp, f.ghost - Math.max(1.2, (f.ghost - f.hp) * 0.05));
