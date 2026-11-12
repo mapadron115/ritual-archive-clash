@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ritual Archive: Clash (demo)</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #07060c; color: #eee; font-family: "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  #wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #stage { position: relative; width: min(100vw, 177.78vh); aspect-ratio: 16 / 9; }
+  canvas { width: 100%; height: 100%; display: block; background: #111; }
+  .screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.2vh; background: rgba(7, 6, 12, .9); padding: 2vh 3vw; box-sizing: border-box; overflow: auto; font-size: clamp(11px, 1.25vw, 16px); }
+  h1 { font-size: 3.4em; font-style: italic; font-weight: 900; margin: 0; letter-spacing: .02em; }
+  h1 span { color: #ff4b4b; }
+  h2 { margin: 0 0 .4em; font-size: 1.1em; text-transform: uppercase; letter-spacing: .1em; color: #bbb; }
+  h3 { margin: .7em 0 .3em; font-size: 1.15em; } h3 span { color: #bbb; font-weight: 500; font-size: .8em; margin-left: .6em; }
+  p { margin: .2em 0; color: #bbb; }
+  button { font: inherit; font-weight: 700; color: #fff; background: #1b1a28; border: 2px solid #3a3850; border-radius: 8px; padding: .7em 1.4em; cursor: pointer; min-width: 22em; }
+  button:hover:not(:disabled) { border-color: #fff; background: #26243a; }
+  button.go { background: #c8323c; border-color: #ff6a6a; }
+  button.small { min-width: 0; }
+  .row { display: flex; gap: 1.5vw; align-items: flex-start; }
+  .col { display: flex; flex-direction: column; gap: .5em; }
+  .fighter { min-width: 17em; text-align: left; display: flex; flex-direction: column; padding: .5em 1em; }
+  .fighter b { color: var(--ac); font-size: 1.1em; } .fighter span { font-weight: 500; color: #bbb; font-size: .85em; }
+  .fighter.on { border-color: var(--ac); background: #2a2840; box-shadow: 0 0 0 2px var(--ac) inset; }
+  .fighter:disabled { opacity: .75; cursor: default; }
+  .panel { background: #12111c; border: 1px solid #2c2a40; border-radius: 10px; padding: .6em 1.2em 1em; max-width: 62em; }
+  table { border-collapse: collapse; } td { padding: .25em .7em .25em 0; vertical-align: top; color: #ccc; } td:nth-child(3) { white-space: nowrap; color: #999; }
+  kbd { display: inline-block; min-width: 1.3em; text-align: center; background: #eee; color: #111; border-radius: 4px; padding: 0 .35em; font: 800 .9em "Segoe UI", sans-serif; margin: 0 .5em 0 .15em; }
+  .basics { line-height: 1.9; }
+  input { font: inherit; font-weight: 800; letter-spacing: .3em; text-transform: uppercase; width: 6em; text-align: center; padding: .6em; border-radius: 8px; border: 2px solid #3a3850; background: #0d0c14; color: #fff; }
+  #netStatus { min-height: 1.5em; color: #ffd866; font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+  <canvas id="cv" width="1280" height="720"></canvas>
+
+  <div class="screen" id="title">
+    <h1>RITUAL ARCHIVE: <span>CLASH</span></h1>
+    <p>A fighting demo. Five techniques from the Ritual Archive, five original fighters.</p><br>
+    <button class="go" onclick="pickMode('ai')">1 Player vs Computer</button>
+    <button onclick="pickMode('local')">2 Players, one keyboard</button>
+    <button onclick="show('online')">Online: play a friend</button>
+    <button onclick="pickMode('watch')">Watch: computer vs computer</button>
+  </div>
+
+  <div class="screen" id="select">
+    <div class="row">
+      <div class="col" id="col0"></div>
+      <div class="col" style="align-self:center;font-size:2em;font-weight:900;font-style:italic">VS</div>
+      <div class="col" id="col1"></div>
+    </div>
+    <div class="panel" id="detail"></div>
+    <div class="panel" id="selBasics"></div>
+    <div class="row"><button class="small" onclick="toMenu()">Back</button><button class="go" id="start" onclick="startFight()">Fight</button></div>
+    <p id="selNote"></p>
+  </div>
+
+  <div class="screen" id="online">
+    <h2>Online</h2>
+    <p>One of you hosts and reads out the room code; the other types it in. Both need this page open.</p>
+    <button onclick="hostGame()">Host a room</button>
+    <div class="row" style="align-items:center"><input id="code" maxlength="4" placeholder="CODE"><button class="small" onclick="joinGame()">Join</button></div>
+    <p id="netStatus"></p>
+    <button class="small" onclick="netClose();show('title')">Back</button>
+  </div>
+
+  <div class="screen" id="pause">
+    <h2>Paused: move list</h2>
+    <div class="panel" id="pauseList"></div>
+    <div class="row"><button class="small go" onclick="togglePause()">Resume (Esc)</button><button class="small" onclick="toSelect()">Change fighters</button><button class="small" onclick="toMenu()">Main menu</button></div>
+  </div>
+
+  <div class="screen" id="over" style="background:rgba(7,6,12,.6)">
+    <h1 id="overTitle"></h1>
+    <div class="row" id="overBtns"><button class="small go" onclick="rematch()">Rematch</button><button class="small" onclick="toSelect()">Change fighters</button><button class="small" onclick="toMenu()">Main menu</button></div>
+  </div>
+</div></div>
+<script src="src/sim.js"></script>
+<script src="src/fighters.js"></script>
+<script src="src/ai.js"></script>
+<script src="src/render.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
