@@ -52,6 +52,10 @@ function sfx(e) {
     case 'domain': tone(60, 240, 1, 'sawtooth', .22); tone(90, 360, 1, 'sine', .2); break;
     case 'clash': noise(.6, .4, 3000); tone(900, 50, .7, 'square', .15); break;
     case 'nope': tone(140, 110, .08, 'square', .06); break;
+    case 'word': tone(180, 90, .35, 'sawtooth', .2); tone(360, 200, .3, 'square', .08); break;
+    case 'counter': tone(900, 1800, .15, 'triangle', .18); noise(.1, .2, 6000); break;
+    case 'stop': tone(1200, 80, .5, 'sine', .2); break;
+    case 'dash': case 'cuts': noise(.08, .16, 7000); tone(2000, 600, .08, 'sawtooth', .05); break;
   }
 }
 
@@ -59,7 +63,7 @@ function sfx(e) {
 function show(id) { for (const s of document.querySelectorAll('.screen')) s.style.display = s.id === id ? 'flex' : 'none'; }
 function moveList(ch, lab) {
   const c = CH[ch], k = n => lab ? `<kbd>${lab[n]}</kbd>` : '';
-  let h = `<h3 style="color:${c.look.accent}">${c.name} <span>${c.tech} · ${c.tag}</span></h3><table>`;
+  let h = `<h3 style="color:${c.look.accent}">${c.tech} <span>${c.name} · ${c.tag}${c.ip ? ' · from ' + c.ip : ''}</span></h3>${c.passive ? '<p>' + c.passive + '.</p>' : ''}<table>`;
   c.arts.forEach((a, n) => { h += `<tr><td>${k('A' + (n + 1))}</td><td><b>${a.name}</b></td><td>${a.cost} CE · ${(a.cd / 60).toFixed(1)}s</td><td>${a.desc}</td></tr>`; });
   h += `<tr><td>${k('DOM')}</td><td><b>${c.dom.name}</b></td><td>${c.dom.maximum ? 'Maximum' : 'Domain'}</td><td>${c.dom.desc}. Once a round, when the gauge is full or you are under 30% health</td></tr></table>`;
   return h;
@@ -77,7 +81,7 @@ function buildSelect() {
     const col = $('col' + i); col.innerHTML = `<h2>${names[i]}</h2>`;
     CH.forEach((c, n) => {
       const b = document.createElement('button'); b.className = 'fighter' + (G.pick[i] === n ? ' on' : ''); b.style.setProperty('--ac', c.look.accent);
-      b.innerHTML = `<b>${c.tech}</b><span>${c.name} · ${c.tag}</span>`;
+      b.innerHTML = `<b>${c.tech}</b><span>${c.name}</span>`;
       b.disabled = online && i !== me;
       b.onmouseenter = () => { $('detail').innerHTML = moveList(n, labels()[i] || BIND.solo.lab); };
       b.onclick = () => { G.pick[i] = n; if (online) netSend({ t: 'pick', ch: n }); buildSelect(); $('detail').innerHTML = moveList(n, labels()[i] || BIND.solo.lab); };
@@ -93,7 +97,7 @@ function buildSelect() {
 function pickMode(m) { G.mode = m; show('select'); buildSelect(); }
 function startFight() {
   G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); POSE_CACHE[0] = POSE_CACHE[1] = null; FX.parts = []; FX.banner = null;
-  AI_MEM[0] = {}; AI_MEM[1] = {}; FX.stars = []; FX.puffs = []; FX.nums = []; FX.lines = []; FX.silent = false; G.paused = false; G.running = true; G.over = false; G.acc = 0; G.remoteIn = 0;
+  AI_MEM[0] = {}; AI_MEM[1] = {}; FX.stars = []; FX.puffs = []; FX.nums = []; FX.lines = []; FX.words = []; FX.silent = false; G.paused = false; G.running = true; G.over = false; G.acc = 0; G.remoteIn = 0;
   if (G.mode === 'host') netSend({ t: 'start', p: G.pick });
   show('none'); initAudio();
 }

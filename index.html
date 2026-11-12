@@ -12,7 +12,7 @@
   .screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.2vh; background: rgba(7, 6, 12, .9); padding: 2vh 3vw; box-sizing: border-box; overflow: auto; font-size: clamp(11px, 1.25vw, 16px); }
   h1 { font: italic 900 3.6em "Arial Black", "Segoe UI Black", Impact, sans-serif; margin: 0; letter-spacing: .01em; -webkit-text-stroke: .09em #1b1424; paint-order: stroke fill; transform: rotate(-2deg); }
   #title { background: rgba(27, 20, 36, .45); } #title p { color: #fff; font-weight: 700; text-shadow: 0 2px 0 #1b1424; }
-  #select, #online { background: rgba(27, 20, 36, .82); }
+  #select, #online { background: rgba(27, 20, 36, .82); } #select, #pause { justify-content: flex-start; }
   h1 span { color: #ffe36b; }
   h2 { margin: 0 0 .4em; font-size: 1.1em; text-transform: uppercase; letter-spacing: .1em; color: #bbb; }
   h3 { margin: .7em 0 .3em; font-size: 1.15em; } h3 span { color: #bbb; font-weight: 500; font-size: .8em; margin-left: .6em; }
@@ -23,8 +23,8 @@
   button.go { background: #ff4b4b; } button.go:hover:not(:disabled) { background: #ff6a5a; }
   button.small { min-width: 0; }
   .row { display: flex; gap: 1.5vw; align-items: flex-start; }
-  .col { display: flex; flex-direction: column; gap: .5em; }
-  .fighter { min-width: 17em; text-align: left; display: flex; flex-direction: column; padding: .5em 1em; }
+  .col { display: grid; grid-template-columns: repeat(3, 1fr); gap: .55em .5em; } .col h2 { grid-column: 1 / -1; }
+  .fighter { min-width: 0; width: 10.5em; text-align: left; display: flex; flex-direction: column; padding: .35em .7em; font-size: .9em; }
   .fighter b { color: var(--ac); font-size: 1.1em; } .fighter span { font-weight: 500; color: #bbb; font-size: .85em; }
   .fighter.on { background: #453660; box-shadow: 0 5px 0 #1b1424, 0 0 0 3px var(--ac) inset; }
   .fighter:disabled { opacity: .75; cursor: default; }
@@ -83,6 +83,7 @@
 </div></div>
 <script src="src/sim.js"></script>
 <script src="src/fighters.js"></script>
+<script src="src/fighters2.js"></script>
 <script src="src/ai.js"></script>
 <script src="src/render.js"></script>
 <script src="src/main.js"></script>

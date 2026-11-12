@@ -1,7 +1,6 @@
-﻿# Ritual Archive: Clash (demo)
+# Ritual Archive: Clash (demo)
 
-A small 2D fighting game demo: five original fighters, each with one technique from the Ritual Archive library
-(Limitless, Shrine, Boogie Woogie, Ten Shadows, Cursed Cannon). No feats, no levels.
+A small 2D fighting game demo: fifteen original fighters, each with one technique from the Ritual Archive library. No feats, no levels.
 
 ## Run
 Double-click `index.html`. Nothing to install. (Online play needs an internet connection on both computers.)
@@ -17,5 +16,5 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
   Two Domains meeting cancel each other.
 
 ## Code
-`src/sim.js` the fight rules (plain-data state, 60 ticks a second), `src/fighters.js` the five techniques,
+`src/sim.js` the fight rules (plain-data state, 60 ticks a second), `src/fighters.js` and `src/fighters2.js` the fifteen techniques,
 `src/ai.js` the computer opponent, `src/render.js` drawing, `src/main.js` menus, input, sound, online.

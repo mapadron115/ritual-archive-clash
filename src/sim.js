@@ -23,18 +23,18 @@ function ev(S, k, x, y, a, b) { S.ev.push({ k, x: Math.round(x || 0), y: Math.ro
 function newFighter(i, ch) {
   return { i, ch, x: i ? 880 : 400, y: GROUND, vx: 0, vy: 0, face: i ? -1 : 1, hp: CH[ch].hp, ghost: CH[ch].hp, ce: 50,
     gauge: 0, guardHp: 100, st: 'idle', stT: 0, move: null, mt: 0, hitDone: 0, comboN: 0, cd: [0, 0, 0], domUsed: 0,
-    prev: 0, buf: 0, bufT: 0, inf: 0, inv: 0, armor: 0, dis: 0, voided: 0, grab: 0, grabX: 0, air: 0, wall: 0, volley: 0, volleyN: 0, walkT: 0 };
+    prev: 0, buf: 0, bufT: 0, inf: 0, inv: 0, armor: 0, dis: 0, voided: 0, grab: 0, grabX: 0, air: 0, wall: 0, volley: 0, volleyN: 0, walkT: 0, res: 0, counter: 0, abs: 0, gum: 0, nails: 0, big: 0, buff: 0, chg: 0, hist: [], hurtT: -999, sling: 0, leap: 0 };
 }
 function newMatch(c0, c1, seed) {
   const S = { t: 0, seed: seed || 12345, phase: 'intro', phaseT: 0, round: 1, timer: ROUND_TICKS, wins: [0, 0], f: [newFighter(0, c0), newFighter(1, c1)],
-    proj: [], ents: [], zones: [], dom: null, ev: [], hitstop: 0, freeze: 0, winner: -1 };
+    proj: [], ents: [], zones: [], dom: null, stop: null, ev: [], hitstop: 0, freeze: 0, winner: -1 };
   return S;
 }
 function newRound(S) {
   const g = [S.f[0].gauge, S.f[1].gauge];
   S.f = [newFighter(0, S.f[0].ch), newFighter(1, S.f[1].ch)];
   S.f[0].gauge = g[0] * 0.5; S.f[1].gauge = g[1] * 0.5;
-  S.proj = []; S.ents = []; S.zones = []; S.dom = null; S.timer = ROUND_TICKS; S.phase = 'intro'; S.phaseT = 0; S.round++;
+  S.proj = []; S.ents = []; S.zones = []; S.dom = null; S.stop = null; S.timer = ROUND_TICKS; S.phase = 'intro'; S.phaseT = 0; S.round++;
 }
 function maxHp(f) { return CH[f.ch].hp; }
 function domReady(f) { return !f.domUsed && (f.gauge >= GAUGE_MAX || f.hp <= maxHp(f) * DOM_HP); }
@@ -44,7 +44,7 @@ function ko(S, f) {
   if (S.phase !== 'fight') return;
   const o = S.f[1 - f.i];
   f.hp = 0; f.st = 'ko'; f.vy = -9; f.vx = -f.face * 6; f.air = 1;
-  S.phase = 'ko'; S.phaseT = 0; S.dom = null; S.hitstop = 26;
+  S.phase = 'ko'; S.phaseT = 0; S.dom = null; S.stop = null; S.hitstop = 26;
   if (o.hp > 0) { S.wins[o.i]++; S.winner = o.i; } else S.winner = -1;
   ev(S, 'ko', f.x, f.y - 60);
 }
@@ -59,9 +59,15 @@ function hit(S, by, f, sx, o) {
   const hx = f.x, hy = f.y - 70;
   if (f.inf > 0 && !o.dom) { ev(S, 'inf', hx, hy); return 0; }
   const atk = by >= 0 ? S.f[by] : null;
+  if (atk && !o.dom && !o.noCounter && (f.counter > 0 || (f.abs > 0 && f.st !== 'hit' && f.st !== 'stun'))) {   // Full Counter: the blow goes back
+    ev(S, 'counter', hx, hy); if (f.counter > 0) f.counter = 0;
+    hit(S, f.i, atk, f.x, { dmg: o.dmg * (f.abs > 0 ? 1 : 1.4), kb: 12, lift: 5, stun: 24, noCounter: 1, unblock: 1 });
+    return 1;
+  }
+  if (o.gum) f.gum = 300;
   const dir = Math.abs(sx - f.x) < 6 ? -f.face : sgn(f.x - sx);
   const guarding = (f.st === 'guard' || f.st === 'block') && (o.anyGuard || -dir === f.face);
-  let dmg = o.dmg * (atk && o.melee ? CH[atk.ch].melee : 1);
+  let dmg = o.dmg * (atk && o.melee ? CH[atk.ch].melee : 1) * (atk && CH[atk.ch].mul ? CH[atk.ch].mul(S, atk, f, o) : 1);
   if (guarding && !o.unblock) {
     rawDmg(S, f, dmg * (o.chip || 0.15));
     f.guardHp -= o.guardDmg || o.dmg * 0.45;
@@ -79,11 +85,14 @@ function hit(S, by, f, sx, o) {
   if (f.voided > 0 && !o.dom) dmg *= 0.6;
   if (guarding && o.unblock) { f.guardHp = 60; o = Object.assign({}, o, { stun: 45 }); ev(S, 'break', hx, hy); }
   if (atk) { atk.ce = Math.min(MAXCE, atk.ce + dmg * 0.06); atk.gauge = Math.min(GAUGE_MAX, atk.gauge + dmg * 0.07); }
-  rawDmg(S, f, dmg);
+  rawDmg(S, f, dmg); f.hurtT = S.t;
+  if (o.nail) f.nails = Math.min(3, f.nails + 1);
+  if (CH[f.ch].hurt) CH[f.ch].hurt(S, f, dmg);
+  if (atk && CH[atk.ch].dealt) CH[atk.ch].dealt(S, atk, dmg, f, o);
   ev(S, 'hit', hx, hy, dmg, dir);
   S.hitstop = Math.max(S.hitstop, o.dom ? 2 : dmg > 80 ? 9 : dmg > 45 ? 6 : 4);
   if (f.st === 'ko') { f.vx = dir * 9; return 2; }
-  if (f.armor) return 2;
+  if (f.armor || (f.big > 0 && dmg < 70 && !o.dom)) return 2;
   if (f.voided > 0 && o.dom) return 2;
   f.move = null; f.inf = 0;
   if (o.shock) { f.st = 'stun'; f.stT = o.shock; f.vx = 0; }
@@ -94,7 +103,8 @@ function hit(S, by, f, sx, o) {
   return 2;
 }
 
-function startMove(f, id) { f.st = 'atk'; f.move = id; f.mt = 0; f.hitDone = 0; f.buf = 0; f.inf = 0; }
+function startMove(f, id) { f.st = 'atk'; f.move = id; f.mt = 0; f.hitDone = 0; f.buf = 0; f.inf = 0; f.chg = 0; }
+function strike(S, f, o, reach, opts, tall) { const dx = (o.x - f.x) * f.face; if (dx > -24 && dx < reach + 22 && Math.abs(o.y - f.y) < (tall || 110)) return hit(S, f.i, o, f.x, opts); return 0; }
 function moveDef(f) { return f.move ? (BASIC[f.move] || CH[f.ch].arts[+f.move[1]]) : null; }
 
 function tryArt(S, f, o, n) {
@@ -102,9 +112,9 @@ function tryArt(S, f, o, n) {
   if (ART[a.id + '_re'] && ART[a.id + '_re'](S, f, o, a)) return true;
   const garden = S.dom && S.dom.k === 'garden' && S.dom.o === f.i && !S.freeze;
   const cost = garden ? 0 : a.cost;
-  if (f.cd[n] > 0 || f.ce < cost) { ev(S, 'nope', f.x, f.y - 140, f.i); return false; }
+  if (f.cd[n] > 0 || f.ce < cost || (a.hp && f.hp <= a.hp + 1) || (ART[a.id + '_can'] && !ART[a.id + '_can'](S, f, o))) { ev(S, 'nope', f.x, f.y - 140, f.i); return false; }
   if (f.y < GROUND && !a.air) return false;
-  f.ce -= cost; f.cd[n] = garden ? Math.ceil(a.cd / 3) : a.cd;
+  f.ce -= cost; f.cd[n] = garden ? Math.ceil(a.cd / 3) : a.cd; if (a.hp) f.hp -= a.hp;
   startMove(f, 'a' + n);
   if (f.y >= GROUND) f.vx = 0;
   ev(S, 'cast', f.x, f.y - 80, f.ch, n);
@@ -152,6 +162,8 @@ function upFighter(S, f, o, b) {
   if (f.inv > 0) f.inv--;
   if (f.dis > 0) f.dis--;
   if (f.voided > 0) f.voided--;
+  if (f.counter > 0) f.counter--; if (f.abs > 0) f.abs--; if (f.gum > 0) f.gum--; if (f.big > 0) f.big--; if (f.buff > 0) f.buff--;
+  if (c.tick) c.tick(S, f, o);
   if (f.ghost > f.hp) f.ghost = Math.max(f.hp, f.ghost - Math.max(1.2, (f.ghost - f.hp) * 0.05));
   const slow = (S.dom && S.dom.k === 'garden' && S.dom.o !== f.i) ? 0.5 : (f.inf > 0 ? 0.6 : 1);
   const grounded = f.y >= GROUND;
@@ -169,6 +181,7 @@ function upFighter(S, f, o, b) {
     case 'block': f.vx *= 0.8; if (--f.stT <= 0) f.st = (b & BTN.G) ? 'guard' : 'idle'; break;
     case 'atk': {
       const m = moveDef(f); f.mt++;
+      if (m.hold && f.mt === m.su - 1 && (b & BTN['A' + (+f.move[1] + 1)]) && f.chg < m.hold) { f.mt--; f.chg++; }
       if (grounded && !m.air) f.vx *= 0.7;
       if (BASIC[f.move]) {
         if (f.mt >= m.su && f.mt < m.su + m.ac) meleeCheck(S, f, o, m);
@@ -194,12 +207,12 @@ function upFighter(S, f, o, b) {
         if (f.buf & BTN.K) { startMove(f, 'k'); break; }
         if (b & BTN.G) { f.st = 'guard'; f.vx = 0; break; }
         if (pr & BTN.U) { f.st = 'jump'; f.vy = -17.5 * (slow < 1 ? 0.85 : 1); f.vx = dirIn * c.speed * 0.9 * slow; f.y = GROUND - 1; ev(S, 'jump', f.x, f.y); break; }
-        f.vx = dirIn * c.speed * (dirIn === f.face ? 1 : 0.8) * slow;
+        f.vx = dirIn * c.speed * (dirIn === f.face ? 1 : 0.8) * slow * (f.buff > 0 ? 1.35 : 1);
         f.st = dirIn ? 'walk' : 'idle';
         if (dirIn) f.walkT++;
       } else {
         f.st = 'jump';
-        f.vx += dirIn * 0.25; f.vx = clamp(f.vx, -c.speed, c.speed);
+        { const cap = Math.max(c.speed, Math.abs(f.vx)); f.vx = clamp(f.vx + dirIn * 0.25, -cap, cap); }
         if (f.buf & BTN.A1) { f.buf = 0; if (tryArt(S, f, o, 0)) break; }
         if (f.buf & BTN.A2) { f.buf = 0; if (tryArt(S, f, o, 1)) break; }
         if (f.buf & BTN.P) { startMove(f, 'jp'); break; }
@@ -231,6 +244,7 @@ function upFighter(S, f, o, b) {
 function upProj(S) {
   for (const p of S.proj) {
     const t = S.f[1 - p.o];
+    if (S.stop && S.stop.o !== p.o) continue;
     p.life--; p.t = (p.t || 0) + 1;
     if (p.homing && t.st !== 'ko') {
       const want = Math.atan2(t.y - 70 - p.y, t.x - p.x), cur = Math.atan2(p.vy, p.vx);
@@ -261,6 +275,7 @@ function upProj(S) {
 
 function upEnts(S) {
   for (const e of S.ents) {
+    if (S.stop && S.stop.o !== e.o) continue;
     const t = S.f[1 - e.o]; e.life--; e.t++;
     if (e.cd > 0) e.cd--;
     if (e.k === 'dog') {
@@ -293,6 +308,8 @@ function upZones(S) {
       }
       if (z.t === 48) { ev(S, 'boom', z.x, z.y, 110); if (Math.abs(dx) < 115 && t.y > GROUND - 200) hit(S, z.o, t, z.x - S.f[z.o].face * 10, { dmg: 85, kb: 6, lift: 9, stun: 24 }); }
     }
+    if (z.k === 'mark' && z.t === z.delay) { const t = S.f[1 - z.o]; ev(S, 'cuts', z.x, z.y, z.r); if (Math.abs(t.x - z.x) < z.r && Math.abs(t.y - 60 - z.y) < z.r + 40) hit(S, z.o, t, z.x - S.f[z.o].face, { dmg: z.dmg, kb: 4, lift: 6, stun: 22, chip: 0.2 }); }
+    if (z.k === 'trap') { const t = S.f[1 - z.o]; if (z.det || (z.t > 24 && Math.abs(t.x - z.x) < 62 && t.y > GROUND - 60)) { z.t = z.dur; ev(S, 'boom', z.x, z.y - 20, 110); if (Math.abs(t.x - z.x) < 120 && t.y > GROUND - 150) hit(S, z.o, t, z.x, { dmg: 90, kb: 8, lift: 10, stun: 24, chip: 0.25 }); } }
   }
   S.zones = S.zones.filter(z => z.t < z.dur);
 }
@@ -321,8 +338,9 @@ function step(S, inp) {
     if (r0 === r1) { S.phase = 'ko'; S.phaseT = 0; S.winner = -1; ev(S, 'ko', 640, 300); }
     else { const l = S.f[r0 < r1 ? 0 : 1]; l.hp = 0.0001; ko(S, l); l.hp = 0; }
   }
-  upFighter(S, S.f[0], S.f[1], a);
-  upFighter(S, S.f[1], S.f[0], b);
+  const stp = S.stop && S.stop.t > 0 && S.phase === 'fight' ? S.stop : null; if (stp) stp.t--; else S.stop = null;
+  if (!stp || stp.o === 0) upFighter(S, S.f[0], S.f[1], a);
+  if (!stp || stp.o === 1) upFighter(S, S.f[1], S.f[0], b);
   // bodies push apart
   const f = S.f[0], g = S.f[1], dx = g.x - f.x;
   if (Math.abs(dx) < 46 && Math.abs(f.y - g.y) < 100 && f.st !== 'ko' && g.st !== 'ko' && !f.grab && !g.grab) {
