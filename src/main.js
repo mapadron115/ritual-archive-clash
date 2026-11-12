@@ -2,7 +2,7 @@
 // Menus, input, the main loop, sound and online play.
 const $ = id => document.getElementById(id);
 const cv = $('cv'), ctx = cv.getContext('2d');
-const G = { S: null, mode: 'ai', pick: [0, 1], paused: false, running: false, keys: {}, acc: 0, last: 0, netEv: [], remoteIn: 0, guestPick: -1, sendT: 0 };
+const G = { S: null, mode: 'ai', pick: [0, 1], paused: false, running: false, keys: {}, acc: 0, last: 0, netEv: [], remoteIn: 0, guestPick: -1, sendT: 0, slow: 0 };
 
 const BIND = {
   solo: { L: ['KeyA'], R: ['KeyD'], U: ['KeyW'], G: ['KeyS'], P: ['KeyJ'], K: ['KeyK'], A1: ['KeyU'], A2: ['KeyI'], A3: ['KeyO'], DOM: ['KeyL'],
@@ -30,6 +30,7 @@ function noise(dur, vol, freq) { const a = AUDIO.ctx; if (!a || AUDIO.mute) retu
 function sfx(e) {
   switch (e.k) {
     case 'hit': noise(.09 + e.a / 900, .25 + e.a / 500, 900 + e.a * 8); tone(160, 50, .12, 'square', .1); break;
+    case 'blackflash': noise(.55, .5, 520); noise(.12, .35, 9000); tone(95, 24, .7, 'sine', .4); tone(2600, 180, .16, 'sawtooth', .14); tone(70, 35, .9, 'square', .1); break;
     case 'block': noise(.05, .15, 3000); tone(500, 300, .05, 'triangle', .08); break;
     case 'break': noise(.3, .3, 1500); tone(700, 100, .3, 'sawtooth', .12); break;
     case 'whoosh': noise(.07, .06, 1200); break;
@@ -68,7 +69,7 @@ function moveList(ch, lab) {
   h += `<tr><td>${k('DOM')}</td><td><b>${c.dom.name}</b></td><td>${c.dom.maximum ? 'Maximum' : 'Domain'}</td><td>${c.dom.desc}. Once a round, when the gauge is full or you are under 30% health</td></tr></table>`;
   return h;
 }
-function basics(lab) { return `<p class="basics">Move <kbd>${lab.move}</kbd> Jump <kbd>${lab.U}</kbd> Guard <kbd>${lab.G}</kbd> (hold; faces the foe) Punch <kbd>${lab.P}</kbd> (press 3 times for a combo) Kick <kbd>${lab.K}</kbd> (wears a guard down) · Pause <kbd>Esc</kbd> · Mute <kbd>M</kbd></p>`; }
+function basics(lab) { return `<p class="basics">Move <kbd>${lab.move}</kbd> Jump <kbd>${lab.U}</kbd> Guard <kbd>${lab.G}</kbd> (hold; faces the foe) Punch <kbd>${lab.P}</kbd> (press 3 times for a combo) Kick <kbd>${lab.K}</kbd> (wears a guard down) · Pause <kbd>Esc</kbd> · Mute <kbd>M</kbd><br><b style="color:#ff3348">Black Flash</b>: any punch or kick that lands has a small chance (6%) to strike for 2.2 times the damage, launch the foe and give 25 CE. It puts you in the Zone for 8 seconds, where the chance is 20%.</p>`; }
 function labels() {
   if (G.mode === 'local') return [BIND.p1.lab, BIND.p2.lab];
   if (G.mode === 'watch') { const l = [null, null]; l.other = 'Computer'; return l; }
@@ -96,7 +97,7 @@ function buildSelect() {
 }
 function pickMode(m) { G.mode = m; show('select'); buildSelect(); }
 function startFight() {
-  G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); POSE_CACHE[0] = POSE_CACHE[1] = null; FX.parts = []; FX.banner = null;
+  G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); POSE_CACHE[0] = POSE_CACHE[1] = null; FX.parts = []; FX.banner = null; FX.impact = null; FX.bf = null;
   AI_MEM[0] = {}; AI_MEM[1] = {}; FX.stars = []; FX.puffs = []; FX.nums = []; FX.lines = []; FX.words = []; FX.silent = false; G.paused = false; G.running = true; G.over = false; G.acc = 0; G.remoteIn = 0;
   if (G.mode === 'host') netSend({ t: 'start', p: G.pick });
   show('none'); initAudio();
@@ -163,6 +164,8 @@ function endMatch() {
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(100, now - G.last); G.last = now;
+  // If this computer cannot keep up (about 45 frames a second or fewer for three seconds), drop the costliest lighting for the rest of the visit.
+  if (!FX.lite && document.visibilityState === 'visible') { if (dt > 22 && dt < 70) { if (++G.slow > 180) FX.lite = true; } else if (dt <= 18) G.slow = Math.max(0, (G.slow || 0) - 2); }
   if (!G.running || !G.S) {   // a computer match plays behind the menus
     if (!G.demo || G.demo.phase === 'over') { const a = Math.random() * 5 | 0; G.demo = newMatch(a, (a + 1 + (Math.random() * 4 | 0)) % 5, (Math.random() * 1e9) | 0); AI_MEM[0] = {}; AI_MEM[1] = {}; POSE_CACHE[0] = POSE_CACHE[1] = null; }
     FX.silent = true; G.acc += dt; let n = 0;

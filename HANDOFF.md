@@ -34,27 +34,32 @@ workflow does not apply here.
 - Mirror matches must be told apart (P2 pale outfit, tags over heads).
 - Cartoon style like Brawlhalla / Castle Crashers. Original fighters only: no likenesses of series characters.
 
-## In progress when I stopped (the owner's latest ask)
-"improve the visuals again, still cartoony but a little more articulated, aiming for that triple-A look ... also add a black
-flash chance mechanic".
+## Done by the second session (2026-11-12): Black Flash and the visual upgrade
+The owner's ask was "improve the visuals again, still cartoony but a little more articulated, aiming for that triple-A look
+... also add a black flash chance mechanic". Committed locally; **not published** (the owner has to say yes; bump `?v=` to 4).
 
-1. **Black Flash: rules are in `sim.js`, uncommitted-then-committed as WIP, NOT tested, no effect drawn yet.** A landed punch or
-   kick (`o.basic`) has a 6% chance (20% in the Zone) for x2.2 damage, +25 CE, a launch, and 8 s of Zone (`f.zone`). Constants
-   `BF_*`. It emits `ev 'blackflash'` (x, y, a = attacker index). Still to do: handle that event in `fxEvent` (black star with a
-   red edge, jagged red-black lightning, an impact frame, sound in `sfx`), show "IN THE ZONE" on the HUD while `f.zone > 0`,
-   a dark-red aura on the fighter, a line in the move list / basics, and a scripted test (force it by setting `S.seed` or
-   temporarily `BF_CHANCE = 1`).
-2. **Visual upgrade: not started.** My plan, for what it's worth:
-   - Fighters: render each into an offscreen canvas, then blit (gives a soft rim glow via `shadowBlur`, a white hit-flash with
-     `source-atop`, motion trails). Less chibi proportions (smaller head, longer limbs), tapered capsule limbs with two-tone cel
-     shading, a shaped torso, real hands (fist / open when casting) and feet that sit flat on the ground, a neck, eyes with
-     irises that look at the foe, layered hair with highlights, an outfit kit per fighter (coat, gi, jacket, hood, tank, scarf).
-     Spring the pose (velocity per joint) for overshoot and follow-through instead of the plain lerp in `POSE_CACHE`.
-   - Stage: separate layers with parallax off the camera (sky fixed in screen space; far hills .25; town .55; arena 1; a blurred
-     foreground 1.35), smooth sky gradient, sun bloom, haze between layers, waving banners, lantern glow, god rays, a vignette.
-   - Effects: glow on projectiles and beams, an impact frame on very heavy hits and KOs.
-   - Keep the portrait code in `drawHUD` working (it calls `drawFighter` with a fake fighter, `portrait: 1`, index 2/3) and the
-     head tags (`f.y - 168`); both depend on fighter height.
+- **Black Flash** (`sim.js`, constants `BF_*`): a landed, unguarded punch or kick has a 6% chance (20% in the Zone) for x2.2
+  damage, +25 CE, a launch and 8 s of Zone (`f.zone`). Event `blackflash` (x, y, a = attacker). Script-tested over 2000 punches.
+  Look: `fxEvent` sets `FX.impact` (a few frames where the world goes black and the two figures become flat silhouettes) and
+  `FX.bf` (black burst with a red edge, black-red lightning from `bolt()`); HUD shows "IN THE ZONE" with a draining bar;
+  the fighter gets black-red flames, a red glow and red eyes. Sound in `sfx`. One line in `basics()`.
+- **Fighters** (`render.js`, from `const B` to `drawFighter`): bones in `B`, outfits in `KIT` (keyed by technique name),
+  `skeleton()` places the feet on the ground and sets the hip height from the legs, `drawBody()` draws into a sprite canvas
+  (`SPR`, one per slot: 0/1 fighters, 2/3 HUD portraits), then `drawFighter` lights the sprite as one piece (`source-atop`:
+  shade toward the feet, white flash when struck, a rim of light just inside the outline) and copies it to the screen.
+  Poses still come from `P`; `springPose` follows them with a damped spring. `P[x].sx` is how far the hips lunge. `FS` is the
+  overall size. A portrait is positioned by its head, so `drawHUD` just translates to the ring's centre.
+  Head tags sit at `f.y - 196` (246 when `f.big`).
+- **Stage** (`makeBG`, `drawArenaLife`, the top of `drawWorld`): layers `BG.sky/cloud/far/town/arena/fore/vig`, drawn at depths
+  0, .1, .2, .5, 1, 1.3 through `layer(p)`. Light shafts and dust are drawn live; banners wave; lanterns glow.
+- **Effects**: `glow()` (additive) under projectiles, beams, hit stars; white impact frame on hits of 110+ and on a KO.
+- **Speed**: `FX.lite` (set in `main.js` `frame` after about three seconds of slow frames) drops the rim pass, light shafts,
+  clouds and foreground. Portrait sprites repaint every third frame.
+- Testing aid: the Browser pane's screenshot often times out. A tiny receiver that saves `cv.toDataURL()` posts to PNG files
+  worked better (fetch POST to a local Python `http.server` subclass), then read the PNGs.
+
+Not done / ideas: the title screen still says "Five techniques"; no hand-played check of feel or frame rate; walk and attack
+motion were only seen as still frames.
 
 ## How I tested (the pane throttles animation, so nothing was played by hand)
 In the Browser pane's JS: stop the loop (`window.requestAnimationFrame = () => 0; G.running = false; FX.silent = true`), then
