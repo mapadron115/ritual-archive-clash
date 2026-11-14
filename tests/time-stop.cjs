@@ -15,9 +15,45 @@ function begin(kind,owner=0){
   for(let n=0;n<20&&!S.ev.some(e=>e.k==='stop');n++)advance(S);
   assert(S.ev.some(e=>e.k==='stop'),'cast did not emit stop');return S;
 }
-function layer(S){const s=new PixelSurface(640,360);if(typeof pxTimeStopHUD==='function')pxTimeStopHUD(s,S);return s;}
+function layer(S,labels=[null,null]){const s=new PixelSurface(640,360);if(typeof pxTimeStopHUD==='function')pxTimeStopHUD(s,S,labels);return s;}
 function count(s){let n=0;for(let p=3;p<s.data.length;p+=4)if(s.data[p])n++;return n;}
 function crop(s){const a=[];for(let y=61;y<=75;y++)a.push(...s.data.subarray((y*640+261)*4,(y*640+379)*4));return a;}
+const keys={move:'A / D',U:'W',G:'S',P:'J',K:'K',A1:'U',A2:'I',A3:'O',DOM:'L'};
+const modes=[
+  {id:'local',labels:[keys,keys],roles:['P1','P2']},
+  {id:'ai',labels:Object.assign([keys,null],{other:'Computer'}),roles:['YOU','CPU']},
+  {id:'watch',labels:Object.assign([null,null],{other:'Computer'}),roles:['CPU1','CPU2']},
+  {id:'host',labels:Object.assign([keys,null],{other:'Online opponent'}),roles:['YOU','FOE']},
+  {id:'guest',labels:Object.assign([null,keys],{other:'Online opponent'}),roles:['FOE','YOU']}
+];
+// Check literal mode identities independently of the shared role helper, using
+// actual casts and the complete HUD. This fails on the old P1/P2-only notice.
+if(!previewOnly){
+  let identities=0;
+  for(const mode of modes)for(const owner of [0,1])for(const kind of ['golden','world','rewind']){
+    const S=begin(kind,owner),before=JSON.stringify(S),effects=JSON.stringify(FX);
+    const s=layer(S,mode.labels),ink=[],paint=pxText;
+    pxText=function(surface,text,x,y,col,size=1){ink.push({text,x,y,w:pxTextWidth(text,size)});return paint(surface,text,x,y,col,size);};
+    let hud;try{hud=pxHUDSurface(S,mode.labels,{});}finally{pxText=paint;}
+    const expected=mode.roles[owner]+' TIME STOP',notice=ink.filter(p=>p.text.includes('TIME STOP'));
+    assert.equal(notice.length,kind==='rewind'?0:1,'wrong notice count '+mode.id);
+    if(kind!=='rewind'){
+      assert.equal(notice[0].text,expected,'time-stop identity '+mode.id+' slot '+owner);
+      assert(notice[0].x>=282&&notice[0].x+notice[0].w<=375,'notice exceeds existing plaque');
+      const glyphs=new PixelSurface(640,360);pxText(glyphs,expected,284,65,PX_INK);
+      for(let p=0;p<glyphs.data.length;p+=4)if(glyphs.data[p+3])assert.deepEqual(s.data.subarray(p,p+4),glyphs.data.subarray(p,p+4),'missing mode glyph');
+      assert.deepEqual(crop(hud),crop(s),'complete HUD obscures mode identity');
+    }else assert.equal(count(s),0,'Rewind claims active stopped time');
+    assert.deepEqual(layer(JSON.parse(before),mode.labels).data,s.data,'snapshot changes mode identity');
+    assert.equal(JSON.stringify(S),before,'identity rendering mutates combat');assert.equal(JSON.stringify(FX),effects,'identity rendering mutates effects');
+    for(const stage of PX_STAGES){
+      S.stage=stage.id;const frame=pxWorldSurface(S,{});frame.blit(pxHUDSurface(S,mode.labels,{}),0,0);
+      if(kind!=='rewind')assert.deepEqual(crop(frame),crop(s),'native composition obscures mode identity');
+    }
+    identities++;
+  }
+  console.log('PASS',identities,'actual cast/mode/owner identities, bounded literal glyphs, snapshot and full-stage compositions; Rewind excluded');
+}
 if(!previewOnly){
   let timelines=0,ticks=0,rasters=0,holds=0,composites=0;const signatures=[];
   for(const owner of [0,1])for(const kind of ['golden','world','rewind']){
@@ -43,7 +79,7 @@ if(!previewOnly){
             const lab={move:'AD',U:'W',G:'S',P:'F',K:'G'};
             for(const stage of PX_STAGES)for(const labels of [[null,null],[lab,lab],[null,lab],[lab,null]]){
               const F=JSON.parse(before);F.stage=stage.id;const hud=pxHUDSurface(F,labels,{}),frame=pxWorldSurface(F,{});frame.blit(hud,0,0);
-              assert.deepEqual(crop(hud),crop(s),'HUD obscures persistent stop');assert.deepEqual(crop(frame),crop(s),'world obscures persistent stop');composites++;
+              const notice=layer(F,labels);assert.deepEqual(crop(hud),crop(notice),'HUD obscures persistent stop');assert.deepEqual(crop(frame),crop(notice),'world obscures persistent stop');composites++;
             }
             probed=true;
           }
@@ -87,6 +123,14 @@ if(!previewOnly){
   console.log('PASS',timelines,'real Golden Hour/World/Rewind lifecycles;',ticks,'parallel-state ticks;',rasters,'read-only/snapshot rasters;',holds,'freeze holds;',composites,'native composites; owner glyphs, expiry, KO/reset, Rewind exclusion');
 }
 if(output){
+  for(const mode of modes)for(const owner of [0,1])for(const stage of PX_STAGES){
+    const S=begin('golden',owner);S.stage=stage.id;
+    S.f[0].x=940;S.f[1].x=340;S.f[0].face=-1;S.f[1].face=1;
+    // Stacked resources and status lanes exercise the same full HUD as play.
+    S.f.forEach(f=>{f.nails=3;f.zone=180;});
+    const view=pxWorldSurface(S,{});view.blit(pxHUDSurface(S,mode.labels,{}),0,0);
+    writePNG(output+'/'+prefix+'-'+mode.id+'-'+stage.id+'-cpu'+(owner+1)+'.png',view);
+  }
   let total=0;
   for(const kind of ['golden','world','rewind'])for(const owner of [0,1])for(const stage of PX_STAGES){
     const S=begin(kind,owner);S.stage=stage.id;const targets=kind==='golden'?[0,25,60,67]:kind==='world'?[0,85,170,211]:[0,25,60,80];
@@ -94,6 +138,6 @@ if(output){
     targets.forEach((target,i)=>{while(age<target){advance(S);age++;}const view=pxWorldSurface(S,FX);view.blit(pxHUDSurface(S,[null,null]),0,0);
       const name=prefix+'-'+kind+'-'+stage.id+'-'+(owner?'left':'right')+'-t'+target;writePNG(output+'/'+name+'.png',view);strip.blit(view,i%2*640,Math.floor(i/2)*360);total++;
     });writePNG(output+'/'+prefix+'-'+kind+'-'+stage.id+'-'+(owner?'left':'right')+'-lifecycle.png',strip);
-  }console.log('Exported',total,'native scenes');
+  }console.log('Exported',total+30,'native scenes and 18 lifecycle sheets');
 }
 `)(assert,writePNG,process.argv[2]&&!process.argv[2].startsWith('--')?process.argv[2]:null,process.argv[3]||'v61',previewOnly,baseline);
