@@ -444,6 +444,20 @@ function pxKickSweep(s,f) {
   poly([[tail+4,-8-tail*.35],[24,-11],[40,-22],[54,-41],[60,-50],[59,-43],[51,-27],[37,-16],[21,-9]],'#f1e5cd');
   s.blit(cell,Math.round(f.x/2)-(f.face<0?79:64)*scale,Math.round(f.y/2)-120*scale,scale,f.face<0);
 }
+// A horizontal air-kick wake runs below the extended shin, leaving the boot
+// leading and the face clear. Its tail contracts through the eight active ticks;
+// landing, interruption and recovery clear it without retaining any FX state.
+function pxAirKickSweep(s,f) {
+  if(f.st!=='atk'||f.move!=='jk'||f.y>=GROUND||f.mt<BASIC.jk.su||f.mt>=BASIC.jk.su+BASIC.jk.ac)return;
+  const age=f.mt-BASIC.jk.su,h=PX_KITS[f.ch].height||1,scale=f.big>0?1.3:1;
+  const cell=new PixelSurface(144,128),tail=7+Math.min(age,3)*5,rise=Math.min(age,3)*1.5;
+  const shrink=age<4?1:1-(age-3)*.17;
+  const poly=(pts,col)=>cell.poly(pts.map(([a,b])=>[64+57+(a-57)*shrink,120+(-41+(b+41)*shrink)*h]),col);
+  poly([[tail,-31-rise],[tail+7,-27-rise],[43,-30],[57,-43],[57,-35],[49,-24],[33,-17],[tail,-20-rise]],PX_INK);
+  poly([[tail+2,-29-rise],[tail+8,-25-rise],[44,-28],[55,-39],[54,-34],[48,-26],[33,-19],[tail+2,-22-rise]],'#a7aaa5');
+  poly([[tail+5,-24-rise],[34,-22],[47,-29],[54,-36],[49,-28],[34,-20],[tail+5,-22-rise]],age<4?'#f1e5cd':'#bcc0b5');
+  s.blit(cell,Math.round(f.x/2)-(f.face<0?79:64)*scale,Math.round(f.y/2)-120*scale,scale,f.face<0);
+}
 // The chain's lifting finish leaves a rising fist wake, distinct from the low
 // boot sweep. Its four active ticks are the sole clock, including during freezes.
 function pxHookSweep(s,f) {
@@ -1091,7 +1105,7 @@ function pxWorldSurface(S,F=FX) {
   pxJceRhythm(s,S);
   pxOvationRhythm(s,S);
   pxGumTether(s,S);
-  if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2)){pxStraightPunchWake(s,f);pxKickSweep(s,f);pxHookSweep(s,f);}
+  if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2)){pxStraightPunchWake(s,f);pxKickSweep(s,f);pxAirKickSweep(s,f);pxHookSweep(s,f);}
   if(F.bf)pxBlackFlash(s,F.bf);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
