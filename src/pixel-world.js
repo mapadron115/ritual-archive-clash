@@ -173,10 +173,52 @@ function pxPaintFighter(s,S,f,impact) {
   if(f.nails>0)for(let n=0;n<f.nails;n++)s.line([x-5+n*6,y-43+n%2*5],[x-2+n*6,y-50+n%2*5],'#e8d7bc',2);
   if(f.chg>0){pxRing(s,x+f.face*14,y-45,9+Math.floor(f.chg/25)*3,9,'#d8ecb0',2,Math.floor(S.t/4));}
 }
+// Beam families use only the serialized zone's active age/material. Clip columns
+// before painting, including the wide Maximum cones; no animation state/cache.
+function pxBeam(s,z) {
+  const x=Math.round(z.x/2),y=Math.round(z.y/2),face=z.face<0?-1:1;
+  const age=Math.max(0,z.t||0),hw=Math.max(1,z.w/2*(1-age/z.dur)),cone=z.cone||0;
+  const blood=z.col==='#d4102e',air=z.col==='#ff8a2a',phase=Math.floor(age/2)%4;
+  const start=Math.max(0,face>0?-x:x-s.w+1),end=Math.min(660,face>0?s.w-1-x:x);
+  for(let u=start;u<=end;u++) {
+    const sx=x+face*u,h=Math.max(1,Math.floor(hw+u*cone));
+    const span=(a,b,col)=>s.rect(sx,Math.max(0,y+a),1,Math.min(s.h-1,y+b)-Math.max(0,y+a)+1,col);
+    if(blood) {
+      // Three separated ribbons gather at the palm, then braid down the lane.
+      const braid=[0,1,0,-1][(Math.floor(u/12)+phase)%4];
+      for(const lane of [-1,0,1]) {
+        const cy=Math.round(lane*h*.68*Math.min(1,u/18)+braid*Math.min(2,h/6));
+        const r=Math.max(1,Math.round(h*(lane===0?.19:.23)));
+        span(cy-r,cy-r,PX_INK);span(cy+r,cy+r,PX_INK);
+        if(r>1) {span(cy-r+1,cy-r+1,'#ffb4bf');span(cy-r+2,cy,'#d4102e');span(cy+1,cy+r-1,'#790f30');}
+        else span(cy,cy,'#d4102e');
+      }
+    } else if(air) {
+      // A fine squeezed core with sparse, travelling paired pressure fins.
+      const core=Math.max(1,Math.floor(h*.38)),fin=(u-phase*7+112)%28<5;
+      const r=fin?h:core;
+      span(-r,r,PX_INK);span(-r+1,r-1,'#ff8a2a');
+      if(r>2)span(1,r-1,'#a64624');
+      if(u%28<20)span(0,0,'#fff0ca');
+    } else {
+      // Heavy cannon: a shaded barrel of pressure and moving compression ribs.
+      const rib=(u-(Math.floor(age/2)%8)*6+96)%48,edge=rib<5?0:Math.min(2,Math.floor(h/4)),r=h-edge;
+      // Paint disjoint bands once rather than repeatedly filling a large cone.
+      const core=Math.max(0,Math.floor(r*.12)),base=z.col||'#e7a267';
+      span(-r,-r,PX_INK);span(r,r,PX_INK);span(-core,core,rib<5?'#ffd599':PX_LIGHT);
+      if(rib<2&&r>4) {span(-r+1,-core-1,'#995335');span(core+1,r-1,'#995335');}
+      else {
+        const top=r>3?-Math.ceil(r*.5):-r,bottom=r>2?Math.ceil(r*.38):r;
+        span(-r+1,top,'#ffd599');span(top+1,-core-1,base);
+        span(core+1,bottom-1,base);span(bottom,r-1,'#995335');
+      }
+    }
+  }
+}
 function pxZone(s,S,z) {
   const x=z.x/2,y=z.y/2,t=z.t;
   if(z.k==='blue') {for(let n=0;n<3;n++){const r=(80-(t*3+n*25)%80);pxRing(s,x,y,r,r*.8,'#7fb7da',1,n*3);}s.ellipse(x,y,17,17,'#3869a9');s.ellipse(x-3,y-3,10,10,'#87c9e7');s.ellipse(x-4,y-4,4,4,PX_LIGHT);}
-  if(z.k==='beam') {const f=z.face,len=660,hw=Math.max(1,z.w/2*(1-t/z.dur)),far=hw+(z.cone?len*z.cone:0);s.poly([[x,y-hw],[x+f*len,y-far],[x+f*len,y+far],[x,y+hw]],z.col||'#e7a267',PX_INK);s.line([x,y],[x+f*len,y],PX_LIGHT,Math.max(1,hw*.5));}
+  if(z.k==='beam')pxBeam(s,z);
   if(z.k==='pebble')pxProjectile(s,{k:'stone',x:z.x,y:z.y,r:7,vx:0,vy:0,t});
   if(z.k==='tongue')pxToad(s,z);
   if(z.k==='mark') {const r=z.r/2*(1.4-.4*t/z.delay);if(t<z.delay){pxRing(s,x,y,r,r,'#9acfd5',1,Math.floor(t/3));s.line([x-5,y],[x+5,y],'#9acfd5');s.line([x,y-5],[x,y+5],'#9acfd5');}else pxBurst(s,x,y,z.r/2,'#c7e9de',t);}

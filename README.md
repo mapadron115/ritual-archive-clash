@@ -17,6 +17,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Round results distinguish K.O., time up and draws, identify the winner and score, and say which round comes next. They remain visible until the round changes. The match screen shows the final score, keeps rematch context clear and tells online guests to wait for the host. Tab, Enter and Space reach the result buttons.
 - Projectile bodies have distinct pixel shapes: pressure bands, curling flame, a hooked wheel, folded fan, brass shot, elastic knot, knife and nail. Active projectile age animates the energy shapes; impact pauses and time stops hold their frames.
 - Stage atmosphere uses sixteen discrete phases over 128 ticks: clouds ease through a wind loop, rain continues forward across the reset, and the observatory pointer turns in smaller steps. Stonework and the fighting floor remain still. Stage scenery retains its existing global clock during impact/cinematic pauses.
+- Beam attacks have distinct pixel forms: shaded cannon pressure with moving ribs, three blood ribbons, and a fine compressed-air core with paired fins. Existing beam age controls their detail; attack timing and damage remain the same.
 
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
@@ -29,6 +30,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/beams.cjs` checks 184 hard-alpha beam frames, exact facing mirrors, three distinct material silhouettes, active-age detail, ten real art/Maximum input timelines across both slots, contact/expiry, snapshots, read-only drawing, freezes and unchanged simulation outcomes. Existing beam zones continue during time stop. An output directory and optional prefix save body and stage composites; `--baseline --preview-only` audits HEAD's renderer. `--preview-only --timing` samples world-only CPU raster cost, excluding browser display, HUD, audio and input. These are script/raster checks, not human play or observed motion.
 
 `node tests/stage-motion.cjs` checks all 48 stage phases, cloud and rain continuity across the loop, smaller brass-pointer steps, masked rain, unchanged floors, snapshots, actual world-clock routing, pause behavior and six two-cycle input timelines with identical simulation outcomes. It also checks the 24-surface backdrop cache retains a complete current-stage loop alongside menu previews. An optional output directory and version prefix save native-scale scenes and enlarged loop-boundary details; `--preview-only` exports the same audit against earlier code. These are exact rasters, not browser motion or human play.
 
