@@ -36,6 +36,9 @@ for(let ch=0;ch<15;ch++)for(const owner of [0,1])for(const dir of [-1,1]) {
         let visible=0;for(let p=0;p<frame.data.length;p+=4)if(!frame.data.subarray(p,p+4).every((v,k)=>v===plain.data[p+k]))visible++;
         if(age<=3){assert(visible>=500,'body impact disappears into floor/body: '+visible);minVisible=Math.min(minVisible,visible);}
         if(age===24)assert.equal(visible,0,'dust survives expiry');
+        const bodies=new PixelSurface(640,360),impact=FX.impact&&FX.impact.t<FX.impact.sil?FX.impact:null;
+        for(const actor of S.f)pxPaintFighter(bodies,S,actor,impact);
+        for(let p=0;p<bodies.data.length;p+=4)if(bodies.data[p+3])assert.deepEqual(frame.data.subarray(p,p+4),plain.data.subarray(p,p+4),'dust painted over a body');
       }
       if(output&&ch===0&&dir===(owner?-1:1)&&[1,3,5,8].includes(age))for(const stage of PX_STAGES){const view=pxWorldSurface({...S,stage:stage.id},FX);view.blit(hud,0,0);writePNG(output+'/'+prefix+'-'+stage.id+'-'+(dir>0?'right':'left')+'-t'+age+'.png',view);}
     }
@@ -52,6 +55,17 @@ if(!previewOnly){
       if(a){assert(x>0&&x<s.w-1&&y>0&&y<=80,'dust clipped/below floor');if(s.data[p]>200&&s.data[p+1]>180)bright++;}
     }
     if(kind==='thud'&&t<4)assert(bright>=300,'initial body impact lacks bright surface: '+bright);
+    if(kind==='thud'&&t<6) {
+      // A billow has a broad rounded cap, rather than a one-pixel mountain tip.
+      let top=96;
+      for(let y=0;y<96;y++)for(let x=97;x<192;x++)if(s.data[(y*192+x)*4+3])top=Math.min(top,y);
+      let cap=0;for(let x=97;x<192;x++)cap+=!!s.data[((top+2)*192+x)*4+3];
+      assert(cap>=8,'body dust has pointed peaks instead of billowing caps: '+[t,cap]);
+      for(let y=0;y<96;y++)for(let x=1;x<192;x++) {
+        const p=(y*192+x)*4,q=(y*192+192-x)*4;
+        assert.deepEqual(s.data.subarray(p,p+4),s.data.subarray(q,q+4),'unequal left/right dust billows');
+      }
+    }
   }
   for(let t=0;t<24;t++)for(const x of [60,60.5,640,1219.5,1220]) {
     const cell=new PixelSurface(192,96);pxDust(cell,{x:192,y:160,kind:'thud',t});
@@ -59,6 +73,6 @@ if(!previewOnly){
     pxDust(actual,{x,y:GROUND,kind:'thud',t});expected.blit(cell,Math.round(x/2)-96,GROUND/2-80);
     assert.deepEqual(actual.data,expected.data,'fractional/edge root changes the floor burst');
   }
-  console.log('PASS',timelines,'actual punch-chain knockdowns;',ticks,'parallel-state ticks;',rasters,'native scene/snapshot checks; minimum initial visible floor burst',minVisible,'pixels; 120 edge/fractional crops; hard alpha, coalescing, expiry and unchanged jump/land/late thud');
+  console.log('PASS',timelines,'actual punch-chain knockdowns;',ticks,'parallel-state ticks;',rasters,'native scene/snapshot checks; minimum initial visible floor burst',minVisible,'pixels; rounded symmetric caps, both bodies intact, 120 edge/fractional crops; hard alpha, coalescing, expiry and unchanged jump/land/late thud');
 }
 `)(assert,writePNG,output,prefix,previewOnly,oldDust);

@@ -174,16 +174,21 @@ function pxDust(s,e) {
     const cell=new PixelSurface(192,96),t=e.t,heavy=e.kind==='thud',jump=e.kind==='jump';
     const x=96,y=80,u=Math.floor(t/3),spread=(heavy?13:jump?8:10)+u*(heavy?5:3);
     if(heavy&&t<6) {
-      // A body landing throws a broad, grounded fan before it breaks into the
-      // existing dust clusters. The navy edge and pale ridge read on stone;
-      // the center stays behind the fallen body, never over its silhouette.
-      const reach=32+t*2,height=26-t*2;
+      // Broad overlapping billows roll outward and flatten before the existing
+      // debris phase. Paint their shared outline first so internal seams do not
+      // turn the cloud into a row of stones. Both bodies remain in front.
+      const lobes=[[16+t,-12+t*.8,12-t*.5,12-t*.8],
+        [30+t*2,-13+t,13-t*.7,13-t],
+        [44+t*2,-6+t*.3,10-t*.7,6-t*.3]];
       for(const dir of [-1,1]) {
-        const fan=(pts,col)=>cell.poly(pts.map(([a,b])=>[x+dir*a,y+b]),col);
-        fan([[5,0],[12,-8],[18,-height],[29,-height*.45],[37,-height+5],[reach+12,-5],[reach+22,0]],PX_INK);
-        fan([[9,-1],[16,-8],[19,-height+5],[29,-height*.3],[37,-height+9],[reach+11,-3],[reach+16,-1]],'#a99a83');
-        fan([[13,-1],[18,-9],[20,-height+7],[29,-4],[37,-height+10],[reach+9,-2]],'#e6d5b2');
-        fan([[12,0],[23,-3],[reach+14,-2],[reach+18,0]],'#857e73');
+        const puff=(a,b,rx,ry,col)=>cell.ellipse(x+dir*a,y+b,rx,ry,col);
+        puff(30+t*2,-3,25+t,3,PX_INK);
+        for(const [a,b,rx,ry] of lobes)puff(a,b,rx,ry,PX_INK);
+        puff(30+t*2,-3,24+t,2,'#857e73');
+        for(const [a,b,rx,ry] of lobes)puff(a,b,rx-1,ry-1,'#a99a83');
+        for(const [a,b,rx,ry] of lobes)puff(a-1,b-2,rx*.78,ry*.65,'#e6d5b2');
+        // A low shared fold grounds the pale caps without pointed ridges.
+        puff(29+t*2,-3,18+t,2,'#857e73');
       }
     } else for(const dir of [-1,1])for(let n=0;n<(heavy?3:2);n++) {
       const cx=x+dir*(spread+n*7),cy=y-2-Math.min(12,u*2)-n*2;
