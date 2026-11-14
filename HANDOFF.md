@@ -1,24 +1,24 @@
 # Handoff: Ritual Archive: Clash
 
-## Current - version 77, script cache v=80 (2026-11-14)
+## Current - version 78, script cache v=81 (2026-11-14)
 
-All mailbox entries through 15:19 acted on/acknowledged. V76 committed by coordinator as e7c2d79, not pushed. Owner direct check-in repeats independent work/mailbox/report instructions; no design change.
+All mailbox entries through 15:23 acted on/acknowledged. V77 committed by coordinator as ad32119, not pushed. Owner direct check-in repeats independent work/mailbox/report instructions; no design change.
 
-V77 corrects contradictory Escape guidance: selection's controls reference and the in-match help called it Pause even online, where the fight continues. Both now say Move list, with mode-specific pauses match / online match continues guidance. Online's button says Close list (Esc); offline retains Resume (Esc), refreshed on each opening after mode changes. No input, pause behavior, combat, AI, rendering, audio or network changes. Eleven script URLs v=80.
+V78 fixes close-range shadow layering: each actor's shadow previously drew with its body, so slot 2's shadow erased parts of slot 1's soles during movement/crossings and under downed bodies. Both shadows now draw in one ground pass before floor effects and both bodies. Their shape, color and height response remain the same, including hidden recovery bodies and impact-frame suppression. No combat, animation, AI, input, audio or network changes. Eleven script URLs v=81.
 
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/main.js. No add/commit attempt per 01:34/03:00; HEAD/base e7c2d79; never push. Ready for review/commit and owner assessment before publication. No design decision pending.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-world.js, tests/gum-tether.cjs, tests/shadow-layering.cjs (new). The tether composite fixture now includes the separate ground pass; its full suite passes. No add/commit attempt per 01:34/03:00; HEAD/base ad32119; never push. Ready for review/commit and owner assessment before publication. No design decision pending.
 
 ## Verification and limits
 
-- One-off baseline check reproduced the false online Pause promise before editing. Actual-script runtime passes its menus, selection, 200 move-list key events in five modes, offline freeze, neutral guest controls/live snapshots, host continuation, fresh resume input, results and online callback regressions. Eight added in-memory selection/open/close/mode-switch checks pass the actual generated reference/help/button labels across all five modes. No new test file for this text-only change.
-- Feel/input (eleven simulation groups plus handlers), HUD learning (2,115 layout/alpha/snapshot states, 90 actual art inputs and 60 Domain uses/resets), source syntax, eleven matching cache URLs and diff whitespace checks pass.
-- Exported v77-controls-guidance.html in the codex mailbox: actual generated selection references and open-list content for all five modes, using current CSS. It is a review artifact, not a screenshot. Runtime/title/selection/attract rasters also exported; inspected v77-runtime-frame.png, whose fight rendering is unchanged.
-- Retried CUA inventory: browser access host unavailable; no browser surface. Changed DOM wording/layout has not been visually checked. No human play/listening, native focus/activation, motion/FPS, keyboard rollover or real WebRTC/two-computer check. Unchanged broad combat/art/audio/performance suites not repeated.
+- New shadow-layering regression fails on committed v77: 24,627 body-pixel overpaints across 1,488 frames. V78 passes with zero across the same 166,848 samples, 1,380 parallel-state movement/contact ticks, actual jump crossings/launch/knockdown/KO, all builds/mirrors/stages, enlarged bodies, recovery blink, snapshots and freeze-held poses.
+- Footwork, airborne/dust, hook grounding, contacts, world, status effects, gum tether, round results, damage readability/stacks, feel/input and actual-script runtime/menu/selection/results/online regressions pass. Source syntax, eleven matching cache URLs and diff whitespace checks pass.
+- Exported 28 before/28 after full native 640x360 scenes in the codex mailbox. Inspected before/after observatory close-walk and downed-Greta compositions at 1x: the nearby shadow no longer cuts the soles. Runtime/title/selection/attract rasters also exported; runtime frame is byte-identical to v77 (matching SHA256). These are memory-raster composites, not browser screenshots or motion.
+- No browser retry after v77's unavailable access host. No human play/listening, native layout/focus/activation, motion/FPS, keyboard rollover or real WebRTC/two-computer check. Unchanged broad full-match/art/audio/performance suites not repeated.
 - Prior regression evidence and detailed previews remain in dated FROM_CODEX.md entries. Last full-match smoke: 225 ordered matchups/1,169,896 ticks. Nobody has listened to validate synthesized sound. Coordinator browser reviews covered title/selection through v37, not fights/results. Neither scripts nor screenshots count as owner play.
 
 ## Next priorities
 
-Owner first-minute offline readability/feel/listening notes take priority. Retry native browser fight/move-list/results review when the surface works; remaining broad visual refinements follow. Watch identity and third-punch soles are addressed. No speculative balance or audio retuning. Known balance question already passed to coordinator: late run/vertical jump cannot escape the locked diving Maximum, while swap escapes and guard reduces damage; leave its rule unchanged.
+Owner first-minute offline readability/feel/listening notes take priority. Retry native browser fight/move-list/results review when the surface works; remaining visible arena/motion faults follow. Close-range shadow layering, Watch identity and third-punch soles are addressed. No speculative balance or audio retuning. Known balance question already passed to coordinator: late run/vertical jump cannot escape the locked diving Maximum, while swap escapes and guard reduces damage; leave its rule unchanged.
 
 ## Code and run
 

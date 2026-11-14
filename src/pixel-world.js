@@ -323,9 +323,12 @@ function pxVoiceCharge(s,S,f) {
   cell.line([fx+6,y-9],[fx-1,y],light,2);
   s.blit(cell,Math.round(f.x/2)-(f.face<0?127-ox:ox),Math.round(f.y/2)-oy,1,f.face<0);
 }
+function pxFighterShadow(s,f) {
+  const scale=f.big>0?1.3:1;
+  s.ellipse(Math.round(f.x/2),307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
+}
 function pxPaintFighter(s,S,f,impact) {
   const x=Math.round(f.x/2),y=Math.round(f.y/2),scale=f.big>0?1.3:1,alt=f.i===1&&S.f[0].ch===f.ch;
-  if(!impact)s.ellipse(x,307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
   if(f.inv>0 && S.t%4<2)return;
   if(f.zone>0&&!impact)pxStatusEffect(s,S,f,'zone');
   const flash=impact ? impact.kind==='black' ? f.i===impact.a?'#f8edce':'#ed5266' : PX_INK : S.t-f.hurtT<4 ? PX_LIGHT : '';
@@ -946,6 +949,9 @@ function pxWorldSurface(S,F=FX) {
   pxDomain(s,S);
   const impact=F.impact&&F.impact.t<F.impact.sil?F.impact:null;
   if(impact)s.rect(0,0,640,360,impact.kind==='black'?'#111623':'#f8edce');
+  // Ground silhouettes belong below both bodies and floor effects. Painting a
+  // shadow with each actor erased the first actor's boots at close range.
+  if(!impact)for(const f of S.f)pxFighterShadow(s,f);
   for(const z of S.zones)if(z.k!=='beam')pxZone(s,S,z);
   for(const e of S.ents)pxSummon(s,e,S);
   for(const e of F.dust||[])pxDust(s,e);

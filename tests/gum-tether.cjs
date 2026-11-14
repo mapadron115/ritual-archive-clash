@@ -75,10 +75,12 @@ if(!baseline){
     const C=JSON.parse(JSON.stringify(S));C.f[0].x=640;C.f[1].x=640+dx;C.f[1].y+=dy;
     const a=layer(C);assert(count(a)>80,'missing close/cross/air tether');rasters++;
   }
-  // World order must equal painting the tether followed by the fighters.
+  // Ground shadows precede the tether; the tether stays behind both bodies.
   for(const p of previews.filter(p=>p.S.f.some(f=>f.gum>0))){
     const C=JSON.parse(JSON.stringify(p.S));C.proj=[];C.zones=[];C.ents=[];
-    const expected=new PixelSurface(640,360);expected.data.set(pxBackdrop(Math.floor(C.t/8),C.stage).data);pxDomain(expected,C);pxGumTether(expected,C);
+    const expected=new PixelSurface(640,360);expected.data.set(pxBackdrop(Math.floor(C.t/8),C.stage).data);pxDomain(expected,C);
+    if(typeof pxFighterShadow==='function')for(const f of C.f)pxFighterShadow(expected,f);
+    pxGumTether(expected,C);
     for(const f of C.f)pxPaintFighter(expected,C,f,null);
     assert.deepEqual(pxWorldSurface(C,{}).data,expected.data,'tether paints over fighter');composites++;
     // Count visible pale rose strand material in the real world composite.
