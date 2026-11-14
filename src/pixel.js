@@ -137,6 +137,10 @@ const PX_POSES = {
   hooksettle: {h:[1,-77],s:[-3,-62],hip:[-5,-34],a:[[22,-49],[17,-68]],b:[[-17,-48],[-1,-59]],l:[[16,-18],[26,0]],r:[[-22,-19],[-30,0]]},
   kickload: {h:[-12,-82],s:[-13,-66],hip:[-5,-38],a:[[5,-52],[17,-65]],b:[[-28,-53],[-29,-66]],l:[[23,-51],[19,-30]],r:[[-12,-19],[-16,0]]},
   kickre: {h:[-14,-81],s:[-15,-65],hip:[-4,-37],a:[[4,-52],[17,-63]],b:[[-30,-52],[-27,-66]],l:[[23,-38],[34,-25]],r:[[-13,-19],[-18,0]]},
+  // Ground kick retracts the shin before lowering it; the rear support sole stays planted.
+  kickfold: {h:[-11,-80],s:[-12,-64],hip:[-4,-36],a:[[7,-51],[19,-64]],b:[[-27,-51],[-23,-65]],l:[[24,-47],[7,-29]],r:[[-13,-19],[-18,0]]},
+  kicklower: {h:[-6,-79],s:[-7,-63],hip:[-4,-35],a:[[12,-49],[23,-63]],b:[[-23,-49],[-16,-62]],l:[[20,-29],[24,-10]],r:[[-13,-19],[-18,0]]},
+  kicksettle: {h:[1,-78],s:[-2,-62],hip:[-4,-34],a:[[16,-49],[24,-63]],b:[[-18,-48],[-6,-60]],l:[[15,-18],[24,0]],r:[[-14,-19],[-18,0]]},
   kickplant: {h:[-4,-79],s:[-5,-63],hip:[-3,-35],a:[[13,-48],[23,-61]],b:[[-21,-49],[-18,-61]],l:[[19,-20],[26,-2]],r:[[-18,-19],[-25,0]]},
   jpunchre: {h:[14,-73],tilt:.16,s:[8,-57],hip:[-3,-30],a:[[28,-45],[35,-35]],b:[[-15,-46],[-2,-62]],l:[[24,-47],[34,-26]],r:[[-15,-38],[-30,-23]]},
   jkickre: {h:[-18,-76],s:[-20,-60],hip:[-4,-33],a:[[1,-46],[16,-60]],b:[[-38,-49],[-42,-65]],l:[[29,-51],[15,-35]],r:[[-19,-29],[-36,-16]]},
@@ -305,8 +309,8 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   }
   const hip=p.hip, shoulder=p.s, head=p.h;
   // Far limbs are darker; near limbs get one narrow upper-left highlight cluster.
-  // Keep the thick calf contour inside the boot instead of below the walking sole.
-  const ankle=foot=>[foot[0],foot[1]-(/^(walk|back)[0-7]$/.test(pose)||pose.startsWith('win')?Math.ceil((9*(kit.bulk||1)+2)/2):4)];
+  // Keep the thick calf contour inside the boot instead of below a planted sole.
+  const ankle=foot=>[foot[0],foot[1]-(/^(walk|back)[0-7]$/.test(pose)||pose.startsWith('win')||pose.startsWith('kick')?Math.ceil((9*(kit.bulk||1)+2)/2):4)];
   limb([hip[0]-4,hip[1]],p.r[0],12,pant,true); limb(p.r[0],ankle(p.r[1]),9,kit.shorts?skin:pant,true); shoe(p.r[1],true);
   if(kit.limbDetail)kneeDetail(p.r[0],true);
   limb([shoulder[0]-w*.65,shoulder[1]+2],p.b[0],9,kit.sl?top:skin,true); limb(p.b[0],p.b[1],7,kit.sl===2?top:skin,true);
@@ -452,6 +456,8 @@ function pxPose(S,f) {
     if(elapsed<contact)return pose in PX_POSES?pose:'cast1';
     // Only the third basic punch gets this three-part return; hook-shaped arts retain their sequence.
     if(f.move==='p3')return elapsed<contact+4?'hookfollow':elapsed<contact+9?'hookre':'hooksettle';
+    // Basic grounded kick only; keep art and airborne kick sequences intact.
+    if(f.move==='k')return elapsed<contact+4?'kickre':elapsed<contact+8?'kickfold':elapsed<contact+12?'kicklower':'kicksettle';
     const settle=m.ac ? m.ac+Math.ceil(m.re/2) : Math.ceil(m.re*.65);
     return sequence[elapsed<settle?2:3];
   }

@@ -2,6 +2,8 @@
 
 Owner choice passed on by coordinator 2026-11-14: pixel art for the whole game.
 
+Ground kick (v31): after the existing extension, retract for four recovery ticks, fold the shin behind the raised knee for four, lower the boot for four, then plant it and rebuild guard for four. Three new cells bring each build/costume to 128. The rear sole stays at the same point through recovery; calf contours fit inside the boots for every build. Only the basic grounded kick selects the new return. Preserve its ten startup, four active and sixteen recovery ticks; air kicks and arts keep their sequences. No new simulation state or combat changes.
+
 - Source canvas: 640 × 360 for the completed arena/HUD, enlarged with nearest-neighbor sampling. A source pixel represents two simulation units. Final page uses `image-rendering: pixelated`.
 - Fighter cells: 144 × 128 source pixels, grounded root (64, 120); standing heights span roughly 85–115 source pixels depending on stance and build. All assets use integer rasterization with fully opaque color clusters and transparent background, never a reduction of the cartoon renderer.
 - Silhouettes: dark navy one-pixel outline, thicker by overlap in occluded joints; shadowed far limbs; three colors per fabric/skin/hair, one clear technique accent. Lighting comes from the upper left. Avoid scattered lone highlight pixels, gradients, blur and smoothing.

@@ -22,6 +22,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Script checks
 
+`node tests/kick-animation.cjs` checks actual grounded kick whiffs/hits/blocks in both slots/facings, distinct fold/lower/plant silhouettes, grounded support soles, exact recovery boundaries, freezes, hit/KO interruptions, snapshots and unchanged outcomes. Add an output directory for labeled phase, silhouette and actual-input scene previews.
+
 `node tests/air-facing.cjs` checks the actual world painter for all fifteen builds, both costumes and both facings: complete sprite reflection about the simulation root and forward fist/boot pixels at airborne contact. Add an output directory for an explicitly labeled Greta direction sheet.
 
 `node tests/punch-chain.cjs` checks actual two- and three-press punch chains, whiffs/hits/blocks, both slots/facings, distinct first/second punch loads and third-punch follow-through/return silhouettes, exact phase boundaries, freeze holds, hit/KO interruptions, snapshots and unchanged outcomes. Add an output directory for labeled phase, silhouette and actual-input scene previews.
