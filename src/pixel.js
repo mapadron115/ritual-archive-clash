@@ -124,7 +124,7 @@ const PX_BUILDS = [
   {height:.91,width:8,bulk:.84},{height:1.08,width:16,bulk:1.4,belly:17},{height:1.06,width:8,bulk:.82},
   {height:.96,width:10,bulk:.94},{height:.94,width:9,bulk:.94},{height:1.07,width:10,bulk:.98},
   {height:1.02,width:12,bulk:1.15},{height:.99,width:11,bulk:1.15},{height:1,width:8,bulk:.82},
-  {height:.9,width:10,bulk:1.08},{height:1.09,width:9,bulk:.88},{height:1.02,width:17,bulk:1.5,belly:20},
+  {height:.9,width:10,bulk:1.08},{height:1.09,width:9,bulk:.88},{height:1.02,width:17,bulk:1.5,belly:20,sl:1,limbDetail:true},
 ];
 PX_KITS.forEach((kit,n)=>Object.assign(kit,PX_BUILDS[n]));
 function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
@@ -156,12 +156,33 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
     poly([[x-5,y-6],[x+3,y-6],[x+5,y-3],[x+10,y-2],[x+10,y],[x-6,y]],far?pant[0]:pant[1]);
     rect(x-5,y-1,15,1,far?top[0]:hair[0]); rect(x+4,y-3,4,1,far?pant[1]:pant[2]);
   }
+  // Greta's larger forearms need a proportionate fist and a distinct wrist break.
+  function heavyHand(elbow,hand,far) {
+    const dx=hand[0]-elbow[0],dy=hand[1]-elbow[1],len=Math.hypot(dx,dy)||1,u=[dx/len,dy/len],v=[-u[1],u[0]];
+    const band=(distance,half,col,thickness)=>{
+      const c=[hand[0]-u[0]*distance,hand[1]-u[1]*distance];
+      line([c[0]-v[0]*half,c[1]-v[1]*half],[c[0]+v[0]*half,c[1]+v[1]*half],col,thickness);
+    };
+    band(9,6,PX_INK,5);band(9,5,kit.inner,3);band(10,5,far?top[0]:top[2]);
+    oval(hand,8,6,PX_INK);oval(hand,7,5,skin[far?0:1]);
+    line([hand[0]-4,hand[1]-2],[hand[0]+3,hand[1]-2],skin[far?1:2],2);
+    line([hand[0]-3,hand[1]+1],[hand[0]+2,hand[1]+1],skin[0]);
+    line([hand[0]-5,hand[1]+1],[hand[0]-3,hand[1]+3],PX_INK);
+    // Sleeve hem at the elbow separates the fabric from the bare forearm.
+    line([elbow[0]-v[0]*6,elbow[1]-v[1]*6],[elbow[0]+v[0]*6,elbow[1]+v[1]*6],far?top[1]:top[2],2);
+  }
+  function kneeDetail(knee,far) {
+    poly([[knee[0]-5,knee[1]-3],[knee[0]+4,knee[1]-2],[knee[0]+5,knee[1]+2],[knee[0]-3,knee[1]+3]],far?pant[1]:pant[2],null);
+    line([knee[0]-4,knee[1]+3],[knee[0]+3,knee[1]+2],pant[0]);
+  }
   const hip=p.hip, shoulder=p.s, head=p.h;
   // Far limbs are darker; near limbs get one narrow upper-left highlight cluster.
   const ankle=foot=>[foot[0],foot[1]-4];
   limb([hip[0]-4,hip[1]],p.r[0],12,pant,true); limb(p.r[0],ankle(p.r[1]),9,kit.shorts?skin:pant,true); shoe(p.r[1],true);
+  if(kit.limbDetail)kneeDetail(p.r[0],true);
   limb([shoulder[0]-w*.65,shoulder[1]+2],p.b[0],9,kit.sl?top:skin,true); limb(p.b[0],p.b[1],7,kit.sl===2?top:skin,true);
   oval(p.b[1],4,4,PX_INK); oval(p.b[1],3,3,skin[0]);
+  if(kit.limbDetail)heavyHand(p.b[0],p.b[1],true);
   // Hair behind the neck, with a stepped wind-blown shape instead of fine single-pixel noise.
   if(['sweep','braid','tail','long'].includes(kit.hair)) {
     poly([[head[0]-10,head[1]-8],[head[0]+2,head[1]-10],[head[0]+6,head[1]+5],[head[0]-1,head[1]+21],[head[0]-12,head[1]+17],[head[0]-8,head[1]+5]],hair[0]);
@@ -169,6 +190,7 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   }
   if(kit.fit==='hood') {oval([head[0]-2,head[1]+5],14,19,PX_INK);oval([head[0]-2,head[1]+5],12,17,top[0]);line([head[0]-11,head[1]-5],[head[0]-12,head[1]+14],top[2],2);}
   limb([hip[0]+5,hip[1]],p.l[0],12,pant); limb(p.l[0],ankle(p.l[1]),9,kit.shorts?skin:pant); shoe(p.l[1],false);
+  if(kit.limbDetail)kneeDetail(p.l[0],false);
   // Torso: fitted long coat, inset warm ivory front, offset cyan clasp.
   const belly=kit.belly||w,mid=(shoulder[1]+hip[1])/2;
   poly([[shoulder[0]-w,shoulder[1]],[shoulder[0]+w,shoulder[1]-1],[hip[0]+belly,mid],[hip[0]+w,hip[1]+4],[hip[0]-w,hip[1]+4],[hip[0]-belly,mid]],top[1]);
@@ -225,6 +247,7 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   const hand=p.a[1]; oval(hand,5,4,PX_INK); oval(hand,4,3,skin[1]); rect(hand[0]-2,hand[1]-2,5,1,skin[2]);
   line([hand[0]-5,hand[1]+2],[hand[0]-2,hand[1]+4],ac,2);
   if(kit.wraps || kit.brace) for(let n=0;n<3;n++) line([hand[0]-7+n*2,hand[1]+1],[hand[0]-5+n*2,hand[1]+4],kit.wraps?kit.inner:ac);
+  if(kit.limbDetail)heavyHand(p.a[0],hand,false);
   if(kit.gauntlet) {poly([[hand[0]-8,hand[1]-5],[hand[0]+2,hand[1]-6],[hand[0]+5,hand[1]],[hand[0]+1,hand[1]+6],[hand[0]-8,hand[1]+5]],top[2]);rect(hand[0]-6,hand[1]-3,6,2,ac);line([hand[0]-6,hand[1]+3],[hand[0],hand[1]+3],top[0]);}
   if(kit.hammer) {line([hand[0]+1,hand[1]+8],[hand[0]+1,hand[1]-14],PX_INK,4);line([hand[0]+1,hand[1]+7],[hand[0]+1,hand[1]-12],kit.inner,2);rect(hand[0]-5,hand[1]-18,14,7,PX_INK);rect(hand[0]-4,hand[1]-17,12,4,hair[0]);rect(hand[0]-4,hand[1]-17,12,1,hair[2]);}
   if (flash) {

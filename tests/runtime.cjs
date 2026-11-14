@@ -48,4 +48,4 @@ frame(68);assert.equal(G.S.f[0].hp,1000);
 console.log('PASS real script order, title, 15-fighter selection, start, input-to-frame, pause/resume, rematch cleanup and composite canvas presentation');
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
-if(process.argv[2])writePNG(path.join(process.argv[2],'v7-runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
+if(process.argv[2])writePNG(path.join(process.argv[2],'v8-runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});

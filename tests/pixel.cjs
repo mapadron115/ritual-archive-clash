@@ -37,10 +37,17 @@ CH.forEach((c,n)=>{
   pxText(roster,c.name,x+16,y+263,'#f3e3ba',2);
   pxText(roster,c.tech,x+16,y+283,PX_KITS[n].accent,1);
 });
+globalThis.greta=new PixelSurface(1152,620);greta.rect(0,0,1152,620,'#202c40');
+pxText(greta,'GRETA HOLM / SLEEVES, WRISTS, FISTS AND KNEES',20,16,PX_LIGHT,2);
+for(let alt=0;alt<2;alt++)['idle','guard','punch','kick'].forEach((pose,n)=>{
+  const x=n*288,y=40+alt*285;greta.blit(pxSprite(14,pose,!!alt),x,y,2);
+  pxText(greta,(alt?'MIRROR / ':'MAIN / ')+pose,x+16,y+265,PX_LIGHT,2);
+});
 `,ctx);
 const folder=process.argv[2];
 if(folder) {
-  if(process.argv.includes('--roster')) writePNG(path.join(folder,'v3-roster.png'),ctx.roster);
+  if(process.argv.includes('--greta')) writePNG(path.join(folder,'v8-greta-details.png'),ctx.greta);
+  else if(process.argv.includes('--roster')) writePNG(path.join(folder,'v3-roster.png'),ctx.roster);
   else {writePNG(path.join(folder,'v2-isolde-poses.png'),ctx.sheet);writePNG(path.join(folder,'v2-isolde-mirror.png'),ctx.mirror);}
   console.log('Preview PNGs written to',folder);
 }
