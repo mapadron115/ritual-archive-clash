@@ -511,6 +511,55 @@ function pxWebVolley(s,S) {
   }
   s.blit(cell,Math.round(o.x/2)-(face<0?255-ox:ox),Math.round((o.y-70)/2)-oy,1,face<0);
 }
+// The rite's nails arrive on its existing hits; the large hammer prepares the
+// final blow above the face lane. These are ritual images, not collision shapes.
+function pxEffigyRite(s,S) {
+  const d=S.dom;
+  if(!d||d.k!=='effigy'||S.phase!=='fight'||d.t<1||d.t>=66)return;
+  const f=S.f[d.o],o=S.f[1-d.o];
+  if(f.st==='ko'||o.st==='ko')return;
+  const cell=new PixelSurface(224,224),ox=112,oy=178,t=d.t;
+  const point=(x,y)=>[ox+x,oy+y];
+  const poly=(pts,c)=>cell.poly(pts.map(([x,y])=>point(x,y)),c,PX_INK);
+  const line=(a,b,c,w=1)=>cell.line(point(...a),point(...b),c,w);
+  const starts=[1,14,28],hits=[10,24,38],spots=[[-58,-26],[58,-26],[0,-92]];
+  for(let n=0;n<3;n++) {
+    if(t<starts[n])continue;
+    const seated=t>=hits[n],phase=seated?2:Math.min(2,Math.floor((t-starts[n])/(hits[n]-starts[n])*3));
+    const x=spots[n][0],y=spots[n][1]-(seated?0:(2-phase)*8);
+    const shade=['#7a5944','#9f764c','#b58a58'][phase],body=['#cf9f68','#e6b77a','#ffe1a1'][phase];
+    // A wide square head and bevelled shank keep the nail identifiable at 1x.
+    poly([[x-4,y-8],[x+4,y-8],[x+4,y+11],[x,y+19],[x-4,y+11]],shade);
+    line([x-1,y-6],[x-1,y+10],body,3);
+    poly([[x-11,y-13],[x+11,y-13],[x+11,y-5],[x-11,y-5]],body);
+    line([x-8,y-11],[x+8,y-11],'#ffeac0',2);
+    line([x-8,y-6],[x+8,y-6],shade,2);
+    const impact=t-hits[n];
+    if(impact>=0&&impact<4)for(const side of [-1,1]) {
+      line([x+side*14,y-14],[x+side*(21+impact*2),y-19],PX_INK,4);
+      line([x+side*14,y-14],[x+side*(21+impact*2),y-19],'#ffeac0',2);
+    }
+  }
+  if(t>=42) {
+    const strike=t>=60,phase=strike?2:Math.min(2,Math.floor((t-42)/6));
+    const x=strike?0:30-phase*10,y=strike?-116-Math.floor((t-60)/2)*5:-153+phase*7;
+    const shade=['#725044','#a2724e','#c59160'][phase],body=['#cf9f68','#e6b77a','#ffe1a1'][phase];
+    // Long diagonal grip and broad bevelled head; the drop meets the top nail.
+    line([x+12,y],[x+62,y+24],PX_INK,10);line([x+12,y],[x+62,y+24],shade,7);
+    line([x+17,y-1],[x+59,y+19],body,2);
+    poly([[x-27,y-13],[x+24,y-13],[x+29,y-8],[x+29,y+8],[x+23,y+13],[x-27,y+13],[x-31,y+8],[x-31,y-8]],shade);
+    poly([[x-25,y-10],[x+21,y-10],[x+24,y-6],[x+24,y+5],[x-25,y+5]],body);
+    line([x-23,y-8],[x+20,y-8],'#ffeac0',3);
+    line([x-18,y+7],[x+18,y+7],shade,3);
+    if(strike)for(const side of [-1,1]) {
+      const spread=20+(t-60)*5;
+      line([side*15,-102],[side*spread,-94],PX_INK,5);
+      line([side*15,-102],[side*spread,-94],'#ffeac0',3);
+    }
+  }
+  const flip=d.o===1;
+  s.blit(cell,Math.round(o.x/2)-(flip?cell.w-1-ox:ox),Math.round((o.y-70)/2)-oy,1,flip);
+}
 // Finite authored cells, mirrored after rasterization. Active clocks and velocity
 // come from the existing snapshot; rendering never adds animation state to it.
 const PX_SUMMONS=new Map();
@@ -744,6 +793,7 @@ function pxWorldSurface(S,F=FX) {
   for(const e of F.dust||[])pxDust(s,e);
   for(const p of F.puffs||[]) {const r=p.r/2*(1-p.t/p.life*.5);s.ellipse(p.x/2,p.y/2,r,r*.55,'#b9ad9c');s.ellipse(p.x/2-2,p.y/2-2,r*.7,r*.4,'#d1c2a7');}
   pxWebVolley(s,S);
+  pxEffigyRite(s,S);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const f of S.f)if(f.gum>0){const o=S.f[1-f.i];s.line([o.x/2,o.y/2-40],[(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],'#d78bb7',2);s.line([(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],[f.x/2,f.y/2-40],'#d78bb7',2);}
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
