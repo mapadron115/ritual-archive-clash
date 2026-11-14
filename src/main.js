@@ -2,7 +2,7 @@
 // Menus, input, the main loop, sound and online play.
 const $ = id => document.getElementById(id);
 const cv = $('cv'), ctx = cv.getContext('2d');
-const G = { S: null, mode: 'ai', pick: [0, 1], paused: false, running: false, keys: {}, acc: 0, last: 0, netEv: [], remoteIn: 0, guestPick: -1, sendT: 0, slow: 0 };
+const G = { S: null, mode: 'ai', pick: [0, 1], paused: false, running: false, keys: {}, taps: {}, acc: 0, last: 0, netEv: [], remoteIn: 0, remoteTap: 0, guestPick: -1, sendT: 0, slow: 0 };
 
 const BIND = {
   solo: { L: ['KeyA'], R: ['KeyD'], U: ['KeyW'], G: ['KeyS'], P: ['KeyJ'], K: ['KeyK'], A1: ['KeyU'], A2: ['KeyI'], A3: ['KeyO'], DOM: ['KeyL'],
@@ -12,15 +12,25 @@ const BIND = {
   p2: { L: ['ArrowLeft'], R: ['ArrowRight'], U: ['ArrowUp'], G: ['ArrowDown'], P: ['Comma', 'Numpad1'], K: ['Period', 'Numpad2'], A1: ['KeyI', 'Numpad4'], A2: ['KeyO', 'Numpad5'], A3: ['KeyP', 'Numpad6'], DOM: ['Slash', 'Numpad3'],
     lab: { move: '← / →', U: '↑', G: '↓', P: ',', K: '.', A1: 'I', A2: 'O', A3: 'P', DOM: '/' } },
 };
-function readKeys(b) { let m = 0; for (const k in BTN) for (const code of b[k]) if (G.keys[code]) m |= BTN[k]; return m; }
+function clearInput() { G.keys = {}; G.taps = {}; }
+function readKeys(b) {
+  let held = 0, pressed = 0;
+  for (const k in BTN) for (const code of b[k]) {
+    if (G.keys[code]) held |= BTN[k];
+    if (G.taps[code]) { pressed |= BTN[k]; delete G.taps[code]; }
+  }
+  return held | (pressed << INPUT_SHIFT);
+}
+function readRemote() { const b = G.remoteIn | (G.remoteTap << INPUT_SHIFT); G.remoteTap = 0; return b; }
 addEventListener('keydown', e => {
-  if (e.code === 'Escape' && G.running) { togglePause(); return; }
-  if (e.code === 'KeyM') { AUDIO.mute = !AUDIO.mute; return; }
+  if (e.code === 'Escape' && G.running) { if (!e.repeat) togglePause(); return; }
+  if (e.code === 'KeyM') { if (!e.repeat) AUDIO.mute = !AUDIO.mute; return; }
+  if (!e.repeat && !G.keys[e.code] && G.running && !G.paused) G.taps[e.code] = true;
   G.keys[e.code] = true; if (G.running && !e.ctrlKey && !e.metaKey && e.code !== 'F5' && e.code !== 'F12') e.preventDefault();
   initAudio();
 });
 addEventListener('keyup', e => { G.keys[e.code] = false; });
-addEventListener('blur', () => { G.keys = {}; });
+addEventListener('blur', clearInput);
 
 // ---------- sound (all synthesized)
 const AUDIO = { ctx: null, mute: false };
@@ -97,18 +107,19 @@ function buildSelect() {
 }
 function pickMode(m) { G.mode = m; show('select'); buildSelect(); }
 function startFight() {
-  G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); POSE_CACHE[0] = POSE_CACHE[1] = null; FX.parts = []; FX.banner = null; FX.impact = null; FX.bf = null;
-  AI_MEM[0] = {}; AI_MEM[1] = {}; FX.stars = []; FX.puffs = []; FX.nums = []; FX.lines = []; FX.words = []; FX.silent = false; G.paused = false; G.running = true; G.over = false; G.acc = 0; G.remoteIn = 0;
+  G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); FX.parts = []; FX.banner = null; FX.impact = null; FX.bf = null;
+  AI_MEM[0] = {}; AI_MEM[1] = {}; FX.rings = []; FX.shake = 0; FX.flash = 0; FX.nope = [0, 0]; FX.stars = []; FX.puffs = []; FX.nums = []; FX.lines = []; FX.words = []; FX.silent = false; G.paused = false; G.running = true; G.over = false; G.acc = 0; G.remoteIn = 0; G.remoteTap = 0; G.lastSent = -1; clearInput();
   if (G.mode === 'host') netSend({ t: 'start', p: G.pick });
   show('none'); initAudio();
 }
 function togglePause() {
   if (G.over) return;
   G.paused = !G.paused;
+  clearInput();
   if (G.paused) { const lab = labels(); $('pauseList').innerHTML = (G.mode === 'local' ? '' : basics(BIND.solo.lab)) + moveList(G.S.f[0].ch, lab[0]) + moveList(G.S.f[1].ch, lab[1]) + (G.mode === 'local' ? '<b>Player 1</b>' + basics(BIND.p1.lab) + '<b>Player 2</b>' + basics(BIND.p2.lab) : ''); show('pause'); }
   else show('none');
 }
-function toMenu(fromNet) { G.running = false; G.paused = false; if (!fromNet && (G.mode === 'host' || G.mode === 'guest')) netClose(); show('title'); }
+function toMenu(fromNet) { G.running = false; G.paused = false; clearInput(); if (!fromNet && (G.mode === 'host' || G.mode === 'guest')) netClose(); show('title'); }
 function toSelect() { G.running = false; G.paused = false; if (G.mode === 'host') netSend({ t: 'select' }); show('select'); buildSelect(); }
 
 // ---------- online (WebRTC through PeerJS; the host runs the fight, the guest sends buttons)
@@ -126,7 +137,7 @@ function netWire(conn, mode) {
   conn.on('open', () => { G.mode = mode; G.pick = [0, 1]; netSend({ t: 'pick', ch: G.pick[mode === 'guest' ? 1 : 0] }); show('select'); buildSelect(); });
   conn.on('data', m => {
     if (m.t === 'pick') { G.pick[mode === 'guest' ? 0 : 1] = m.ch; if (!G.running) buildSelect(); }
-    else if (m.t === 'in') G.remoteIn = m.b;
+    else if (m.t === 'in') { G.remoteIn = m.b & INPUT_MASK; G.remoteTap |= m.b >>> INPUT_SHIFT; }
     else if (m.t === 'start') { G.pick = m.p; startFight(); }
     else if (m.t === 'select') toSelect();
     else if (m.t === 's' && G.mode === 'guest') { G.S = m.s; for (const e of m.e) fxEvent(G.S, e); if (G.S.phase === 'over' && !G.over) endMatch(); if (G.S.phase !== 'over' && G.over) { G.over = false; show('none'); } }
@@ -167,7 +178,7 @@ function frame(now) {
   // If this computer cannot keep up (about 45 frames a second or fewer for three seconds), drop the costliest lighting for the rest of the visit.
   if (!FX.lite && document.visibilityState === 'visible') { if (dt > 22 && dt < 70) { if (++G.slow > 180) FX.lite = true; } else if (dt <= 18) G.slow = Math.max(0, (G.slow || 0) - 2); }
   if (!G.running || !G.S) {   // a computer match plays behind the menus
-    if (!G.demo || G.demo.phase === 'over') { const a = Math.random() * 5 | 0; G.demo = newMatch(a, (a + 1 + (Math.random() * 4 | 0)) % 5, (Math.random() * 1e9) | 0); AI_MEM[0] = {}; AI_MEM[1] = {}; POSE_CACHE[0] = POSE_CACHE[1] = null; }
+    if (!G.demo || G.demo.phase === 'over') { const a = Math.random() * CH.length | 0; G.demo = newMatch(a, (a + 1 + (Math.random() * (CH.length - 1) | 0)) % CH.length, (Math.random() * 1e9) | 0); AI_MEM[0] = {}; AI_MEM[1] = {}; }
     FX.silent = true; G.acc += dt; let n = 0;
     while (G.acc >= 1000 / TPS && n++ < 3) { G.acc -= 1000 / TPS; step(G.demo, [aiInput(G.demo, 0), aiInput(G.demo, 1)]); for (const e of G.demo.ev) fxEvent(G.demo, e); G.demo.ev.length = 0; fxTick(); }
     if (n > 3) G.acc = 0;
@@ -182,7 +193,7 @@ function frame(now) {
     G.acc += dt; let n = 0;
     while (G.acc >= 1000 / TPS && n++ < 5) {
       G.acc -= 1000 / TPS;
-      const inp = G.mode === 'local' ? [readKeys(BIND.p1), readKeys(BIND.p2)] : G.mode === 'watch' ? [aiInput(S, 0), aiInput(S, 1)] : G.mode === 'host' ? [G.paused ? 0 : readKeys(BIND.solo), G.remoteIn] : [readKeys(BIND.solo), aiInput(S, 1)];
+      const inp = G.mode === 'local' ? [readKeys(BIND.p1), readKeys(BIND.p2)] : G.mode === 'watch' ? [aiInput(S, 0), aiInput(S, 1)] : G.mode === 'host' ? [G.paused ? 0 : readKeys(BIND.solo), readRemote()] : [readKeys(BIND.solo), aiInput(S, 1)];
       step(S, inp);
       for (const e of S.ev) { fxEvent(S, e); if (G.mode === 'host') G.netEv.push(e); }
       S.ev.length = 0; fxTick();

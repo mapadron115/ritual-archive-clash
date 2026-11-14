@@ -1,0 +1,309 @@
+'use strict';
+// Original pixel assets, authored here as integer geometry. No filtered cartoon sprites or external assets.
+const PX_SCALE = 2, PX_W = 144, PX_H = 128, PX_OX = 64, PX_OY = 120;
+const PX_ENABLED = new Set(Array.from({length:15},(_,i)=>i));
+const PX_INK = '#111623', PX_LIGHT = '#fff0ca';
+const PX_RGB = new Map();
+function pxRGB(hex) {
+  if (!PX_RGB.has(hex)) {
+    let color=hex;
+    if(/^#[0-9a-f]{3}$/i.test(color)) color='#'+[...color.slice(1)].map(c=>c+c).join('');
+    const rgb=color.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    const n=parseInt(color.slice(1),16);
+    PX_RGB.set(hex,rgb ? [+rgb[1],+rgb[2],+rgb[3],255] : [n>>16&255,n>>8&255,n&255,255]);
+  }
+  return PX_RGB.get(hex);
+}
+class PixelSurface {
+  constructor(w, h) { this.w = w; this.h = h; this.data = new Uint8ClampedArray(w * h * 4); }
+  dot(x, y, col) {
+    x = Math.round(x); y = Math.round(y);
+    if (x < 0 || y < 0 || x >= this.w || y >= this.h) return;
+    const n = (y * this.w + x) * 4, c = pxRGB(col);
+    for (let k = 0; k < 4; k++) this.data[n + k] = c[k];
+  }
+  rect(x, y, w, h, col) { for (let j = Math.round(y); j < Math.round(y + h); j++) for (let i = Math.round(x); i < Math.round(x + w); i++) this.dot(i, j, col); }
+  ellipse(x, y, rx, ry, col) {
+    for (let j = Math.floor(y - ry); j <= Math.ceil(y + ry); j++) for (let i = Math.floor(x - rx); i <= Math.ceil(x + rx); i++) {
+      if (((i-x)/(rx || 1)) ** 2 + ((j-y)/(ry || 1)) ** 2 <= 1) this.dot(i, j, col);
+    }
+  }
+  line(a, b, col, width = 1) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], n = Math.max(Math.abs(dx), Math.abs(dy), 1);
+    for (let i = 0; i <= n; i++) { const x = a[0] + dx*i/n, y = a[1] + dy*i/n; if (width <= 1) this.dot(x,y,col); else this.ellipse(x,y,width/2,width/2,col); }
+  }
+  poly(points, col, outline) {
+    const minY = Math.floor(Math.min(...points.map(p => p[1]))), maxY = Math.ceil(Math.max(...points.map(p => p[1])));
+    for (let y = minY; y <= maxY; y++) {
+      const xs = [];
+      for (let i = 0; i < points.length; i++) {
+        const a = points[i], b = points[(i+1)%points.length], scan = y + 0.5;
+        if ((a[1] <= scan && b[1] > scan) || (b[1] <= scan && a[1] > scan)) xs.push(a[0] + (scan-a[1])*(b[0]-a[0])/(b[1]-a[1]));
+      }
+      xs.sort((a,b)=>a-b);
+      for (let i = 0; i+1 < xs.length; i += 2) this.rect(Math.ceil(xs[i]), y, Math.ceil(xs[i+1])-Math.ceil(xs[i]), 1, col);
+    }
+    if (outline) for (let i = 0; i < points.length; i++) this.line(points[i], points[(i+1)%points.length], outline);
+  }
+  blit(src, x, y, scale = 1, flip = false) {
+    x=Math.round(x);y=Math.round(y);const w=Math.round(src.w*scale),h=Math.round(src.h*scale);
+    for(let j=Math.max(0,-y);j<Math.min(h,this.h-y);j++) for(let i=Math.max(0,-x);i<Math.min(w,this.w-x);i++) {
+      const sx=Math.min(src.w-1,Math.floor(i/scale)),sy=Math.min(src.h-1,Math.floor(j/scale));
+      const p=(sy*src.w+(flip?src.w-1-sx:sx))*4;if(!src.data[p+3])continue;
+      const q=((y+j)*this.w+x+i)*4;
+      this.data[q]=src.data[p];this.data[q+1]=src.data[p+1];this.data[q+2]=src.data[p+2];this.data[q+3]=src.data[p+3];
+    }
+  }
+}
+
+// Coordinates are in source pixels relative to the grounded root. Every pose was composed for this project.
+// h=head, s=shoulders, hip, a/b=near/far elbow and hand, l/r=near/far knee and foot.
+const PX_POSES = {
+  idle: {h:[1,-78],s:[-2,-63],hip:[-5,-35],a:[[14,-48],[22,-62]],b:[[-17,-48],[-7,-59]],l:[[13,-18],[22,0]],r:[[-20,-19],[-28,0]]},
+  breathe: {h:[1,-77],s:[-2,-62],hip:[-5,-34],a:[[14,-47],[22,-61]],b:[[-17,-47],[-7,-58]],l:[[13,-18],[22,0]],r:[[-20,-19],[-28,0]]},
+  guard: {h:[-4,-76],s:[-6,-61],hip:[-6,-33],a:[[13,-55],[12,-78]],b:[[0,-49],[20,-68]],l:[[12,-17],[24,0]],r:[[-23,-18],[-31,0]]},
+  wind: {h:[-10,-78],s:[-12,-62],hip:[-6,-34],a:[[-25,-51],[-17,-64]],b:[[8,-50],[17,-60]],l:[[11,-18],[20,0]],r:[[-25,-18],[-33,0]]},
+  punch: {h:[15,-77],s:[12,-62],hip:[1,-34],a:[[33,-61],[53,-63]],b:[[-3,-45],[11,-52]],l:[[22,-17],[31,0]],r:[[-21,-19],[-32,0]]},
+  punch2: {h:[17,-76],s:[13,-61],hip:[2,-34],a:[[8,-44],[26,-49]],b:[[36,-60],[55,-61]],l:[[24,-18],[35,0]],r:[[-19,-21],[-29,0]]},
+  hook: {h:[15,-76],s:[10,-60],hip:[1,-33],a:[[28,-57],[35,-83]],b:[[-3,-44],[12,-49]],l:[[27,-18],[35,0]],r:[[-18,-20],[-29,0]]},
+  kickw: {h:[-8,-81],s:[-9,-65],hip:[-6,-36],a:[[9,-51],[18,-63]],b:[[-24,-50],[-29,-62]],l:[[15,-48],[1,-24]],r:[[-12,-18],[-15,0]]},
+  kick: {h:[-18,-79],s:[-19,-63],hip:[-5,-37],a:[[-2,-48],[11,-59]],b:[[-35,-55],[-30,-69]],l:[[22,-43],[52,-48]],r:[[-13,-18],[-19,0]]},
+  jump: {h:[3,-82],s:[0,-66],hip:[-2,-37],a:[[18,-58],[25,-72]],b:[[-20,-57],[-26,-70]],l:[[18,-35],[12,-14]],r:[[-17,-27],[-30,-38]]},
+  jpunch: {h:[13,-80],s:[11,-64],hip:[1,-36],a:[[32,-61],[50,-61]],b:[[-4,-47],[7,-53]],l:[[20,-34],[17,-14]],r:[[-14,-25],[-30,-36]]},
+  jkick: {h:[-13,-82],s:[-14,-65],hip:[-2,-38],a:[[3,-51],[14,-65]],b:[[-29,-58],[-28,-72]],l:[[23,-40],[49,-42]],r:[[-18,-23],[-34,-28]]},
+  hit: {h:[-17,-74],s:[-15,-59],hip:[-2,-32],a:[[1,-44],[15,-52]],b:[[-31,-45],[-37,-57]],l:[[20,-16],[29,0]],r:[[-17,-18],[-26,0]]},
+  stun: {h:[6,-69],s:[0,-57],hip:[-5,-31],a:[[15,-42],[11,-26]],b:[[-19,-43],[-23,-28]],l:[[13,-15],[24,0]],r:[[-21,-15],[-29,0]]},
+  cast1: {h:[2,-79],s:[0,-64],hip:[-4,-35],a:[[19,-54],[37,-65]],b:[[-17,-50],[-7,-60]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
+  clap: {h:[2,-79],s:[0,-64],hip:[-4,-35],a:[[19,-53],[24,-72]],b:[[7,-52],[24,-72]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
+  sign: {h:[2,-79],s:[0,-64],hip:[-4,-35],a:[[16,-51],[11,-66]],b:[[-4,-50],[11,-66]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
+  throw: {h:[14,-77],s:[11,-62],hip:[0,-34],a:[[30,-56],[49,-52]],b:[[-8,-52],[-23,-71]],l:[[22,-17],[31,0]],r:[[-22,-19],[-33,0]]},
+  bow: {h:[1,-79],s:[0,-64],hip:[-4,-35],a:[[20,-65],[39,-65]],b:[[-18,-63],[-8,-76]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
+  win: {h:[0,-82],s:[-2,-66],hip:[-3,-35],a:[[14,-81],[9,-94]],b:[[-20,-50],[-7,-38]],l:[[6,-18],[13,0]],r:[[-14,-19],[-21,0]]},
+  walk0: {h:[3,-80],s:[1,-64],hip:[-2,-35],a:[[13,-48],[21,-52]],b:[[-15,-49],[-18,-60]],l:[[15,-19],[31,0]],r:[[-12,-18],[-29,-3]]},
+  walk1: {h:[3,-78],s:[1,-62],hip:[-2,-33],a:[[12,-46],[20,-54]],b:[[-13,-47],[-12,-59]],l:[[1,-16],[7,0]],r:[[-10,-17],[-14,-8]]},
+  walk2: {h:[3,-80],s:[1,-64],hip:[-2,-35],a:[[1,-48],[-6,-59]],b:[[8,-49],[22,-53]],l:[[-15,-19],[-29,-3]],r:[[12,-18],[31,0]]},
+  walk3: {h:[3,-78],s:[1,-62],hip:[-2,-33],a:[[1,-47],[-5,-59]],b:[[9,-46],[20,-54]],l:[[-10,-17],[-14,-8]],r:[[1,-16],[7,0]]},
+};
+const PX_KITS = [
+  {fit:'coat',sl:2,width:9,hair:'sweep',scarf:true,skin:['#986c75','#d49b98','#f6cbc0'],top:['#17253f','#2c4366','#536b8d'],pants:['#141f32','#29354b','#48546b'],hairCol:['#8294ae','#c3d1de','#edf0dc'],accent:'#75d9e8',inner:'#e8d7be'},
+  {fit:'gi',sl:1,width:11,hair:'crest',wraps:true,skin:['#85544f','#bd8466','#e5b18b'],top:['#491f35','#8b344d','#be5964'],pants:['#241c30','#403043','#6b4651'],hairCol:['#2c1d30','#603044','#9e4b52'],accent:'#ffab83',inner:'#f5d7af'},
+  {fit:'jacket',sl:1,width:12,bulk:1.08,hair:'flat',brace:true,skin:['#563d43','#8b5b47','#bd8861'],top:['#71532c','#bd8d3d','#eed080'],pants:['#1c2d39','#344b58','#647278'],hairCol:['#151e27','#2e3440','#4f5156'],accent:'#f4d988',inner:'#273644'},
+  {fit:'hood',sl:2,width:9,height:.94,hair:'bob',charm:true,skin:['#916b6d','#c39b85','#eac5a0'],top:['#2d284c','#51456f','#827398'],pants:['#1e2338','#37354f','#5d526a'],hairCol:['#121b2a','#2b2d40','#494055'],accent:'#b7a0ed',inner:'#2d284c'},
+  {fit:'vest',sl:0,width:14,bulk:1.13,hair:'buzz',goggles:true,beard:true,gauntlet:true,skin:['#775a4f','#ad8766','#d7b082'],top:['#283c39','#536c53','#8a9b6b'],pants:['#242d30','#424d46','#6a7462'],hairCol:['#625f61','#9d9a8e','#c8c5a8'],accent:'#f6bd70',inner:'#c2b58c'},
+  {fit:'coat',sl:2,width:9,hair:'braid',vials:true,skin:['#a36c7a','#d49aa1','#f0c6bb'],top:['#4a253e','#8e3c55','#c66575'],pants:['#281f36','#483047','#6c485b'],hairCol:['#9f909b','#dad0ce','#f2e9d8'],accent:'#ff8c99',inner:'#382e44'},
+  {fit:'jacket',sl:2,width:10,hair:'part',phones:true,skin:['#9d7372','#c99f86','#efd1a8'],top:['#2d3d38','#586b52','#91a17c'],pants:['#232e32','#3a4949','#68746a'],hairCol:['#8c8474','#c1b596','#eee0b8'],accent:'#b6e69a',inner:'#e9d9b2'},
+  {fit:'apron',sl:1,width:9,height:.95,hair:'bun',hammer:true,skin:['#956a68','#c8967a','#edbf99'],top:['#283b50','#4a6379','#819ca2'],pants:['#262c39','#454655','#6e6671'],hairCol:['#603c39','#a66846','#dba265'],accent:'#eac186',inner:'#ba966d'},
+  {fit:'coat',sl:2,width:11,hair:'tail',clock:true,skin:['#926e57','#c69b70','#ecc390'],top:['#78502f','#bd9046','#e5c578'],pants:['#332f30','#554739','#8b7251'],hairCol:['#2c2930','#554034','#8c6240'],accent:'#fff0b3',inner:'#463a37'},
+  {fit:'robe',sl:2,width:12,hair:'long',brace:true,skin:['#875750','#be8768','#e1b08c'],top:['#23443f','#3f7a60','#86b68a'],pants:['#1e2b38','#344757','#617381'],hairCol:['#182936','#314858','#557181'],accent:'#b5edb9',inner:'#e9dcba'},
+  {fit:'jacket',sl:2,width:11,hair:'hawk',gauntlet:true,goggles:true,skin:['#946b5f','#c89b7a','#edc59c'],top:['#252c39','#474b54','#77736a'],pants:['#222b37','#3c4652','#606c72'],hairCol:['#241f2c','#45323b','#785245'],accent:'#f7aa63',inner:'#d7874e'},
+  {fit:'vest',sl:0,width:9,height:.96,hair:'round',scarf:true,wraps:true,skin:['#aa7d85','#d9b1ad','#f4d8bc'],top:['#807b99','#b8b2ca','#e8dfdf'],pants:['#352b4c','#634365','#95697f'],hairCol:['#293e76','#4b71a4','#8cb1ca'],accent:'#ee97bf',inner:'#635074'},
+  {fit:'vest',sl:0,width:10,height:.96,hair:'topknot',shorts:true,wraps:true,skin:['#62474a','#9b6a4e','#c99469'],top:['#1f4b4c','#377d70','#7db197'],pants:['#202f3b','#3f5660','#6c8185'],hairCol:['#23232e','#4b3834','#795343'],accent:'#afdbc4',inner:'#d8cb9e'},
+  {fit:'robe',sl:2,width:10,hair:'tail',scarf:true,brace:true,skin:['#a07878','#cfa99a','#eaceb0'],top:['#22444f','#3d7580','#7cb7b5'],pants:['#1b2a3e','#334458','#5f6d7c'],hairCol:['#17202c','#2e3944','#4c5861'],accent:'#b6e7e5',inner:'#a6c7bc'},
+  {fit:'vest',sl:0,width:15,bulk:1.2,hair:'bald',beard:true,wraps:true,skin:['#7b6556','#ae9871','#d8c79a'],top:['#334832','#647d44','#a2ab64'],pants:['#352e3b','#5a4650','#8a6e65'],hairCol:['#3a2d35','#624438','#9e7051'],accent:'#d9df87',inner:'#50533a'},
+];
+// Individually composed idle silhouettes. Poses and visible builds never alter sim.js collision geometry.
+const PX_IDLES = [
+  {h:[1,-82],s:[-2,-66],hip:[-5,-36],a:[[17,-56],[31,-58]],b:[[-17,-48],[-8,-43]],l:[[11,-19],[20,0]],r:[[-15,-20],[-20,0]]},
+  {h:[2,-72],s:[-2,-57],hip:[-3,-29],a:[[20,-44],[29,-55]],b:[[-24,-45],[-22,-60]],l:[[22,-16],[36,0]],r:[[-25,-16],[-36,0]]},
+  {h:[-3,-79],s:[-5,-62],hip:[-3,-35],a:[[20,-47],[16,-61]],b:[[-19,-48],[9,-66]],l:[[18,-19],[30,0]],r:[[-21,-20],[-29,0]]},
+  {h:[-5,-80],s:[-6,-64],hip:[-4,-33],a:[[12,-50],[8,-62]],b:[[-12,-50],[10,-63]],l:[[8,-18],[15,0]],r:[[-10,-18],[-16,0]]},
+  {h:[-7,-73],s:[-10,-57],hip:[-7,-30],a:[[12,-43],[28,-42]],b:[[-28,-43],[-26,-32]],l:[[23,-17],[36,0]],r:[[-27,-17],[-37,0]]},
+  {h:[7,-83],s:[4,-67],hip:[-4,-37],a:[[21,-55],[29,-74]],b:[[-17,-50],[-18,-33]],l:[[10,-20],[18,0]],r:[[-12,-20],[-16,0]]},
+  {h:[-5,-80],s:[-7,-64],hip:[-4,-34],a:[[13,-56],[8,-77]],b:[[-14,-48],[4,-43]],l:[[12,-19],[23,0]],r:[[-16,-19],[-24,0]]},
+  {h:[2,-81],s:[0,-65],hip:[-3,-35],a:[[19,-47],[18,-61]],b:[[-18,-48],[-14,-36]],l:[[9,-20],[16,0]],r:[[-17,-19],[-25,0]]},
+  {h:[6,-83],s:[4,-67],hip:[0,-38],a:[[21,-50],[20,-56]],b:[[-14,-51],[3,-63]],l:[[5,-21],[12,0]],r:[[-14,-21],[-21,0]]},
+  {h:[-9,-77],s:[-10,-61],hip:[-4,-33],a:[[13,-52],[20,-72]],b:[[-5,-47],[12,-53]],l:[[18,-18],[29,0]],r:[[-20,-19],[-29,0]]},
+  {h:[15,-73],s:[10,-58],hip:[0,-31],a:[[29,-44],[40,-43]],b:[[-7,-44],[-17,-58]],l:[[22,-17],[36,0]],r:[[-18,-18],[-27,0]]},
+  {h:[-9,-81],s:[-11,-64],hip:[-4,-35],a:[[8,-56],[9,-77]],b:[[-27,-48],[-31,-35]],l:[[12,-20],[22,0]],r:[[-13,-18],[-20,0]]},
+  {h:[1,-77],s:[0,-60],hip:[-3,-31],a:[[18,-44],[21,-47]],b:[[-18,-43],[-14,-52]],l:[[17,-16],[28,0]],r:[[-17,-17],[-26,0]]},
+  {h:[-1,-83],s:[-4,-67],hip:[-5,-37],a:[[14,-49],[23,-38]],b:[[-17,-51],[-1,-63]],l:[[10,-21],[22,0]],r:[[-19,-20],[-29,0]]},
+  {h:[-7,-74],s:[-9,-56],hip:[-5,-27],a:[[17,-39],[27,-25]],b:[[-30,-40],[-33,-28]],l:[[21,-14],[35,0]],r:[[-29,-14],[-39,0]]},
+];
+const PX_BUILDS = [
+  {height:1.04,width:8,bulk:.88},{height:1,width:12,bulk:1.06},{height:1.04,width:13,bulk:1.25},
+  {height:.91,width:8,bulk:.84},{height:1.08,width:16,bulk:1.4,belly:17},{height:1.06,width:8,bulk:.82},
+  {height:.96,width:10,bulk:.94},{height:.94,width:9,bulk:.94},{height:1.07,width:10,bulk:.98},
+  {height:1.02,width:12,bulk:1.15},{height:.99,width:11,bulk:1.15},{height:1,width:8,bulk:.82},
+  {height:.9,width:10,bulk:1.08},{height:1.09,width:9,bulk:.88},{height:1.02,width:17,bulk:1.5,belly:20},
+];
+PX_KITS.forEach((kit,n)=>Object.assign(kit,PX_BUILDS[n]));
+function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
+  const kit = PX_KITS[ch] || PX_KITS[0];
+  let p = PX_POSES[pose] || PX_POSES.idle;
+  if(pose==='idle' || pose==='breathe') {
+    p=PX_IDLES[ch];
+    if(pose==='breathe') {
+      const shift=point=>[point[0],point[1]+1];
+      p={h:shift(p.h),s:shift(p.s),hip:shift(p.hip),a:p.a.map(shift),b:p.b.map(shift),l:[shift(p.l[0]),p.l[1]],r:[shift(p.r[0]),p.r[1]]};
+    }
+  }
+  if(kit.hammer && pose==='win') p=Object.assign({},p,{a:[[14,-70],[9,-82]]});
+  const s = new PixelSurface(PX_W, PX_H), at = v => [PX_OX+v[0], PX_OY+v[1]*(kit.height||1)];
+  const top = alt ? ['#655e7c','#b2a8bf','#e8dfde'] : kit.top;
+  const pant = alt ? ['#3a3658','#655e7e','#9a91ab'] : kit.pants;
+  const skin = kit.skin, hair = kit.hairCol, ac = alt ? '#efb2c7' : kit.accent, w = kit.width;
+  const poly = (pts,col,edge=PX_INK) => s.poly(pts.map(at),col,edge);
+  const line = (a,b,col,width=1) => s.line(at(a),at(b),col,width);
+  const rect = (x,y,r,h,col) => s.rect(PX_OX+x,PX_OY+y*(kit.height||1),r,h*(kit.height||1),col);
+  const oval = (a,rx,ry,col) => s.ellipse(...at(a),rx,ry*(kit.height||1),col);
+  function limb(a,b,width,colors,far=false) {
+    width*=kit.bulk||1;
+    line(a,b,PX_INK,width+2); line(a,b,colors[far?0:1],width);
+    if(!far) line([a[0]-1,a[1]-1],[b[0]-1,b[1]-1],colors[2],Math.max(1,width-5));
+  }
+  function shoe(foot,far) {
+    const [x,y]=foot;
+    poly([[x-5,y-6],[x+3,y-6],[x+5,y-3],[x+10,y-2],[x+10,y],[x-6,y]],far?pant[0]:pant[1]);
+    rect(x-5,y-1,15,1,far?top[0]:hair[0]); rect(x+4,y-3,4,1,far?pant[1]:pant[2]);
+  }
+  const hip=p.hip, shoulder=p.s, head=p.h;
+  // Far limbs are darker; near limbs get one narrow upper-left highlight cluster.
+  const ankle=foot=>[foot[0],foot[1]-4];
+  limb([hip[0]-4,hip[1]],p.r[0],12,pant,true); limb(p.r[0],ankle(p.r[1]),9,kit.shorts?skin:pant,true); shoe(p.r[1],true);
+  limb([shoulder[0]-w*.65,shoulder[1]+2],p.b[0],9,kit.sl?top:skin,true); limb(p.b[0],p.b[1],7,kit.sl===2?top:skin,true);
+  oval(p.b[1],4,4,PX_INK); oval(p.b[1],3,3,skin[0]);
+  // Hair behind the neck, with a stepped wind-blown shape instead of fine single-pixel noise.
+  if(['sweep','braid','tail','long'].includes(kit.hair)) {
+    poly([[head[0]-10,head[1]-8],[head[0]+2,head[1]-10],[head[0]+6,head[1]+5],[head[0]-1,head[1]+21],[head[0]-12,head[1]+17],[head[0]-8,head[1]+5]],hair[0]);
+    if(kit.hair==='braid' || kit.hair==='tail') for(let n=0;n<6;n++) {oval([head[0]-10-n,head[1]+9+n*4],3,3,hair[n%2]);if(n===5)rect(head[0]-18,head[1]+30,5,3,ac);}
+  }
+  if(kit.fit==='hood') {oval([head[0]-2,head[1]+5],14,19,PX_INK);oval([head[0]-2,head[1]+5],12,17,top[0]);line([head[0]-11,head[1]-5],[head[0]-12,head[1]+14],top[2],2);}
+  limb([hip[0]+5,hip[1]],p.l[0],12,pant); limb(p.l[0],ankle(p.l[1]),9,kit.shorts?skin:pant); shoe(p.l[1],false);
+  // Torso: fitted long coat, inset warm ivory front, offset cyan clasp.
+  const belly=kit.belly||w,mid=(shoulder[1]+hip[1])/2;
+  poly([[shoulder[0]-w,shoulder[1]],[shoulder[0]+w,shoulder[1]-1],[hip[0]+belly,mid],[hip[0]+w,hip[1]+4],[hip[0]-w,hip[1]+4],[hip[0]-belly,mid]],top[1]);
+  poly([[shoulder[0]-w+1,shoulder[1]+1],[shoulder[0]-3,shoulder[1]+2],[hip[0]-3,hip[1]+3],[hip[0]-w+1,hip[1]+3]],top[0],null);
+  poly([[shoulder[0]+2,shoulder[1]+2],[shoulder[0]+7,shoulder[1]+1],[hip[0]+4,hip[1]-4],[hip[0],hip[1]-4]],kit.inner,null);
+  line([shoulder[0]-7,shoulder[1]+1],[hip[0]-6,hip[1]-2],top[2]);
+  line([shoulder[0]+w-1,shoulder[1]+2],[hip[0]+w-1,hip[1]+1],top[2]);
+  if(kit.fit==='coat' || kit.fit==='robe' || kit.fit==='gi') {
+    const tail=kit.fit==='coat'?24:kit.fit==='robe'?18:10;
+    poly([[hip[0]-w,hip[1]-2],[hip[0]+1,hip[1]],[hip[0]-1,hip[1]+tail-4],[hip[0]-17,hip[1]+tail],[hip[0]-12,hip[1]+10]],top[0]);
+    poly([[hip[0]+2,hip[1]],[hip[0]+w,hip[1]-2],[hip[0]+16,hip[1]+tail-6],[hip[0]+4,hip[1]+tail-9]],top[1]);
+    line([hip[0]-15,hip[1]+tail-3],[hip[0]-3,hip[1]+tail-7],ac);
+  }
+  if(kit.fit==='gi' || kit.fit==='robe') {poly([[shoulder[0]-7,shoulder[1]],[shoulder[0]-3,shoulder[1]+8],[hip[0]+6,hip[1]-2],[hip[0]+9,hip[1]-6]],top[2]);}
+  if(kit.fit==='apron') {poly([[shoulder[0]-3,shoulder[1]+7],[shoulder[0]+7,shoulder[1]+7],[hip[0]+10,hip[1]+21],[hip[0]-8,hip[1]+21]],kit.inner);rect(hip[0]-3,hip[1]+6,9,8,top[0]);}
+  if(kit.fit==='vest') {line([shoulder[0]-6,shoulder[1]+1],[hip[0]-4,hip[1]-6],top[2],2);line([shoulder[0]+6,shoulder[1]+1],[hip[0]+4,hip[1]-6],top[2],2);}
+  rect(hip[0]-8,hip[1]-3,17,3,PX_INK); rect(hip[0]+2,hip[1]-3,4,3,ac);
+  if(kit.vials) for(let n=0;n<3;n++) {rect(hip[0]-10+n*4,hip[1]+2,3,8,PX_INK);rect(hip[0]-9+n*4,hip[1]+3,1,5,ac);}
+  if(kit.clock || kit.charm) {const med=[shoulder[0]+3,shoulder[1]+17];line([shoulder[0]-4,shoulder[1]+4],med,ac);oval(med,4,5,PX_INK);oval(med,3,4,ac);line(med,[med[0]+1,med[1]-3],top[0]);}
+  // Face: asymmetric brow, warm nose plane, a two-pixel eye and no borrowed mask or facial marking.
+  rect(head[0]-2,head[1]+7,6,8,skin[0]); rect(head[0],head[1]+7,4,6,skin[1]);
+  poly([[head[0]-7,head[1]-7],[head[0]+5,head[1]-8],[head[0]+9,head[1]-3],[head[0]+9,head[1]+2],[head[0]+12,head[1]+4],[head[0]+8,head[1]+6],[head[0]+6,head[1]+10],[head[0]-2,head[1]+10],[head[0]-7,head[1]+5]],skin[1]);
+  poly([[head[0]+1,head[1]-5],[head[0]+7,head[1]-4],[head[0]+7,head[1]+2],[head[0]+10,head[1]+4],[head[0]+5,head[1]+6],[head[0]+2,head[1]+5]],skin[2],null);
+  rect(head[0]+3,head[1]-1,5,1,PX_INK); rect(head[0]+4,head[1],4,2,PX_LIGHT); rect(head[0]+6,head[1],2,2,ac); rect(head[0]+7,head[1],1,2,PX_INK);
+  rect(head[0]+5,head[1]+7,3,1,skin[0]);
+  const hx=head[0],hy=head[1];
+  const shapes={
+    sweep:[[-9,1],[-10,-8],[-5,-12],[5,-12],[11,-8],[6,-5],[-2,-4],[-5,8]],
+    crest:[[-8,2],[-10,-8],[-7,-15],[-1,-13],[2,-17],[6,-11],[8,-6],[0,-4],[-4,4]],
+    flat:[[-8,5],[-10,-11],[-6,-14],[6,-14],[9,-11],[7,-5],[-2,-5],[-3,4]],
+    bob:[[-10,10],[-10,-7],[-5,-12],[5,-12],[9,-7],[6,-2],[0,-4],[-1,11]],
+    buzz:[[-8,2],[-9,-7],[-5,-10],[5,-10],[8,-6],[0,-6],[-4,-2]],
+    braid:[[-8,5],[-10,-6],[-5,-12],[7,-11],[10,-7],[4,-5],[-2,-3],[-4,6]],
+    part:[[-9,6],[-10,-6],[-4,-12],[6,-11],[11,-6],[4,-5],[1,-8],[-3,-1],[-4,6]],
+    bun:[[-10,10],[-11,-6],[-5,-12],[6,-11],[8,-6],[2,-2],[-2,-2],[-2,9]],
+    tail:[[-9,2],[-11,-6],[-7,-12],[3,-14],[8,-10],[8,-6],[1,-5],[-5,5]],
+    long:[[-10,14],[-11,-5],[-6,-12],[5,-13],[9,-8],[5,-6],[-2,-5],[-3,14]],
+    hawk:[[-8,2],[-8,-7],[-3,-9],[-1,-17],[4,-14],[7,-7],[5,-4],[-2,-4]],
+    round:[[-10,9],[-12,0],[-10,-9],[-4,-13],[6,-12],[11,-6],[5,-4],[-2,-3],[-2,10]],
+    topknot:[[-8,5],[-9,-6],[-4,-11],[4,-11],[8,-7],[4,-4],[-1,-4],[-3,5]],
+    bald:[[-9,3],[-9,-4],[-6,-7],[-4,-5],[-5,4]],
+  };
+  poly((shapes[kit.hair]||shapes.sweep).map(([x,y])=>[hx+x,hy+y]),hair[1]);
+  if(kit.hair!=='bald') {line([hx-6,hy-8],[hx+2,hy-10],hair[2],2);line([hx-7,hy-6],[hx-6,hy+1],hair[0]);}
+  if(kit.hair==='bun' || kit.hair==='topknot') {oval([hx-8,hy-14],5,4,PX_INK);oval([hx-8,hy-14],4,3,hair[1]);line([hx-12,hy-12],[hx-7,hy-12],ac,2);}
+  if(kit.beard) {poly([[hx-4,hy+6],[hx+5,hy+8],[hx+9,hy+5],[hx+7,hy+12],[hx-2,hy+12]],hair[0]);line([hx,hy+10],[hx+5,hy+10],hair[1]);}
+  if(kit.goggles) {rect(hx-6,hy-2,16,5,PX_INK);rect(hx-3,hy-1,4,2,ac);rect(hx+4,hy-1,5,2,ac);}
+  if(kit.phones) {line([hx-9,hy+1],[hx-9,hy-10],top[2],3);line([hx-9,hy-10],[hx+7,hy-10],PX_INK,3);oval([hx-7,hy+2],4,6,PX_INK);oval([hx-7,hy+2],2,4,ac);}
+  // High collar and an angular scarf tail identify Isolde at a distance.
+  poly([[shoulder[0]-7,shoulder[1]-2],[head[0]-3,head[1]+10],[head[0]+5,head[1]+10],[shoulder[0]+8,shoulder[1]-3],[shoulder[0]+3,shoulder[1]+3]],top[0]);
+  line([shoulder[0]-3,shoulder[1]],[shoulder[0]+6,shoulder[1]-3],ac,2);
+  if(kit.scarf) poly([[shoulder[0]-5,shoulder[1]],[shoulder[0]-21,shoulder[1]+5],[shoulder[0]-29,shoulder[1]+1],[shoulder[0]-16,shoulder[1]+10],[shoulder[0]-5,shoulder[1]+3]],ac);
+  limb([shoulder[0]+w*.65,shoulder[1]+3],p.a[0],10,kit.sl?top:skin); limb(p.a[0],p.a[1],8,kit.sl===2?top:skin);
+  const hand=p.a[1]; oval(hand,5,4,PX_INK); oval(hand,4,3,skin[1]); rect(hand[0]-2,hand[1]-2,5,1,skin[2]);
+  line([hand[0]-5,hand[1]+2],[hand[0]-2,hand[1]+4],ac,2);
+  if(kit.wraps || kit.brace) for(let n=0;n<3;n++) line([hand[0]-7+n*2,hand[1]+1],[hand[0]-5+n*2,hand[1]+4],kit.wraps?kit.inner:ac);
+  if(kit.gauntlet) {poly([[hand[0]-8,hand[1]-5],[hand[0]+2,hand[1]-6],[hand[0]+5,hand[1]],[hand[0]+1,hand[1]+6],[hand[0]-8,hand[1]+5]],top[2]);rect(hand[0]-6,hand[1]-3,6,2,ac);line([hand[0]-6,hand[1]+3],[hand[0],hand[1]+3],top[0]);}
+  if(kit.hammer) {line([hand[0]+1,hand[1]+8],[hand[0]+1,hand[1]-14],PX_INK,4);line([hand[0]+1,hand[1]+7],[hand[0]+1,hand[1]-12],kit.inner,2);rect(hand[0]-5,hand[1]-18,14,7,PX_INK);rect(hand[0]-4,hand[1]-17,12,4,hair[0]);rect(hand[0]-4,hand[1]-17,12,1,hair[2]);}
+  if (flash) {
+    const color=pxRGB(flash);
+    for(let i=0;i<s.data.length;i+=4) if(s.data[i+3]) {s.data[i]=color[0];s.data[i+1]=color[1];s.data[i+2]=color[2];}
+  }
+  return s;
+}
+const PX_SPRITES = new Map(), PX_CANVASES = new WeakMap();
+const PX_FONT = {
+  A:'01110/10001/10001/11111/10001/10001/10001', B:'11110/10001/10001/11110/10001/10001/11110', C:'01111/10000/10000/10000/10000/10000/01111',
+  D:'11110/10001/10001/10001/10001/10001/11110', E:'11111/10000/10000/11110/10000/10000/11111', F:'11111/10000/10000/11110/10000/10000/10000',
+  G:'01111/10000/10000/10111/10001/10001/01111', H:'10001/10001/10001/11111/10001/10001/10001', I:'111/010/010/010/010/010/111',
+  J:'00111/00010/00010/00010/10010/10010/01100', K:'10001/10010/10100/11000/10100/10010/10001', L:'10000/10000/10000/10000/10000/10000/11111',
+  M:'10001/11011/10101/10101/10001/10001/10001', N:'10001/11001/11001/10101/10011/10011/10001', O:'01110/10001/10001/10001/10001/10001/01110',
+  P:'11110/10001/10001/11110/10000/10000/10000', Q:'01110/10001/10001/10001/10101/10010/01101', R:'11110/10001/10001/11110/10100/10010/10001',
+  S:'01111/10000/10000/01110/00001/00001/11110', T:'11111/00100/00100/00100/00100/00100/00100', U:'10001/10001/10001/10001/10001/10001/01110',
+  V:'10001/10001/10001/10001/10001/01010/00100', W:'10001/10001/10001/10101/10101/11011/10001', X:'10001/10001/01010/00100/01010/10001/10001',
+  Y:'10001/10001/01010/00100/00100/00100/00100', Z:'11111/00001/00010/00100/01000/10000/11111',
+  0:'01110/10001/10011/10101/11001/10001/01110',1:'010/110/010/010/010/010/111',2:'01110/10001/00001/00010/00100/01000/11111',
+  3:'11110/00001/00001/01110/00001/00001/11110',4:'10010/10010/10010/11111/00010/00010/00010',5:'11111/10000/10000/11110/00001/00001/11110',
+  6:'01110/10000/10000/11110/10001/10001/01110',7:'11111/00001/00010/00100/01000/01000/01000',8:'01110/10001/10001/01110/10001/10001/01110',
+  9:'01110/10001/10001/01111/00001/00001/01110', '-':'000/000/000/111/000/000/000', '.':'0/0/0/0/0/1/1',
+  ':':'0/1/1/0/1/1/0', '/':'00001/00001/00010/00100/01000/10000/10000', '!':'1/1/1/1/1/0/1', '?':'1110/0001/0001/0010/0100/0000/0100',
+  '+':'000/010/010/111/010/010/000', '%':'10001/00010/00010/00100/01000/01000/10001', "'":'1/1/0/0/0/0/0',
+  ',':'00/00/00/00/00/01/10', '(':'01/10/10/10/10/10/01', ')':'10/01/01/01/01/01/10',
+  '<':'001/010/100/010/001/000/000','>':'100/010/001/010/100/000/000',
+  '←':'00000/00100/01000/11111/01000/00100/00000','→':'00000/00100/00010/11111/00010/00100/00000',
+  '↑':'00100/01110/10101/00100/00100/00100/00000','↓':'00100/00100/00100/00100/10101/01110/00100',
+};
+function pxTextWidth(text,scale=1) { return [...String(text).toUpperCase()].reduce((n,ch)=>n+(ch===' '?4:((PX_FONT[ch]||PX_FONT['?']).split('/')[0].length+1))*scale,0)-scale; }
+function pxText(s,text,x,y,col=PX_LIGHT,scale=1) {
+  for(const ch of String(text).toUpperCase()) {
+    if(ch===' ') {x+=4*scale;continue;}
+    const rows=(PX_FONT[ch]||PX_FONT['?']).split('/');
+    rows.forEach((row,j)=>[...row].forEach((v,i)=>{if(v==='1')s.rect(x+i*scale,y+j*scale,scale,scale,col);}));
+    x+=(rows[0].length+1)*scale;
+  }
+}
+function pxSprite(ch, pose, alt = false, flash = '') {
+  const key = [ch,pose,alt,flash].join(':');
+  if (!PX_SPRITES.has(key)) PX_SPRITES.set(key,pixelSprite(ch,pose,alt,flash));
+  return PX_SPRITES.get(key);
+}
+function pxCanvas(surface) {
+  if (!PX_CANVASES.has(surface)) {
+    const cv=document.createElement('canvas'); cv.width=surface.w; cv.height=surface.h;
+    const c=cv.getContext('2d'), image=c.createImageData(surface.w,surface.h); image.data.set(surface.data); c.putImageData(image,0,0);
+    PX_CANVASES.set(surface,cv);
+  }
+  return PX_CANVASES.get(surface);
+}
+function pxPose(S,f) {
+  if(f.portrait) return 'idle';
+  if(f.st === 'atk') {
+    const m=moveDef(f), pose=m.pose;
+    if(f.mt < m.su) return pose.indexOf('kick') >= 0 ? 'kickw' : 'wind';
+    if(f.mt >= m.su + (m.ac || 5) + Math.max(2,m.re/2)) return f.y<GROUND?'jump':'idle';
+    return ({slash:'punch2',slashw:'punch2',cannon:'cast1',guard:'guard'})[pose] || (PX_POSES[pose] ? pose : 'cast1');
+  }
+  if(f.st === 'walk') return 'walk'+(Math.floor(f.walkT/6)%4);
+  if(f.st === 'block') return 'guard';
+  if(f.st === 'down' || f.st === 'ko') return 'hit';
+  if(f.st === 'cast') return 'clap';
+  if(f.st === 'idle' && S.phase === 'over' && S.wins[f.i] >= 2) return 'win';
+  if(f.st === 'idle') return Math.floor(S.t/22)%2 ? 'breathe' : 'idle';
+  return PX_POSES[f.st] ? f.st : 'idle';
+}
+function pxDrawFighter(c,S,f,alpha=1) {
+  const pose=pxPose(S,f), alt=f.portrait ? !!f.alt : f.i === 1 && S.f[0].ch === f.ch;
+  const imp=!f.portrait && FX.impact && FX.impact.t < FX.impact.sil ? FX.impact : null;
+  const flash=imp ? (imp.kind === 'black' ? f.i===imp.a ? '#f8edce' : '#ef5260' : PX_INK) : S.t-f.hurtT<4 ? '#fff0ca' : '';
+  const frame=pxSprite(f.ch,pose,alt,flash), scale=PX_SCALE*(f.big>0?1.3:1);
+  c.save(); c.imageSmoothingEnabled=false; c.globalAlpha*=alpha;
+  if(!f.portrait) {c.save();c.fillStyle='#111623';c.globalAlpha*=.35;c.fillRect(Math.round(f.x/2)*2-40,GROUND,80,6);c.restore();}
+  if(f.inv>0 && S.t%4<2) c.globalAlpha*=.5;
+  c.translate(Math.round(f.x/2)*2,Math.round(f.y/2)*2); c.scale(f.face,1);
+  if(f.portrait) {c.translate(-4,156);}
+  else if(f.st==='down' || f.st==='ko') {c.translate(0,-16);c.rotate(-Math.PI/2);}
+  c.drawImage(pxCanvas(frame),-PX_OX*scale,-PX_OY*scale,frame.w*scale,frame.h*scale);
+  c.restore();
+}

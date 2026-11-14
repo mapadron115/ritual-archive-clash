@@ -2,10 +2,22 @@
 // A simple computer opponent: reads the state, returns a button mask.
 const AI_MEM = [{}, {}];
 const AI_RANGE = [260, 400, 80, 300, 430];
+const AI_REACTION_MIN = 10, AI_REACTION_SPREAD = 7;
 
 function aiInput(S, i) {
+  const m = AI_MEM[i];
+  if (S.phase !== 'fight') { AI_MEM[i] = {}; return 0; }
+  // Re-reading the same frame or waiting through hit-stop must not buy reaction time.
+  if (m.lastTick === S.t) return m.output || 0;
+  m.lastTick = S.t;
+  if (S.freeze > 0 || S.hitstop > 0 || (S.stop && S.stop.t > 0 && S.stop.o !== i)) return m.output || 0;
+  m.clock = (m.clock || 0) + 1;
+  m.output = aiDecide(S, i);
+  return m.output;
+}
+
+function aiDecide(S, i) {
   const f = S.f[i], o = S.f[1 - i], m = AI_MEM[i], c = CH[f.ch];
-  if (S.phase !== 'fight') { m.until = 0; return 0; }
   const dx = o.x - f.x, dist = Math.abs(dx), toward = dx > 0 ? BTN.R : BTN.L, away = dx > 0 ? BTN.L : BTN.R;
   const can = n => f.cd[n] <= 0 && f.ce >= c.arts[n].cost;
   const R = Math.random;
@@ -14,14 +26,23 @@ function aiInput(S, i) {
   if (o.st === 'atk') { const md = moveDef(o); threat = o.mt < md.su + 4 && (BASIC[o.move] ? dist < md.reach + 50 : true); }
   for (const p of S.proj) if (p.o !== i && Math.abs(p.x - f.x) < 220 && sgn(p.vx) === sgn(f.x - p.x)) threat = true;
   if (S.dom && S.dom.o !== i && (S.dom.k === 'shrine' || S.dom.k === 'ovation')) threat = true;
-  if (S.dom && S.dom.o !== i && S.dom.k === 'nuclear') return dist < 300 ? toward | (S.t % 30 < 3 ? BTN.U : 0) : BTN.G;
+  if (S.dom && S.dom.o !== i && S.dom.k === 'nuclear') threat = true;
   if (threat) {
-    if (m.gt !== 1) { m.gt = 1; m.guard = R() < 0.6; m.jump = !m.guard && R() < 0.4; if (f.ch === 0 && can(2) && R() < 0.35) return BTN.A3; if (f.ch === 2 && can(0) && R() < 0.3) return BTN.A1; if (c.tech === 'Full Counter') { if (can(0) && R() < 0.5) return BTN.A1; if (can(1) && S.proj.some(p => p.o !== i) && R() < 0.4) return BTN.A2; } }
-    if (m.guard) return BTN.G;
-    if (m.jump) { m.jump = false; return BTN.U | toward; }
+    if (m.gt !== 1) { m.gt = 1; m.reactAt = m.clock + AI_REACTION_MIN + (R() * AI_REACTION_SPREAD | 0); m.responded = false; }
+    if (m.clock >= m.reactAt) {
+      if (S.dom && S.dom.o !== i && S.dom.k === 'nuclear') return dist < 300 ? toward | (m.clock % 30 < 3 ? BTN.U : 0) : BTN.G;
+      if (!m.responded) {
+        m.responded = true; m.guard = R() < 0.6; m.jump = !m.guard && R() < 0.4;
+        if (f.ch === 0 && can(2) && R() < 0.35) return BTN.A3;
+        if (f.ch === 2 && can(0) && R() < 0.3) return BTN.A1;
+        if (c.tech === 'Full Counter') { if (can(0) && R() < 0.5) return BTN.A1; if (can(1) && S.proj.some(p => p.o !== i) && R() < 0.4) return BTN.A2; }
+      }
+      if (m.guard) return BTN.G;
+      if (m.jump) { m.jump = false; return BTN.U | toward; }
+    }
   } else m.gt = 0;
-  if (m.until > S.t) return m.b | (m.tap && S.t % 6 < 3 ? m.tap : 0);
-  const plan = (b, n, tap) => { m.b = b; m.until = S.t + n; m.tap = tap || 0; return b; };
+  if (m.until > m.clock) return m.b | (m.tap && m.clock % 6 < 3 ? m.tap : 0);
+  const plan = (b, n, tap) => { m.b = b; m.until = m.clock + n; m.tap = tap || 0; return b; };
   if (!free(f)) return 0;
   for (const e of S.ents) if (e.o !== i && e.k === 'dog' && Math.abs(e.x - f.x) < 100 && Math.random() < 0.5) return plan(0, 10, BTN.P);
   if (domReady(f) && f.y >= GROUND && R() < 0.5 && (f.ch !== 4 || dist < 650)) return BTN.DOM;

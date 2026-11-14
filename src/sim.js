@@ -2,6 +2,9 @@
 // Fight simulation. State is plain data (so it can be sent over the network); step(S, inputs) advances one tick.
 const W = 1280, H = 720, GROUND = 612, LEFT = 60, RIGHT = 1220, MAXCE = 100, TPS = 60;
 const BTN = { L: 1, R: 2, U: 4, G: 8, P: 16, K: 32, A1: 64, A2: 128, A3: 256, DOM: 512 };
+// Low bits are held buttons; upper bits preserve keyboard presses between ticks (also sent online).
+const INPUT_SHIFT = 10, INPUT_MASK = (1 << INPUT_SHIFT) - 1, INPUT_BUFFER = 9;
+const ATTACK_INPUT = BTN.P | BTN.K | BTN.A1 | BTN.A2 | BTN.A3 | BTN.DOM;
 const DOM_HP = 0.3, GAUGE_MAX = 100, ROUND_TICKS = 99 * 60;
 const BF_CHANCE = 0.06, BF_ZONE = 0.2, BF_MULT = 2.2, BF_ZONE_TICKS = 480;
 
@@ -108,7 +111,19 @@ function hit(S, by, f, sx, o) {
   return 2;
 }
 
-function startMove(f, id) { f.st = 'atk'; f.move = id; f.mt = 0; f.hitDone = 0; f.buf = 0; f.inf = 0; f.chg = 0; }
+function startMove(f, id) { f.st = 'atk'; f.move = id; f.mt = 0; f.hitDone = 0; f.buf = 0; f.bufT = 0; f.inf = 0; f.chg = 0; }
+function sampleInput(f, input) {
+  const b = input & INPUT_MASK, pressed = (b & ~f.prev) | (input >>> INPUT_SHIFT);
+  f.prev = b;
+  const act = pressed & (ATTACK_INPUT | BTN.U);
+  if (act) { f.buf = act; f.bufT = INPUT_BUFFER; }
+}
+function prepareGuard(f, o, b) {
+  if (!free(f) || f.y < GROUND) return;
+  if (!f.dis) f.face = o.x >= f.x ? 1 : -1;
+  if ((b & BTN.G) && !(f.buf & ATTACK_INPUT)) { f.st = 'guard'; f.vx = 0; }
+  else if (f.st === 'guard') f.st = 'idle';
+}
 function strike(S, f, o, reach, opts, tall) { const dx = (o.x - f.x) * f.face; if (dx > -24 && dx < reach + 22 && Math.abs(o.y - f.y) < (tall || 110)) return hit(S, f.i, o, f.x, opts); return 0; }
 function moveDef(f) { return f.move ? (BASIC[f.move] || CH[f.ch].arts[+f.move[1]]) : null; }
 
@@ -156,9 +171,6 @@ function meleeCheck(S, f, o, m) {
 
 function upFighter(S, f, o, b) {
   const c = CH[f.ch];
-  const pr = b & ~f.prev; f.prev = b;
-  const act = pr & (BTN.P | BTN.K | BTN.A1 | BTN.A2 | BTN.A3 | BTN.DOM);
-  if (act) { f.buf = act; f.bufT = 9; } else if (f.bufT > 0) { if (--f.bufT === 0) f.buf = 0; }
   const mine = S.dom && S.dom.o === f.i && S.dom.k === 'garden';
   for (let n = 0; n < 3; n++) if (f.cd[n] > 0) f.cd[n] -= 1;
   f.ce = Math.min(MAXCE, f.ce + c.regen);
@@ -212,7 +224,7 @@ function upFighter(S, f, o, b) {
         if (f.buf & BTN.P) { startMove(f, 'p1'); break; }
         if (f.buf & BTN.K) { startMove(f, 'k'); break; }
         if (b & BTN.G) { f.st = 'guard'; f.vx = 0; break; }
-        if (pr & BTN.U) { f.st = 'jump'; f.vy = -17.5 * (slow < 1 ? 0.85 : 1); f.vx = dirIn * c.speed * 0.9 * slow; f.y = GROUND - 1; ev(S, 'jump', f.x, f.y); break; }
+        if (f.buf & BTN.U) { f.buf = 0; f.bufT = 0; f.st = 'jump'; f.vy = -17.5 * (slow < 1 ? 0.85 : 1); f.vx = dirIn * c.speed * 0.9 * slow; f.y = GROUND - 1; ev(S, 'jump', f.x, f.y); break; }
         f.vx = dirIn * c.speed * (dirIn === f.face ? 1 : 0.8) * slow * (f.buff > 0 ? 1.35 : 1);
         f.st = dirIn ? 'walk' : 'idle';
         if (dirIn) f.walkT++;
@@ -245,6 +257,8 @@ function upFighter(S, f, o, b) {
     }
   }
   if (f.st !== 'hit' && !(f.st === 'down' && f.stT > 24)) f.wall = 0;
+  // Frozen fighters never reach here, so their buffer keeps its full active-tick lifetime.
+  if (f.bufT > 0 && --f.bufT === 0) f.buf = 0;
 }
 
 function upProj(S) {
@@ -331,9 +345,14 @@ function upDomain(S) {
 
 function step(S, inp) {
   S.t++;
+  // Read both players before any early return: a press/release during impact pause still counts.
+  for (let i = 0; i < 2; i++) {
+    if (S.phase === 'fight') sampleInput(S.f[i], inp[i] | 0);
+    else { S.f[i].prev = 0; S.f[i].buf = 0; S.f[i].bufT = 0; }
+  }
   if (S.freeze > 0) { S.freeze--; return; }
   if (S.hitstop > 0) { S.hitstop--; return; }
-  let a = inp[0] | 0, b = inp[1] | 0;
+  let a = inp[0] & INPUT_MASK, b = inp[1] & INPUT_MASK;
   if (S.phase === 'intro') { a = b = 0; if (++S.phaseT === 1) ev(S, 'round', 0, 0, S.round); if (S.phaseT >= 100) { S.phase = 'fight'; ev(S, 'fight'); } }
   else if (S.phase === 'ko') {
     a = b = 0;
@@ -345,6 +364,9 @@ function step(S, inp) {
     else { const l = S.f[r0 < r1 ? 0 : 1]; l.hp = 0.0001; ko(S, l); l.hp = 0; }
   }
   const stp = S.stop && S.stop.t > 0 && S.phase === 'fight' ? S.stop : null; if (stp) stp.t--; else S.stop = null;
+  // Establish guard for both slots before the first attack can resolve. Recovery cannot be canceled.
+  if (!stp || stp.o === 0) prepareGuard(S.f[0], S.f[1], a);
+  if (!stp || stp.o === 1) prepareGuard(S.f[1], S.f[0], b);
   if (!stp || stp.o === 0) upFighter(S, S.f[0], S.f[1], a);
   if (!stp || stp.o === 1) upFighter(S, S.f[1], S.f[0], b);
   // bodies push apart

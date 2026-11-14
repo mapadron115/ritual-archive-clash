@@ -1,0 +1,18 @@
+# Ritual Archive: Clash — original pixel art direction
+
+Owner choice passed on by coordinator 2026-11-14: pixel art for the whole game.
+
+- Source canvas: 640 × 360 for the completed arena/HUD, enlarged with nearest-neighbor sampling. A source pixel represents two simulation units. Final page uses `image-rendering: pixelated`.
+- Fighter cells: 144 × 128 source pixels, grounded root (64, 120); standing heights span roughly 85–115 source pixels depending on stance and build. All assets use integer rasterization with fully opaque color clusters and transparent background, never a reduction of the cartoon renderer.
+- Silhouettes: dark navy one-pixel outline, thicker by overlap in occluded joints; shadowed far limbs; three colors per fabric/skin/hair, one clear technique accent. Lighting comes from the upper left. Avoid scattered lone highlight pixels, gradients, blur and smoothing.
+- Animation: discrete authored anticipation, contact and recovery poses, four walking poses, two idle poses, guard/block, airborne attacks, hit/stun, cast and victory. Gameplay timing chooses the frame; no joint springs or interpolated sprite edges. Feet use the simulation ground, not a new animation collider.
+- First fighter: Isolde Varn. Original asymmetrical silver side-sweep, warm face, split navy travel coat, inset ivory shirt, offset cyan clasp, narrow cyan scarf tail and low boots. Her exposed face and angular travel clothes define her own identity.
+- Mirror costume: warm pearl coat with mauve shadows, violet trousers and rose accent; silhouette stays the same. Keep P1/P2 overhead tags.
+- Roster pass: distinct head shapes, body widths, coat/robe/apron/vest silhouettes, hair, equipment and accents. Shared anatomy is allowed; a palette swap alone does not complete a fighter.
+- Stage pass: an original archive courtyard at dusk with architectural depth, stepped cloud clusters, masonry and cloth, a clear foreground fighting plane, and low-contrast distant detail.
+- Effects: compact sprite bursts, stepped arcs/rings, bold cores and sparse debris. Preserve Black Flash's dark/red identity and hit-stop without soft glow.
+- HUD/menu pass: angular panels, source-pixel borders, bitmap text, consistent native sizing and readable meters.
+
+No existing game's sprites, poses, palettes or stages are used as references or copied assets.
+
+Silhouette pass (v7): all fifteen idle poses are individually composed. Visible build profiles range from compact/narrow through tall/slender to broad/heavy; shoulders, limbs, stance spread, arm carriage and weight differ. The larger transparent sprite cell leaves room for tall builds, raised fists and the hammer. Simulation hitboxes remain unchanged. Black silhouettes are reviewed separately from color/props.

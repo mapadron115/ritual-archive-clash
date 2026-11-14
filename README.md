@@ -1,6 +1,6 @@
 # Ritual Archive: Clash (demo)
 
-A small 2D fighting game demo: fifteen original fighters, each with one technique from the Ritual Archive library. No feats, no levels.
+An original pixel-art 2D fighting game demo: fifteen original fighters, each with one technique from the Ritual Archive library. No feats, no levels.
 
 ## Run
 Double-click `index.html`. Nothing to install. (Online play needs an internet connection on both computers.)
@@ -16,5 +16,9 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
   Two Domains meeting cancel each other.
 
 ## Code
-`src/sim.js` the fight rules (plain-data state, 60 ticks a second), `src/fighters.js` and `src/fighters2.js` the fifteen techniques,
-`src/ai.js` the computer opponent, `src/render.js` drawing, `src/main.js` menus, input, sound, online.
+
+`src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
+
+## Script checks
+
+Node is optional for development checks; the game itself needs only a browser. Run `node tests/feel.cjs`, `node tests/smoke.cjs`, `node tests/pixel.cjs`, `node tests/silhouettes.cjs`, `node tests/stage.cjs`, `node tests/world.cjs`, `node tests/hud.cjs` and `node tests/runtime.cjs`. These cover command timing, all matchups, sprite bounds, rendering and main-loop integration. They are not human playtests. `node tests/performance.cjs` measures Node CPU raster time only.
