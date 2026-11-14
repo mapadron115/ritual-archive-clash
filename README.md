@@ -24,6 +24,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Resounding Voice prepares a split jade resonator ahead of the face. Its plates brighten and the compression mark closes through the existing wind-up, clearing when the word releases.
 - Convergence gathers three blood feeds toward the forward hand. They close and brighten through its existing wind-up, then clear when the blood beam fires.
 - Nuclear Shell has a sustained copper pressure collar ahead of the hands. Its broad face brightens and its vanes close through the existing charge; it clears when the beam fires.
+- Web of Strings frames the foe with pink strands that straighten and brighten before each of its three existing hits, then snap and recoil. The center stays open; these strands show the volley rhythm, not a collision boundary.
 
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.

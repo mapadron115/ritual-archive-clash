@@ -482,6 +482,35 @@ function pxZone(s,S,z) {
   if(z.k==='trap') {s.line([x,306],[x+3,293],PX_INK,3);s.line([x,306],[x+3,293],'#c1c1b0');s.rect(x,291,6,3,'#d8ad78');}
   if(z.k==='target')pxLandingWarning(s,z);
 }
+// Web's three automatic volleys use their serialized Domain clock, including
+// during pauses. The open center is a tell, never an escape/collision boundary.
+function pxWebVolley(s,S) {
+  const d=S.dom;
+  if(!d||d.k!=='web'||S.phase!=='fight'||d.t<1||d.t>=70)return;
+  const f=S.f[d.o],o=S.f[1-d.o];
+  if(f.st==='ko'||o.st==='ko')return;
+  const hits=[14,38,62],last=hits.filter(t=>t<=d.t).pop();
+  const snap=last!==undefined&&d.t-last<6;
+  const next=hits.find(t=>t>d.t);
+  if(!snap&&next===undefined)return;
+  const index=hits.indexOf(snap?last:next),face=index%2?-1:1;
+  const start=index===0?1:hits[index-1]+6;
+  const phase=snap?Math.floor((d.t-last)/2):Math.min(2,Math.floor((d.t-start)/(next-start)*3));
+  const cell=new PixelSurface(256,128),ox=128,oy=64;
+  const shade=['#72435f','#a35d83','#cd8dac'][snap?2:phase];
+  const body=['#bc78a0','#e8a3c9','#ffe1ed'][snap?2:phase],light='#ffe1ed';
+  // Separated taut pairs frame the body. Broad ribbons read against a full scene.
+  for(const lane of [-1,0,1])for(const side of [-1,1]) {
+    const tip=snap?13+phase*9:40-phase*9;
+    const a=[ox+side*119,oy+lane*43],b=[ox+side*tip,oy+lane*(snap?15:24)];
+    const mid=[ox+side*(snap?72:86-phase*8),oy+lane*(snap?35:28)+(snap?side*(phase-1)*5:side*(2-phase)*5)];
+    cell.poly([[a[0],a[1]-3],mid,[b[0],b[1]-2],[b[0],b[1]+2],[mid[0],mid[1]+6],[a[0],a[1]+3]],shade,PX_INK);
+    cell.line(a,mid,body,3);cell.line(mid,b,body,3);
+    cell.line([a[0],a[1]-1],[mid[0],mid[1]-1],light);
+    if(snap)cell.poly([[b[0]+side*5,b[1]-5],[b[0]-side*4,b[1]],[b[0]+side*5,b[1]+5]],body,PX_INK);
+  }
+  s.blit(cell,Math.round(o.x/2)-(face<0?255-ox:ox),Math.round((o.y-70)/2)-oy,1,face<0);
+}
 // Finite authored cells, mirrored after rasterization. Active clocks and velocity
 // come from the existing snapshot; rendering never adds animation state to it.
 const PX_SUMMONS=new Map();
@@ -714,6 +743,7 @@ function pxWorldSurface(S,F=FX) {
   for(const e of S.ents)pxSummon(s,e,S);
   for(const e of F.dust||[])pxDust(s,e);
   for(const p of F.puffs||[]) {const r=p.r/2*(1-p.t/p.life*.5);s.ellipse(p.x/2,p.y/2,r,r*.55,'#b9ad9c');s.ellipse(p.x/2-2,p.y/2-2,r*.7,r*.4,'#d1c2a7');}
+  pxWebVolley(s,S);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const f of S.f)if(f.gum>0){const o=S.f[1-f.i];s.line([o.x/2,o.y/2-40],[(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],'#d78bb7',2);s.line([(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],[f.x/2,f.y/2-40],'#d78bb7',2);}
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
