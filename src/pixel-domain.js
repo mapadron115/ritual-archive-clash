@@ -115,15 +115,21 @@ function pxDomainBackdrop(kind) {
     s.line([320,137],[368,162],PX_INK,11);s.line([320,137],[368,162],mid,6);s.ellipse(320,137,10,10,PX_INK);s.ellipse(318,135,7,7,light);
     for(const x of [33,125,487,579]) {block(x,64,28,216);for(let n=0;n<4;n++)block(x-8,91+n*45,43,9);}
   } else if(kind==='absolute') {
-    // Faceted jade shields face one another across a recessed mirror sanctuary.
-    for(const side of [-1,1])for(let n=0;n<3;n++) {
-      const x=320+side*(86+n*83),y=46+n*18;
-      poly([[x-32,y],[x+28,y],[x+39,y+70],[x+20,261],[x-23,261],[x-41,y+69]],mid);
-      poly([[x-32,y],[x-19,y+8],[x-20,241],[x-23,261],[x-41,y+69]],light);
-      poly([[x+28,y],[x+39,y+70],[x+20,261],[x+10,240],[x+16,y+12]],dark);
-      poly([[x-13,y+30],[x+13,y+30],[x+18,y+80],[x,222],[x-18,y+80]],dark);
+    // Round jade bucklers in a recessed sanctuary, distinct from allout's crags.
+    // Thick rims, convex faces and raised bosses read as shields at native size.
+    for(const [x,y,r]of [[38,139,43],[145,119,56],[602,139,43],[495,119,56],[320,115,91]]) {
+      block(x-12,y+r-3,24,280-y-r);
+      s.ellipse(x,y,r+2,r+2,PX_INK);s.ellipse(x,y,r,r,dark);
+      s.ellipse(x-2,y-3,r-3,r-4,light);s.ellipse(x+1,y+2,r-9,r-9,mid);
+      s.ellipse(x,y,r-17,r-17,PX_INK);s.ellipse(x,y,r-19,r-19,dark);
+      s.ellipse(x-3,y-5,r-22,r-24,mid);
+      const b=Math.round(r/4);
+      poly([[x,y-b],[x+b,y],[x,y+b],[x-b,y]],dark);
+      poly([[x,y-b],[x,y],[x-b,y]],light);
+      poly([[x,y],[x+b,y],[x,y+b]],mid);
+      for(const side of [-1,1])s.rect(x+side*(r-12)-2,y-2,5,5,PX_INK);
     }
-    block(246,258,148,22);
+    block(220,258,200,22);
   } else if(kind==='howitzer') {
     // A copper vortex behind banked launch vanes and damaged stone buttresses.
     halo(320,124,112,102);

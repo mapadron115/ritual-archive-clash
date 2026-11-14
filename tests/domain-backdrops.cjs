@@ -5,6 +5,7 @@ vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-domai
 vm.runInContext(`
 globalThis.sheet=new PixelSurface(1920,1800);sheet.rect(0,0,1920,1800,PX_INK);
 globalThis.scene=new PixelSurface(1280,720);
+globalThis.comparison=new PixelSurface(1280,720);
 const distinct=new Set();let frames=0,floors=0,timelines=0;
 for(let ch=0;ch<15;ch++) {
   const kind=CH[ch].dom.kind,palette=PX_DOMAIN_PALETTES[kind],bg=pxDomainBackdrop(kind);
@@ -48,13 +49,21 @@ for(let ch=0;ch<15;ch++) {
   D.f[0].x=420;D.f[1].x=890;D.f[0].gauge=100;step(D,[BTN.DOM,0]);
   for(let n=0;n<40;n++)step(D,[0,0]);
   const frame=pxWorldSurface(D,{});pxOutlinedText(frame,CH[ch].name+' / '+CH[ch].dom.name,12,16,PX_LIGHT);
-  pxOutlinedText(frame,'V23 / ORIGINAL PIXEL DOMAIN SCENERY',12,30,'#b4c2ce');
+  pxOutlinedText(frame,'ORIGINAL PIXEL DOMAIN SCENERY',12,30,'#b4c2ce');
   sheet.blit(frame,ch%3*640,Math.floor(ch/3)*360);
   const panel=[0,1,3,8].indexOf(ch);if(panel>=0)scene.blit(frame,panel%2*640,Math.floor(panel/2)*360);
+  if(kind==='absolute'||kind==='allout') {
+    const x=kind==='absolute'?0:640;
+    comparison.blit(bg,x,0);pxOutlinedText(comparison,CH[ch].dom.name,x+12,16,PX_LIGHT);
+    comparison.blit(frame,x,360);
+  }
 }
 assert.equal(distinct.size,15,'duplicate backdrop');assert.equal(PX_DOMAIN_BACKDROPS.size,15);
 assert.equal(pxDomainBackdrop('unknown'),pxDomainBackdrop('void'));assert.equal(pxDomainBackdrop('__proto__'),pxDomainBackdrop('void'));assert.equal(PX_DOMAIN_BACKDROPS.size,15,'unbounded cache key');
 const empty=new PixelSurface(640,360);pxDomain(empty,{dom:null});assert(!empty.data.some(Boolean));
 console.log('PASS',frames,'hard-alpha animated Domain frames;',floors,'unchanged stage floors;',timelines,'actual Domain timelines; fifteen distinct three-tone spaces, bounded cache, freeze/snapshot stability and unchanged outcomes');
 `,ctx);
-if(process.argv[2])for(const [name,key]of [['v23-domain-backdrops.png','sheet'],['v23-domain-scene.png','scene']])writePNG(path.join(process.argv[2],name),ctx[key]);
+if(process.argv[2]) {
+  const version=process.argv[3]||'v23';
+  for(const [name,key]of [['domain-backdrops','sheet'],['domain-scene','scene'],['domain-comparison','comparison']])writePNG(path.join(process.argv[2],version+'-'+name+'.png'),ctx[key]);
+}

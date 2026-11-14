@@ -15,6 +15,10 @@ Owner choice passed on by coordinator 2026-11-14: pixel art for the whole game.
 
 No existing game's sprites, poses, palettes or stages are used as references or copied assets.
 
+Domain distinction (v24): Absolute Counter uses round jade bucklers with thick shaded rims, convex faces and raised diamond bosses on low plinths. Its circular masses distinguish it from Everything I Have's angular emerald cavern. Preserve both established palettes, the sanctuary/cavern ideas, motes and stage floor.
+
+Footwork (v25): eight authored advance cells and eight guarded retreat cells replace the four-cell shared walk. Each holds for three existing active walk ticks. One sole stays at the floor while the swing knee lifts, passes and reaches; the planted sole moves against root travel at frame changes. Advances lean forward with restrained arm counter-motion; retreats lean away with raised hands. Existing signed velocity relative to facing selects the family immediately on reversals/crossings. No extra turn delay or animation state; collision, movement speeds and clocks stay unchanged. Twelve added cells bring each build/costume to 109. Discrete drawing reduces sliding without promising continuous foot locking, especially under speed buffs/slows.
+
 Contact pass (v12): warm directional hit shards, cool cyan guard arcs and wider orange guard-break shards. Two-frame compressed contact, five-frame expansion, then separated fragments; integer mirrored cells keep both directions exact. No soft glow or random frame flicker. Preserve established hit-stop, impact frames and Black Flash identity.
 
 Sound pass (v13): all audio remains original synthesis. A short filtered snap and falling bass body distinguish light/heavy contact; a brighter, shorter pair of tones identifies guard contact. Guard breaks add a falling crack, landings stay quiet, and knockdowns/walls have lower body tones. Black Flash keeps its own dark crack and bass tail. Two-millisecond attacks, shared compression/master gain and capped polyphony control dense effects. Listening on real speakers/headphones remains required.
