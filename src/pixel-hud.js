@@ -36,6 +36,15 @@ function pxTimeStopHUD(s,S) {
   s.rect(270,65,3,7,PX_INK);s.rect(276,65,3,7,PX_INK);
   pxText(s,'P'+(S.stop.o+1)+' TIME STOP',284,65,PX_INK);
 }
+// Keep guard beside its fighter's other meters, above the world and control
+// hints. The old foot strip crossed the bottom cards and had no label.
+function pxGuardHUD(s,f,x) {
+  const low=f.guardHp<35,col=low?'#f1ad91':'#b5dce5';
+  pxText(s,low?'GUARD LOW':'GUARD '+Math.ceil(clamp(f.guardHp,0,100))+'%',x,55,col);
+  pxPanel(s,x,65,80,6,'#263346',low?'#f1ad91':'#68768a');
+  const w=Math.round(80*clamp(f.guardHp/100,0,1));
+  s.rect(x,65,w,6,col);s.rect(x,65,w,2,PX_LIGHT);
+}
 // These are existing cast prerequisites, not a promise that recovery has ended
 // or that a cast will hit. Never call a mutating art/recast handler from drawing.
 function pxArtCardState(S,f,n) {
@@ -68,13 +77,13 @@ function pxHUDSurface(S,labels,F=FX) {
     if(c.res){pxText(s,c.res.name+' '+Math.floor(f.res)+'/'+c.res.max,x,sy,PX_LIGHT);sy+=10;}
     if(f.nails>0||f.gum>0){pxText(s,f.nails>0?'NAILS '+f.nails:'STUCK '+Math.ceil(f.gum/60)+'S',x,sy,'#eda08e');sy+=10;}
     if(f.zone>0){pxText(s,'IN THE ZONE '+Math.ceil(f.zone/60)+'S',x,sy,'#ee8a99');s.rect(x,sy+9,90,3,PX_INK);s.rect(x,sy+9,90*f.zone/BF_ZONE_TICKS,2,'#ed5266');}
-    // The actor tags and guard meter stay tied to simulation coordinates; hitboxes are untouched.
+    if(f.st!=='ko')pxGuardHUD(s,f,x+121);
+    // Actor tags stay tied to simulation coordinates; hitboxes are untouched.
     if(f.st!=='ko') {
       const tag=lab?(labels[0]&&labels[1]?'P'+(i+1):'YOU'):(labels.other==='Computer'?'CPU':'FOE');
       const {x:tx,y:ty}=pxActorAnchor(f),tw=pxTextWidth(tag);
       s.rect(tx-tw/2-3,ty-2,tw+6,11,PX_INK);pxText(s,tag,tx-tw/2,ty,left?'#8ecddf':'#efa394');s.poly([[tx-3,ty+9],[tx+3,ty+9],[tx,ty+12]],left?'#8ecddf':'#efa394');
     }
-    if(f.guardHp<99){const gx=f.x/2-15,gy=f.y/2+8;pxPanel(s,gx,gy,30,3,'#263346');s.rect(gx,gy,30*clamp(f.guardHp/100,0,1),3,f.guardHp<35?'#e99588':'#9bb8d0');}
     const cardX=left?14:331,cy=319,cardH=39;
     for(let n=0;n<4;n++) {
       const xx=cardX+n*72,dom=n===3,cw=dom?83:67,a=dom?c.dom:c.arts[n],art=dom?null:pxArtCardState(S,f,n),ready=dom?domReady(f):art.ready,used=dom&&f.domUsed;

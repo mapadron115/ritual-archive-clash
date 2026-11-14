@@ -15,6 +15,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Technique labels use the full card width, wrap at spaces and start below a consistent name/portrait row. On narrow screens, title and selection use the viewport height; fights keep their 16:9 canvas. This remains a keyboard game.
 - The title tray uses one compact row on desktop, with its keyboard hint by the logo. Selection cards use smaller portraits and padding at <=900px to give the arena row more room.
 - Damage values rise above the struck fighter, with clear space around both fighters, actor tags and banners. Simultaneous values use separate nearby lanes. Hit effects, damage and timing stay the same.
+- Each fighter's guard strength has a labeled meter beneath the energy bar. A broad rose meter and GUARD LOW label warn below 35%; the existing guard-break reset and recovery rules are unchanged. The meter stays clear of the bottom move cards.
 - Round results distinguish K.O., time up and draws, identify the winner and score, and say which round comes next. They remain visible until the round changes. The match screen shows the final score, keeps rematch context clear and tells online guests to wait for the host. Tab, Enter and Space reach the result buttons.
 - Escape opens the move list and focuses Resume. Its buttons precede the long rules list; Tab, Enter, Space and scrolling keys keep their native menu behavior. Combat keys stay neutral while the list is open. Offline matches pause; online matches continue, as the list explains. Escape or Resume returns to the fight.
 - Online, either player's Change fighters button returns both players to selection. Each keeps control of their own fighter; the host still chooses the arena and starts the next fight.
@@ -121,6 +122,8 @@ The runtime suite also uses controlled PeerJS events to check closed/replaced ro
 `node tests/domain-backdrops.cjs` checks fifteen distinct layered three-tone Domain/Maximum spaces, eight hard-alpha motion phases, unchanged stage floors, freeze/snapshot stability, bounded caches and actual input-driven timelines across all stages. Add an output directory for all-fifteen and detail scene previews. Selected spaces are cached before a round starts. Domain scenery follows the active Domain clock.
 
 `node tests/guard-animation.cjs` checks actual block, guard-break and shock timelines for both player slots, distinct recoil/recovery silhouettes across all builds, repeated contacts, freeze/time-stop holds, snapshots and unchanged simulation. Add an output directory for phase, silhouette and actual-contact scene previews.
+
+`node tests/guard-hud.cjs` checks real three-kick held-guard, break and recovery sequences in both slots, pause holds, round resets and all-build resource/Zone/time-stop HUD combinations. An output directory and version prefix export 27 full native scenes. `--baseline` reads the committed HUD in memory; `--preview-only` exports its comparison scenes without asserting the new labels. These are script/raster checks, not human play.
 
 `node tests/domain-animation.cjs` checks all fifteen input-driven Domain/Maximum timelines in both player slots, cinematic countdown poses, actual release ticks, held casts, interruption/clash/expiry, snapshots and unchanged simulation. Add an output directory for phase, silhouette and actual-timeline scene previews.
 
