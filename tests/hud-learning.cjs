@@ -53,7 +53,14 @@ for(let ch=0;ch<15;ch++)for(let owner=0;owner<2;owner++)for(let n=0;n<3;n++) {
   assert(inspect(S,'local')[owner*4+n].some(t=>t.startsWith('WAIT ')));
   let ticks=0;while(f.cd[n]>1){S.ev=[];step(S,[0,0]);assert(++ticks<5000,'cooldown stalled');}
   assert(inspect(S,'local')[owner*4+n].includes('WAIT 0.1S'));step(S,[0,0]);
-  assert.equal(f.cd[n],0);assert(inspect(S,'local')[owner*4+n].includes('CE READY'));casts++;
+  assert.equal(f.cd[n],0);
+  const expired=inspect(S,'local')[owner*4+n];assert(!expired.some(t=>t.startsWith('WAIT ')),'expired cooldown still shown');
+  // Consumed/expired setup must no longer advertise CE READY merely because its
+  // cooldown finished. Dedicated real setup transitions are in hud-eligibility.
+  if(a.id==='hairpin')assert(expired.includes('NEED NAIL'));
+  else if(a.id==='resonance')assert(expired.includes(o.nails>0?'CE READY':'HIT FIRST'));
+  else if(a.id==='contract'||a.id==='slingshot')assert(expired.includes('NEED GUM'));
+  else assert(expired.includes('CE READY'));casts++;
 }
 for(let ch=0;ch<15;ch++)for(let owner=0;owner<2;owner++)for(const low of [false,true]) {
   const S=newMatch(ch,ch,1000);S.phase='fight';const f=S.f[owner];

@@ -31,6 +31,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 - Repeated damage values on the same target use separate rows with a clear gap; each hit keeps its own value and color.
 
+- Art cards show missing nail/gum/wound/history setup, low HP and ground-only restrictions. Active Garden casts show their zero CE cost; an available stone swap shows 0 CE / SWAP STONE. Cards still do not promise that recovery has ended or that a target is in range.
+
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
 - Arts cost Cursed Energy, which refills by itself and faster when you land blows.
@@ -42,6 +44,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/hud-eligibility.cjs` checks 36 actual setup/HP/air/Garden/stone input timelines and 5,744 parallel-state ticks, plus 1,058 read-only card layouts across all builds, slots and five modes. Checks specific prerequisites, real consumption and expiry, exact HP and wound boundaries, Garden ownership/cost and free stone recasts, with bounded complete labels and snapshot parity. An optional output directory/prefix exports 84 native scenes; `--baseline` checks the committed HUD against the same combat/layout matrix without asserting new wording. Script/raster evidence is not human play or browser motion.
 
 `node tests/damage-stacks.cjs` checks 18 real Shrine/Web/Judgement Cut End timelines across three stages/both owners, 11,700 snapshot/read-only layouts, every separate damage value and 114 native body/HUD/glyph composites. Same-target values occupy separate rows with four-pixel gaps; hit counts, full damage, expiry, trades, swap grouping and legacy FX snapshots are checked. An optional output directory/prefix exports native scenes and lifecycle sheets; `--baseline` compares the committed presentation without enforcing the new row rule. These are script/raster checks, not play or motion assessment.
 

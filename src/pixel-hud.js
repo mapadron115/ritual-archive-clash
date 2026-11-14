@@ -28,6 +28,21 @@ function pxResultRole(labels,i) {
   if(!labels[0]&&!labels[1]||labels[0]&&labels[1])return 'P'+(i+1);
   return labels[i]?'YOU':labels.other==='Computer'?'CPU':'FOE';
 }
+// These are existing cast prerequisites, not a promise that recovery has ended
+// or that a cast will hit. Never call a mutating art/recast handler from drawing.
+function pxArtCardState(S,f,n) {
+  const a=CH[f.ch].arts[n],o=S.f[1-f.i];
+  const garden=S.dom&&S.dom.k==='garden'&&S.dom.o===f.i&&!S.freeze;
+  const swap=a.id==='stone'&&free(f)&&S.proj.some(p=>p.k==='stone'&&p.o===f.i);
+  const cost=garden||swap?0:a.cost;
+  const status=swap?'SWAP STONE':f.cd[n]>0?'WAIT '+(Math.ceil(f.cd[n]/6)/10).toFixed(1)+'S':
+    f.ce<cost?'NEED '+Math.ceil(cost-f.ce)+' CE':
+    a.hp&&f.hp<=a.hp+1?'LOW HP':
+    ART[a.id+'_can']&&!ART[a.id+'_can'](S,f,o)?
+      ({hairpin:'NEED NAIL',resonance:'HIT FIRST',contract:'NEED GUM',slingshot:'NEED GUM',rewind:'RECORDING'}[a.id]||'NEED SETUP'):
+    f.y<GROUND&&!a.air?'LAND FIRST':garden?'FREE CE':'CE READY';
+  return {cost,status,ready:status==='CE READY'||status==='FREE CE'||status==='SWAP STONE'};
+}
 function pxHUDSurface(S,labels,F=FX) {
   const s=new PixelSurface(640,360);
   for(let i=0;i<2;i++) {
@@ -54,17 +69,17 @@ function pxHUDSurface(S,labels,F=FX) {
     if(f.guardHp<99){const gx=f.x/2-15,gy=f.y/2+8;pxPanel(s,gx,gy,30,3,'#263346');s.rect(gx,gy,30*clamp(f.guardHp/100,0,1),3,f.guardHp<35?'#e99588':'#9bb8d0');}
     const cardX=left?14:331,cy=319,cardH=39;
     for(let n=0;n<4;n++) {
-      const xx=cardX+n*72,dom=n===3,cw=dom?83:67,a=dom?c.dom:c.arts[n],ready=dom?domReady(f):f.cd[n]<=0&&f.ce>=a.cost,used=dom&&f.domUsed;
+      const xx=cardX+n*72,dom=n===3,cw=dom?83:67,a=dom?c.dom:c.arts[n],art=dom?null:pxArtCardState(S,f,n),ready=dom?domReady(f):art.ready,used=dom&&f.domUsed;
       pxPanel(s,xx,cy,cw,cardH,dom&&ready?ac:ready?'#293a50':'#202c3d',ready?ac:'#475367');
       if(F.nope&&F.nope[i]>0&&!ready){s.rect(xx,cy,cw,1,'#e99588');s.rect(xx,cy+cardH-1,cw,1,'#e99588');}
       const ink=dom&&ready?PX_INK:ready?PX_LIGHT:'#95a0af',key=lab?lab[dom?'DOM':'A'+(n+1)]:null;
       if(key){s.rect(xx+3,cy+21,10,9,PX_INK);pxText(s,key,xx+8-pxTextWidth(key)/2,cy+22,ready?PX_LIGHT:'#95a0af');}
       pxWrap(a.name,cw-8).forEach((line,j)=>pxText(s,line,xx+4,cy+3+j*8,ink));
       const type=dom?(a.maximum?'MAXIMUM':'DOMAIN'):null;
-      const footer=dom?type+(used||ready?'':' '+Math.floor(clamp(f.gauge/GAUGE_MAX,0,1)*100)+'%'):a.cost+' CE';
+      const footer=dom?type+(used||ready?'':' '+Math.floor(clamp(f.gauge/GAUGE_MAX,0,1)*100)+'%'):art.cost+' CE';
       pxText(s,footer,xx+(key?17:4),cy+22,dom&&ready?PX_INK:ready?ac:'#b1bccb');
       const status=dom?(used?'USED 1/1':ready?(f.hp<=maxHp(f)*DOM_HP?'HP READY':'FULL READY'):'OR 30% HP'):
-        f.cd[n]>0?'WAIT '+(Math.ceil(f.cd[n]/6)/10).toFixed(1)+'S':f.ce<a.cost?'NEED '+Math.ceil(a.cost-f.ce)+' CE':'CE READY';
+        art.status;
       pxText(s,status,xx+4,cy+30,dom&&ready?PX_INK:ready?PX_LIGHT:'#c4cbd4');
       const ratio=dom?(used?0:f.gauge/GAUGE_MAX):1-f.cd[n]/a.cd;s.rect(xx+3,cy+cardH-1,cw-6,1,PX_INK);s.rect(xx+3,cy+cardH-1,(cw-6)*clamp(ratio,0,1),1,ac);
     }
