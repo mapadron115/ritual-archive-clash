@@ -41,6 +41,60 @@
   .basics { line-height: 1.9; }
   input { font: inherit; font-weight: 800; letter-spacing: .3em; text-transform: uppercase; width: 6em; text-align: center; padding: .6em; border-radius: 0; border: 2px solid #3a3850; background: #0d0c14; color: #fff; }
   #netStatus { min-height: 1.5em; color: #ffd866; font-weight: 700; }
+  /* Selection keeps the start action outside the scrolling reference material. */
+  #select { padding: 1.5% 2%; gap: .65em; background: #101927f5; font-size: clamp(9px, 1vw, 14px); }
+  .selectHeading { display: flex; flex-shrink: 0; width: 100%; align-items: center; justify-content: space-between; border-bottom: 2px solid #536577; padding-bottom: .6em; }
+  .selectHeading h2 { color: #ecd3a0; margin: 0; font-size: 1.5em; }
+  .selectBody { width: 100%; min-height: 0; overflow: auto; flex: 1; scrollbar-color: #68768a #101927; }
+  .matchup { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5em; }
+  .roster { min-width: 0; display: grid; grid-template-columns: 28% 1fr; gap: .8em; }
+  .selectedFighter { min-width: 0; margin: 0; padding: .6em; border: 2px solid #536577; background: #1b293b; text-align: center; }
+  .selectedFighter canvas { width: 100%; height: auto; background: transparent; }
+  .selectedFighter h3 { margin: .35em 0; font-size: 1.2em; color: var(--ac); }
+  .selectedFighter p { font-size: .9em; line-height: 1.4; color: #c1cbd7; }
+  .selectedFighter strong { display: block; font-size: .85em; color: #ecd3a0; margin-bottom: .4em; }
+  #select .col { gap: .4em; align-content: start; min-width: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #select .col h2 { margin: .2em 0; color: #a7c8da; }
+  #select .fighter { width: 100%; padding: .35em; display: grid; grid-template-columns: 36px 1fr; align-items: center; gap: .4em; border-width: 2px; box-shadow: none; font-size: .85em; min-height: 4.1em; background: #202e42; }
+  #select .fighter canvas { width: 36px; height: 36px; grid-row: 1 / 3; }
+  #select .fighter b { grid-column: 2; font-size: 1em; color: #e2e9ee; line-height: 1.15; overflow-wrap: anywhere; }
+  #select .fighter span { grid-column: 2; min-width: 0; overflow-wrap: anywhere; font-size: .9em; color: var(--ac); line-height: 1.15; }
+  #select .fighter.on { background: #34495f; border-color: var(--ac); box-shadow: inset 0 -3px var(--ac); }
+  #select .fighter:hover:not(:disabled) { background: #34495f; }
+  #select .fighter:disabled { opacity: 1; }
+  #select .stagePanel { max-width: none; margin-top: .9em; padding: .6em; border: 2px solid #536577; background: #172334; }
+  #stageChoices { flex-wrap: nowrap; gap: .6em; }
+  #select .stageChoice { flex: 1; width: 0; flex-direction: row; text-align: left; padding: .4em; border-width: 2px; gap: .7em; font-size: .9em; box-shadow: none; }
+  #select .stageChoice canvas { width: 80px; height: 45px; flex-shrink: 0; }
+  #select .stageChoice b { display: block; color: #ecd3a0; }
+  #select .stageChoice span { display: block; margin-top: .3em; font-size: .85em; }
+  .quickControls { display: flex; flex-wrap: wrap; gap: .4em 1.5em; margin-top: .7em; padding: .6em; border-left: 3px solid #a7c8da; background: #1b293b; }
+  .quickControls p { color: #e2e9ee; line-height: 1.5; }
+  .selectReference { border-bottom: 1px solid #536577; margin-top: .5em; padding: .5em; }
+  .selectReference summary { cursor: pointer; color: #a7c8da; font-weight: bold; }
+  .selectReference summary:focus-visible { outline: 3px solid #ecd3a0; outline-offset: 3px; }
+  .selectReference .panel { margin-top: .7em; max-width: none; overflow-x: auto; }
+  .selectFooter { display: flex; flex-shrink: 0; align-items: center; gap: 1em; width: 100%; border-top: 2px solid #536577; padding-top: .6em; }
+  .selectFooter p { flex: 1; color: #c1cbd7; }
+  #select .selectFooter button { min-width: 8em; padding: .6em 1em; }
+  #select .selectFooter .go { min-width: 14em; background: #bd453f; }
+  @media (max-width: 900px) {
+    #select .fighter { grid-template-columns: 24px 1fr; }
+    #select .fighter canvas { width: 24px; height: 24px; }
+    #select .stageChoice canvas { width: 56px; height: 32px; }
+    #select .stageChoice span { display: none; }
+  }
+  @media (max-width: 640px) {
+    .roster { grid-template-columns: 1fr; }
+    .selectedFighter { display: none; }
+    .matchup { gap: .8em; }
+    #select .fighter { grid-template-columns: 1fr; min-height: 5em; }
+    #select .fighter canvas { display: none; }
+    #select .fighter b, #select .fighter span { grid-column: 1; }
+    .selectHeading span { display: none; }
+    #select .stageChoice { flex-direction: column; text-align: center; }
+    #select .selectFooter .go { min-width: 9em; }
+  }
 </style>
 </head>
 <body>
@@ -57,16 +111,18 @@
   </div>
 
   <div class="screen" id="select">
-    <div class="row">
-      <div class="col" id="col0"></div>
-      <div class="col" style="align-self:center;font-size:2em;font-weight:900;font-style:italic">VS</div>
-      <div class="col" id="col1"></div>
+    <header class="selectHeading"><h2>Choose your fighter</h2><span>15 FIGHTERS / 3 ARENAS / BEST OF THREE</span></header>
+    <div class="selectBody">
+      <div class="matchup">
+        <section class="roster" aria-label="Left fighter"><figure class="selectedFighter" id="preview0"></figure><div class="col" id="col0" role="group" aria-label="Left fighter choices"></div></section>
+        <section class="roster" aria-label="Right fighter"><figure class="selectedFighter" id="preview1"></figure><div class="col" id="col1" role="group" aria-label="Right fighter choices"></div></section>
+      </div>
+      <div class="stagePanel"><div id="stageChoices" role="group" aria-label="Stage selection"></div></div>
+      <div id="quickControls" class="quickControls"></div>
+      <details class="selectReference" id="moveReference"><summary>Fighter move lists</summary><div class="panel" id="detail"></div></details>
+      <details class="selectReference"><summary>All controls &amp; combat rules</summary><div class="panel" id="selBasics"></div></details>
     </div>
-    <div class="panel"><h2>Stage</h2><div id="stageChoices" role="group" aria-label="Stage selection"></div></div>
-    <div class="panel" id="detail"></div>
-    <div class="panel" id="selBasics"></div>
-    <div class="row"><button class="small" onclick="toMenu()">Back</button><button class="go" id="start" onclick="startFight()">Fight</button></div>
-    <p id="selNote"></p>
+    <footer class="selectFooter"><button class="small" onclick="toMenu()">Back</button><p id="selNote" role="status"></p><button class="go" id="start" onclick="startFight()">Fight</button></footer>
   </div>
 
   <div class="screen" id="online">
@@ -89,16 +145,16 @@
     <div class="row" id="overBtns"><button class="small go" onclick="rematch()">Rematch</button><button class="small" onclick="toSelect()">Change fighters</button><button class="small" onclick="toMenu()">Main menu</button></div>
   </div>
 </div></div>
-<script src="src/sim.js?v=37"></script>
-<script src="src/fighters.js?v=37"></script>
-<script src="src/fighters2.js?v=37"></script>
-<script src="src/pixel.js?v=37"></script>
-<script src="src/pixel-stage.js?v=37"></script>
-<script src="src/pixel-domain.js?v=37"></script>
-<script src="src/pixel-world.js?v=37"></script>
-<script src="src/pixel-hud.js?v=37"></script>
-<script src="src/ai.js?v=37"></script>
-<script src="src/render.js?v=37"></script>
-<script src="src/main.js?v=37"></script>
+<script src="src/sim.js?v=38"></script>
+<script src="src/fighters.js?v=38"></script>
+<script src="src/fighters2.js?v=38"></script>
+<script src="src/pixel.js?v=38"></script>
+<script src="src/pixel-stage.js?v=38"></script>
+<script src="src/pixel-domain.js?v=38"></script>
+<script src="src/pixel-world.js?v=38"></script>
+<script src="src/pixel-hud.js?v=38"></script>
+<script src="src/ai.js?v=38"></script>
+<script src="src/render.js?v=38"></script>
+<script src="src/main.js?v=38"></script>
 </body>
 </html>

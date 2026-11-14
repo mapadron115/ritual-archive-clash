@@ -130,34 +130,78 @@ function labels() {
   if (G.mode === 'watch') { const l = [null, null]; l.other = 'Computer'; return l; }
   const l = G.mode === 'guest' ? [null, BIND.solo.lab] : [BIND.solo.lab, null]; l.other = G.mode === 'ai' ? 'Computer' : 'Online opponent'; return l;
 }
+function menuCanvas(surface,w=surface.w,h=surface.h) {
+  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.setAttribute('aria-hidden','true');
+  const c=canvas.getContext('2d');c.imageSmoothingEnabled=false;c.drawImage(pxCanvas(surface),0,0,w,h);return canvas;
+}
+function selectionNames() {
+  if(G.mode==='local')return ['Player 1','Player 2'];
+  if(G.mode==='watch')return ['Computer 1','Computer 2'];
+  if(G.mode==='host')return ['You','Guest'];
+  if(G.mode==='guest')return ['Host','You'];
+  return ['You','Computer'];
+}
+function quickControls(lab,name) {
+  return `<p><b>${name}</b> &nbsp; Move <kbd>${lab.move}</kbd> Jump <kbd>${lab.U}</kbd> Guard <kbd>${lab.G}</kbd> Punch <kbd>${lab.P}</kbd> Kick <kbd>${lab.K}</kbd> Arts <kbd>${lab.A1} ${lab.A2} ${lab.A3}</kbd> Domain <kbd>${lab.DOM}</kbd></p>`;
+}
+function refreshSelection() {
+  const names=selectionNames(),lab=labels();
+  for(let i=0;i<2;i++) {
+    const ch=G.pick[i],c=CH[ch],alt=i===1&&G.pick[0]===ch,preview=$('preview'+i);
+    preview.style.setProperty('--ac',c.look.accent);
+    preview.innerHTML=`<strong>${names[i]}</strong><h3>${c.name}</h3><p>${c.tech}</p>`;
+    const s=new PixelSurface(144,132);s.rect(0,0,144,132,'#1b293b');s.rect(10,120,124,2,'#68768a');
+    s.blit(pxSprite(ch,'idle',alt),0,0,1,i===1);preview.appendChild(menuCanvas(s));
+    const tag=document.createElement('p');tag.textContent=c.tag;preview.appendChild(tag);
+    const buttons=Array.from($('col'+i).children).filter(b=>b.className.startsWith('fighter'));
+    for(let n=0;n<CH.length;n++) {
+      const b=buttons[n];
+      b.className='fighter'+(ch===n?' on':'');b.setAttribute('aria-pressed',String(ch===n));
+    }
+  }
+  $('detail').innerHTML=G.pick.map((ch,i)=>`<h2>${names[i]}</h2>`+moveList(ch,lab[i])).join('');
+  for(let n=0;n<PX_STAGES.length;n++) {
+    const b=$('stageChoices').children[n],on=G.stage===PX_STAGES[n].id;
+    b.className='stageChoice'+(on?' on':'');b.setAttribute('aria-pressed',String(on));
+  }
+  $('selNote').textContent=G.mode==='guest'?'The host chooses the arena and starts the fight.':PX_STAGES.find(s=>s.id===G.stage).name+' / 99-second rounds';
+}
 function buildSelect() {
   const online = G.mode === 'host' || G.mode === 'guest', me = G.mode === 'guest' ? 1 : 0;
-  const names = G.mode === 'local' ? ['Player 1', 'Player 2'] : G.mode === 'watch' ? ['Computer 1', 'Computer 2'] : online ? (me ? ['Host', 'You'] : ['You', 'Guest']) : ['You', 'Computer'];
+  const names = selectionNames();
   for (let i = 0; i < 2; i++) {
     const col = $('col' + i); col.innerHTML = `<h2>${names[i]}</h2>`;
     CH.forEach((c, n) => {
       const b = document.createElement('button'); b.className = 'fighter' + (G.pick[i] === n ? ' on' : ''); b.style.setProperty('--ac', c.look.accent);
-      b.innerHTML = `<b>${c.tech}</b><span>${c.name}</span>`;
+      b.innerHTML = `<b>${c.name}</b><span>${c.tech}</span>`;
+      b.setAttribute('aria-label',c.name+' / '+c.tech+' / '+c.tag);b.setAttribute('aria-pressed',String(G.pick[i]===n));
+      b.appendChild(menuCanvas(pxPortrait(n,false)));
       b.disabled = online && i !== me;
-      b.onmouseenter = () => { $('detail').innerHTML = moveList(n, labels()[i] || BIND.solo.lab); };
-      b.onclick = () => { G.pick[i] = n; if (online) netSend({ t: 'pick', ch: n }); buildSelect(); $('detail').innerHTML = moveList(n, labels()[i] || BIND.solo.lab); };
+      b.onclick = () => { G.pick[i] = n; if (online) netSend({ t: 'pick', ch: n }); refreshSelection(); };
+      b.onkeydown = e => {
+        const delta={ArrowLeft:-1,ArrowRight:1,ArrowUp:-3,ArrowDown:3}[e.code];
+        if(delta===undefined&&e.code!=='Home'&&e.code!=='End')return;
+        e.preventDefault();
+        const target=e.code==='Home'?0:e.code==='End'?CH.length-1:(n+delta+CH.length)%CH.length;
+        Array.from(col.children).filter(b=>b.className.startsWith('fighter'))[target].focus();
+      };
       col.appendChild(b);
     });
   }
-  const lab = labels();
   const stageChoices=$('stageChoices');stageChoices.innerHTML='';
   for(const stage of PX_STAGES) {
     const b=document.createElement('button');b.className='stageChoice'+(G.stage===stage.id?' on':'');
     b.disabled=G.mode==='guest';b.setAttribute('aria-pressed',String(G.stage===stage.id));
-    const thumb=document.createElement('canvas');thumb.width=160;thumb.height=90;thumb.setAttribute('aria-hidden','true');
-    thumb.getContext('2d').imageSmoothingEnabled=false;thumb.getContext('2d').drawImage(pxCanvas(pxBackdrop(0,stage.id)),0,0,160,90);
-    b.innerHTML='<b>'+stage.name+'</b><span>'+stage.desc+'</span>';b.appendChild(thumb);
-    b.onclick=()=>{G.stage=stage.id;if(G.mode==='host')netSend({t:'stage',stage:G.stage});buildSelect();};stageChoices.appendChild(b);
+    b.setAttribute('aria-label',stage.name+' / '+stage.desc);
+    b.appendChild(menuCanvas(pxBackdrop(0,stage.id),160,90));
+    const caption=document.createElement('div');caption.innerHTML='<b>'+stage.name+'</b><span>'+stage.desc+'</span>';b.appendChild(caption);
+    b.onclick=()=>{G.stage=stage.id;if(G.mode==='host')netSend({t:'stage',stage:G.stage});refreshSelection();};stageChoices.appendChild(b);
   }
-  $('detail').innerHTML = moveList(G.pick[me], lab[me] || BIND.solo.lab);
   $('selBasics').innerHTML = G.mode === 'local' ? '<b>Player 1</b>' + basics(BIND.p1.lab) + '<b>Player 2</b>' + basics(BIND.p2.lab) : basics(BIND.solo.lab);
+  $('quickControls').innerHTML=G.mode==='local'?quickControls(BIND.p1.lab,'P1')+quickControls(BIND.p2.lab,'P2'):G.mode==='watch'?'<p>Computer exhibition / Choose both fighters and an arena. Esc opens the move lists during the match.</p>':quickControls(BIND.solo.lab,'YOU');
   $('start').style.display = G.mode === 'guest' ? 'none' : '';
-  $('selNote').textContent = G.mode === 'guest' ? 'The host selects the stage and starts the fight.' : '';
+  $('start').textContent=G.mode==='watch'?'Start exhibition':'Fight';
+  refreshSelection();
 }
 function pickMode(m) { G.mode = m; show('select'); buildSelect(); }
 function startFight() {

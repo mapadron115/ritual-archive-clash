@@ -2,6 +2,8 @@
 
 Owner choice passed on by coordinator 2026-11-14: pixel art for the whole game.
 
+Selection (v34): bring the existing original roster art into the first-minute flow. Reuse native portraits for each choice and idle cells for full-body comparisons; right-side fighters face left and use their mirror costume when appropriate. Navy panels, ivory labels and technique accents match the arena HUD. Keep the Fight action outside the scrolling selection/reference body. Full moves and rules remain in native expandable panels; the compact controls follow each mode. No new sprites, names, combat rules or style changes. Browser layout still needs visual review.
+
 Second-punch return (v33): withdraw the far fist for three recovery ticks, fold that elbow for three, then rebuild guard for three. Keep the near hand forward and both soles at their contact positions. Three new cells bring each build/costume to 134; their calf contours end inside the boots. Only p2 selects them; shared punch-shaped arts and Maximums keep their prior return. Preserve all four startup, three active and nine recovery ticks, with immediate third-press chaining from every recovery tick. No simulation state, timing or combat changes.
 
 First punch (v32): withdraw the fist for three recovery ticks, fold the elbow for two, then raise guard for three. Both soles stay at the contact stance's positions through recovery; thick calf contours fit inside the new return boots. Three new cells bring each build/costume to 131. Select these cells only for p1, leaving shared punch-shaped arts and Maximums intact. Preserve all four startup, three active and eight recovery ticks, including the immediate second-press chain from every recovery tick. No new simulation state, control delay or combat changes.

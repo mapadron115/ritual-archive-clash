@@ -9,6 +9,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - 1 Player vs Computer, 2 Players on one keyboard, Watch (computer vs computer)
 - Online: one player hosts and gets a 4-letter room code, the other joins with it. The host's game runs the fight.
 - Choose Archive Courtyard, Rainlit Gallery or Dawn Observatory on the fighter selection screen. Online, the host chooses; rounds and rematches keep that stage. Stages have the same fighting bounds and no hazards.
+- Fighter selection shows portraits and two full-body previews, including the second costume in mirror matches. Use Tab to reach a choice, arrow keys to browse its roster, then Enter or Space to select. The Fight button stays below the scrolling choices; full move lists and rules expand beneath the arena choices. Quick controls follow the selected mode.
 
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
@@ -21,6 +22,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/runtime.cjs` checks the real script order and menu-to-match flow, including 150 fighter selections across all five modes, full move lists, host/guest restrictions, stable keyboard focus, arrow/Home/End navigation and 30 exact main/mirror preview canvases. An optional output directory saves `v34-selection-assets.png` and a gameplay frame. These verify canvas contents and scripted behavior, not browser CSS layout or human play.
 
 `node tests/jab-animation.cjs` checks actual first-punch whiffs/hits/blocks in both slots/facings, distinct withdraw/fold/guard silhouettes, fixed grounded return soles, all eight recovery ticks and immediate second-press chaining from each tick, freezes, hit/KO interruptions, snapshots and unchanged outcomes. Add an output directory for labeled phase, silhouette and actual-input scene previews.
 

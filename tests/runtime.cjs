@@ -22,7 +22,7 @@ class Context {
   }
 }
 const nodes=new Map(),events={};
-const element=id=>({id,style:{setProperty(){}},children:[],_html:'',set innerHTML(value){this._html=value;this.children=[];},get innerHTML(){return this._html;},textContent:'',attributes:{},setAttribute(key,value){this.attributes[key]=value;},appendChild(child){this.children.push(child);}});
+const element=id=>({id,style:{setProperty(){}},children:[],_html:'',set innerHTML(value){this._html=value;this.children=[];},get innerHTML(){return this._html;},textContent:'',attributes:{},setAttribute(key,value){this.attributes[key]=value;},appendChild(child){this.children.push(child);},focus(){document.activeElement=this;}});
 const cv=new Canvas(1280,720);nodes.set('cv',cv);
 for(const id of ['title','select','online','pause','over'])nodes.set(id,element(id));
 const document={visibilityState:'visible',getElementById(id){if(!nodes.has(id))nodes.set(id,element(id));return nodes.get(id);},querySelectorAll(){return ['title','select','online','pause','over'].map(id=>nodes.get(id));},createElement(tag){return tag==='canvas'?new Canvas():element(tag);},head:element('head')};
@@ -38,6 +38,63 @@ pickMode('ai');assert.equal($('col0').children.length,15);assert.equal($('col1')
 assert.equal($('stageChoices').children.length,3);
 $('stageChoices').children[1].onclick();assert.equal(G.stage,'gallery');assert.equal($('stageChoices').children[1].attributes['aria-pressed'],'true');
 assert($('selBasics').innerHTML.includes('Black Flash'));
+// All modes retain their controls, selection authority and complete move lists.
+let selected=0;
+for(const mode of ['ai','local','watch','host','guest']) {
+  G.mode=mode;G.pick=[0,1];buildSelect();
+  const original=[$('col0').children.slice(),$('col1').children.slice()];
+  assert.equal($('start').style.display,mode==='guest'?'none':'');
+  assert.equal($('start').textContent,mode==='watch'?'Start exhibition':'Fight');
+  assert.equal($('stageChoices').children.every(b=>b.disabled),mode==='guest');
+  if(mode==='local')for(const key of ['F','G','R T Y','H',',','.','I O P','/','← / →'])assert($('quickControls').innerHTML.includes(key));
+  else if(mode==='watch')assert($('quickControls').innerHTML.includes('exhibition'));
+  else for(const key of ['J','K','U I O','L'])assert($('quickControls').innerHTML.includes(key));
+  for(let slot=0;slot<2;slot++) {
+    const locked=mode==='host'?slot===1:mode==='guest'?slot===0:false;
+    assert.equal(original[slot].every(b=>b.disabled),locked);
+    for(let ch=0;ch<CH.length;ch++) {
+      // Incoming remote choices use the same refresh path; disabled controls stay disabled.
+      if(locked){G.pick[slot]=ch;refreshSelection();}else original[slot][ch].onclick();
+      assert.equal(G.pick[slot],ch);
+      assert.equal(original[slot][ch].attributes['aria-pressed'],'true');
+      assert.equal($('col'+slot).children.filter(b=>b.attributes['aria-pressed']==='true').length,1);
+      assert(original[slot][ch].attributes['aria-label'].includes(CH[ch].name));
+      assert(original[slot][ch].attributes['aria-label'].includes(CH[ch].tech));
+      assert(original[slot][ch].children.some(c=>c.getContext),'missing roster portrait');
+      assert($('preview'+slot).innerHTML.includes(CH[ch].name));
+      assert($('preview'+slot).children.some(c=>c.getContext),'missing full-body preview');
+      for(let i=0;i<2;i++) {
+        assert.equal($('col'+i).children[0],original[i][0],'selection replaced keyboard focus target');
+        for(const a of [...CH[G.pick[i]].arts,CH[G.pick[i]].dom])assert($('detail').innerHTML.includes(a.name),'move list lost '+a.name);
+      }
+      selected++;
+    }
+  }
+}
+G.mode='ai';G.pick=[0,1];buildSelect();
+const choices=$('col0').children;
+for(const [from,code,to] of [[0,'ArrowLeft',14],[0,'ArrowUp',12],[14,'ArrowRight',0],[14,'ArrowDown',2],[7,'Home',0],[7,'End',14]]) {
+  let prevented=false;choices[from].onkeydown({code,preventDefault(){prevented=true;}});
+  assert(prevented);assert.equal(document.activeElement,choices[to]);assert.equal(G.pick[0],0,'browsing must wait for activation');
+}
+choices[14].focus();choices[14].onclick();assert.equal(document.activeElement,choices[14]);assert.equal(G.pick[0],14);
+// Both selected costumes, for every build: compare actual menu canvases to their source pixels.
+globalThis.selectionAssets=new PixelSurface(1280,1040);selectionAssets.rect(0,0,1280,1040,PX_INK);
+pxText(selectionAssets,'V34 / ACTUAL MENU CANVASES / MAIN RIGHT + MIRROR LEFT',16,12,PX_LIGHT,2);
+for(let ch=0;ch<CH.length;ch++) {
+  G.pick=[ch,ch];refreshSelection();
+  const x=(ch%5)*256,y=42+Math.floor(ch/5)*324;
+  pxText(selectionAssets,CH[ch].name,x+8,y,PX_LIGHT);
+  pxText(selectionAssets,CH[ch].tech,x+8,y+12,PX_KITS[ch].accent);
+  for(let i=0;i<2;i++) {
+    const canvas=$('preview'+i).children.find(c=>c.getContext),expected=new PixelSurface(144,132);
+    expected.rect(0,0,144,132,'#1b293b');expected.rect(10,120,124,2,'#68768a');expected.blit(pxSprite(ch,'idle',i===1),0,0,1,i===1);
+    assert.deepEqual(Array.from(canvas.pixels()),Array.from(expected.data));
+    selectionAssets.blit(expected,x+56,y+30+i*142);
+  }
+}
+console.log('PASS',selected,'fighter selections across five modes; full move lists, permissions, stable focus, six grid-navigation boundaries and 30 exact costume previews');
+G.pick=[0,1];G.stage='gallery';G.mode='ai';buildSelect();
 startFight();
 for(const f of G.S.f){assert(PX_DOMAIN_BACKDROPS.has(CH[f.ch].dom.kind),'selected Domain was not prewarmed');assert.equal(f.domUsed,0);}
 assert.equal(G.S.dom,null);
@@ -68,3 +125,4 @@ console.log('PASS real script order, title, fighter/stage selection, start, inpu
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
+if(process.argv[2])writePNG(path.join(process.argv[2],'v34-selection-assets.png'),context.selectionAssets);
