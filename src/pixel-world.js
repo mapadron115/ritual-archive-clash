@@ -293,6 +293,30 @@ function pxConvergenceCharge(s,S,f) {
   cell.line([fx+4,y-5],[fx,y],light,2);
   s.blit(cell,Math.round(f.x/2)-(f.face<0?127-ox:ox),Math.round(f.y/2)-oy,1,f.face<0);
 }
+// A split jade resonator prepares the word in the forward face lane. Its broad
+// faces brighten and compression marks close during the existing 23-tick tell.
+function pxVoiceCharge(s,S,f) {
+  const d=S.dom;
+  if(!d||d.o!==f.i||d.k!=='megaphone'||d.t<1||d.t>=24||f.st!=='cast')return;
+  const cell=new PixelSurface(128,112),ox=24,oy=104,x=ox,y=oy-76;
+  const phase=Math.min(5,Math.floor((d.t-1)/4)),tier=Math.floor(phase/2);
+  const shade=['#285346','#568d72','#9bd7ae'][tier],body=['#79c9a5','#b9dfba','#e0f1cf'][tier],light='#e0f1cf';
+  // Flared, separated upper/lower plates leave both face and throat visible.
+  for(const dir of [-1,1]) {
+    const points=[[12,4],[35,23],[46,23],[46,8],[35,8],[12,0]];
+    cell.poly(points.map(([a,b])=>[x+a,y+dir*b]),shade,PX_INK);
+    cell.poly([[17,4],[36,21],[44,21],[44,10],[35,10]].map(([a,b])=>[x+a,y+dir*b]),body);
+    cell.line([x+18,y+dir*6],[x+36,y+dir*21],light,2);
+    cell.rect(x+38,y+dir*19-2,6,5,light);
+  }
+  // A substantial inward chevron closes toward the open resonator, never a
+  // range boundary or a projectile. It disappears on the real release tick.
+  const fx=x+70-phase*4;
+  cell.poly([[fx+6,y-13],[fx-5,y],[fx+6,y+13],[fx+11,y+9],[fx+3,y],[fx+11,y-9]],shade,PX_INK);
+  cell.poly([[fx+6,y-10],[fx-2,y],[fx+6,y+10],[fx+8,y+8],[fx,y],[fx+8,y-8]],body);
+  cell.line([fx+6,y-9],[fx-1,y],light,2);
+  s.blit(cell,Math.round(f.x/2)-(f.face<0?127-ox:ox),Math.round(f.y/2)-oy,1,f.face<0);
+}
 function pxPaintFighter(s,S,f,impact) {
   const x=Math.round(f.x/2),y=Math.round(f.y/2),scale=f.big>0?1.3:1,alt=f.i===1&&S.f[0].ch===f.ch;
   if(!impact)s.ellipse(x,307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
@@ -309,6 +333,7 @@ function pxPaintFighter(s,S,f,impact) {
   pxChargeCue(s,f);
   pxMaximumCharge(s,S,f);
   pxConvergenceCharge(s,S,f);
+  pxVoiceCharge(s,S,f);
 }
 // Beam families use only the serialized zone's active age/material. Clip columns
 // before painting, including the wide Maximum cones; no animation state/cache.

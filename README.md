@@ -21,6 +21,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Lingering attraction has inward streams and a faceted dark core that disperses at the burst. Delayed cuts use contracting corner marks followed by crossed blades; the warning leaves the defender's center clear. Existing active ages select these phases.
 - The diving Maximum's landing warning has tall bright outer posts, broad gold rails, closing inner arrows and a descending center tip. It marks the locked destination through the existing countdown and clears on impact.
 - Rock's charge has an open mint cuff that brightens at each existing strength threshold, with three larger lit indicators visible at native play size. The cue holds during pauses and clears when charging ends, including after interruption.
+- Resounding Voice prepares a split jade resonator ahead of the face. Its plates brighten and the compression mark closes through the existing wind-up, clearing when the word releases.
 - Convergence gathers three blood feeds toward the forward hand. They close and brighten through its existing wind-up, then clear when the blood beam fires.
 - Nuclear Shell has a sustained copper pressure collar ahead of the hands. Its broad face brightens and its vanes close through the existing charge; it clears when the beam fires.
 
@@ -35,6 +36,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/voice-charge.cjs` checks all 23 prefire ages, six closing phases, broad value steps, exact mirrors, hard alpha, clear face/throat/floor lanes, snapshots, 24 native scene composites and 30 edge crops. Six actual front/guard/swap timelines check unchanged tick-24 release, 40 HP self-cost, damage and escapes, plus 156 pause holds, cancellation/reset and existing Domain time-stop advance. An optional output directory and prefix export 36 native scenes and six lifecycle sheets; `--baseline --rules-only` checks unchanged combat against HEAD's renderer. These are script/raster checks, not play.
 
 `node tests/convergence-charge.cjs` checks all 39 prefire ages, six closing phases, broad value progression, exact mirrors, hard alpha, clear hand/floor lanes, snapshots, native scene visibility and edge clipping. Six actual front/guard/swap timelines check the existing tick-40 release and outcomes, pause holds, cancellation and reset. An optional output directory and prefix export native before/after scenes and lifecycle sheets; `--baseline --rules-only` checks unchanged combat against HEAD's renderer. These are script/raster checks, not play.
 
