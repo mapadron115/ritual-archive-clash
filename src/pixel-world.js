@@ -594,6 +594,35 @@ function pxShrineRhythm(s,S) {
   const flip=d.o===1;
   s.blit(cell,Math.round(o.x/2)-(flip?cell.w-1-ox:ox),Math.round((o.y-70)/2)-oy,1,flip);
 }
+// Seven existing eight-tick cuts: broad split folds prepare, then spring apart.
+// The clear center preserves the fighter; these images are not safe-area bounds.
+function pxJceRhythm(s,S) {
+  const d=S.dom;
+  if(!d||d.k!=='jce'||S.phase!=='fight'||d.t<1||d.t>=60)return;
+  const f=S.f[d.o],o=S.f[1-d.o];
+  if(f.st==='ko'||o.st==='ko')return;
+  const beat=Math.floor(d.t/8),age=d.t%8,snap=beat>0&&age<4;
+  const phase=snap?Math.floor(age/2):beat?Math.min(2,Math.max(0,age-5)):Math.min(2,Math.floor((age-1)/2));
+  const cell=new PixelSurface(224,144),ox=112,oy=100;
+  const shade=['#426e79','#6ba1ab','#a0cbd0'][snap?2:phase];
+  const body=['#88bac5','#b7e4e8','#e4fffa'][snap?2:phase],light='#f4fff5';
+  const poly=(pts,c)=>cell.poly(pts.map(([x,y])=>[ox+x,oy+y]),c,PX_INK);
+  const line=(a,b,c,w=1)=>cell.line([ox+a[0],oy+a[1]],[ox+b[0],oy+b[1]],c,w);
+  // Four angular folded plates close in broad value steps. The alternating
+  // stagger changes on contact; recoil opens the cut without covering the face.
+  for(const side of [-1,1])for(const vertical of [-1,1]) {
+    const tip=snap?34+phase*13:52-phase*9,tail=snap?103+phase*5:108-phase*3;
+    const stagger=side*(beat%2?1:-1)*3;
+    const at=(x,y)=>[side*x,-25+vertical*(y+25+(snap?phase*7:0))+stagger];
+    poly([at(tip,-43),at(tip+18,-65),at(tail,-65),at(tail,-49),at(tip+25,-49),at(tip+9,-32)],shade);
+    poly([at(tip+4,-43),at(tip+20,-62),at(tail-3,-62),at(tail-3,-53),at(tip+23,-53),at(tip+9,-37)],body);
+    line(at(tip+12,-48),at(tip+22,-60),light,2);
+    line(at(tip+22,-60),at(tail-6,-60),light,2);
+    if(snap)poly([at(tip+4,-27),at(tip+22,-35),at(tip+29,-31),at(tip+11,-23)],body);
+  }
+  const flip=d.o===1;
+  s.blit(cell,Math.round(o.x/2)-(flip?cell.w-1-ox:ox),Math.round((o.y-70)/2)-oy,1,flip);
+}
 // Ovation's existing swaps alternate right/left, irrespective of the actor slot.
 // Broad imbued stones count toward the next clap; they are not collision shapes.
 function pxOvationRhythm(s,S) {
@@ -865,6 +894,7 @@ function pxWorldSurface(S,F=FX) {
   pxWebVolley(s,S);
   pxEffigyRite(s,S);
   pxShrineRhythm(s,S);
+  pxJceRhythm(s,S);
   pxOvationRhythm(s,S);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const f of S.f)if(f.gum>0){const o=S.f[1-f.i];s.line([o.x/2,o.y/2-40],[(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],'#d78bb7',2);s.line([(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],[f.x/2,f.y/2-40],'#d78bb7',2);}
