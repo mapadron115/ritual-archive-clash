@@ -20,6 +20,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Beam attacks have distinct pixel forms: shaded cannon pressure with moving ribs, three blood ribbons, and a fine compressed-air core with paired fins. Existing beam age controls their detail; attack timing and damage remain the same.
 - Lingering attraction has inward streams and a faceted dark core that disperses at the burst. Delayed cuts use contracting corner marks followed by crossed blades; the warning leaves the defender's center clear. Existing active ages select these phases.
 - The diving Maximum's landing warning has fixed outer posts, closing inner arrows and a descending center tip. It marks the locked destination through the existing countdown and clears on impact.
+- Rock's charge has an open mint cuff and three indicators for its existing strength thresholds. The cue holds during pauses and clears when charging ends, including after interruption.
 
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
@@ -32,6 +33,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/charge-cue.cjs` checks 75 charge ages, four strength tiers, hard alpha, exact mirrors, active-clock/snapshot parity, 180 fractional edge crops and disappearance after release/interruption. Forty-two actual release/whiff/hit/guard timelines cover both slots and threshold boundaries with unchanged tier damage, 210 freeze/time-stop holds, eight shock and six actual punch interruptions, and eight round resets. An output directory and prefix save phase, lifecycle and actual-input scene sheets. `--baseline --rules-only` checks committed combat/state behavior; `--baseline --preview-only` exports the old cue; `--preview-only --timing` samples world-only CPU cost. These are script/raster checks, not human play or browser motion.
 
 `node tests/landing-warning.cjs` checks all 26 landing-warning ages, six countdown stages, fixed outer posts, symmetry, hard alpha, materials, clear upper-body space, 180 fractional/edge crops, snapshots and expiry. Ten real Maximum timelines cover standing, running after lock, guarding, vertical jumping and swapping in both slots, with 60 freeze holds, exact tick-46 impact and identical simulation outcomes. Existing late run/jump contacts and successful swap escape remain unchanged; this is not a balance judgment. An output directory and prefix save phases and actual-input composites. `--baseline --rules-only` checks committed combat behavior; `--baseline --preview-only` exports the prior warning; `--preview-only --timing` samples world-only CPU cost. No human play or browser motion claim.
 

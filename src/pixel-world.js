@@ -215,6 +215,35 @@ function pxStatusEffect(s,S,f,kind) {
   }
   s.blit(cell,Math.round(f.x/2)-(f.face<0?63:64),Math.round(f.y/2)-120,1,f.face<0);
 }
+// The charge value survives release/hits in simulation. Only the held Rock
+// startup shows this cue; never imply an idle or interrupted fighter is charging.
+function pxChargeCue(s,f) {
+  if(f.st!=='atk'||!(f.chg>0))return;
+  const m=moveDef(f);
+  if(!m||m.id!=='rock'||f.mt>=m.su-1)return;
+  const cell=new PixelSurface(96,96),x=48+14,y=90-45;
+  const tier=Math.min(3,Math.floor(f.chg/25)),phase=Math.floor(f.chg/5)%4;
+  // An open faceted cuff leaves the fist visible; three fixed lamps mark the
+  // existing 25/50/75 strength thresholds without inventing a new meter/clock.
+  cell.poly([[x-11,y-5],[x-5,y-11],[x+6,y-11],[x+12,y-5],[x+12,y+5],[x+5,y+11],[x-5,y+11],[x-11,y+5]],'#39765f',PX_INK);
+  cell.poly([[x-8,y-4],[x-4,y-8],[x+4,y-8],[x+9,y-4],[x+9,y+4],[x+4,y+8],[x-4,y+8],[x-8,y+4]],'#9bd7ae');
+  cell.poly([[x-6,y-3],[x-3,y-6],[x+3,y-6],[x+6,y-3],[x+6,y+3],[x+3,y+6],[x-3,y+6],[x-6,y+3]],'#39765f');
+  // Clear the center to reveal the existing hand, rather than covering it.
+  for(let cy=y-5;cy<=y+5;cy++)for(let cx=x-5;cx<=x+5;cx++)if(Math.abs(cx-x)+Math.abs(cy-y)<=7)cell.data.fill(0,(cy*cell.w+cx)*4,(cy*cell.w+cx)*4+4);
+  cell.line([x-8,y-5],[x-4,y-9],'#e0f1cf',2);cell.line([x-3,y-9],[x+4,y-9],'#e0f1cf');
+  for(let n=0;n<3;n++) {
+    const py=y-11+n*10;
+    cell.rect(x+16,py-3,8,7,PX_INK);cell.rect(x+17,py-2,6,5,'#39765f');
+    if(tier>n){cell.rect(x+18,py-1,4,3,'#9bd7ae');cell.rect(x+19,py,2,1,'#e0f1cf');}
+  }
+  // Two restrained inward motes advance with held charge, and hold in pauses.
+  const gap=7-phase*2;
+  for(const dir of [-1,1]) {
+    cell.rect(x-4+phase*2,y+dir*(12+gap)-1,4,3,PX_INK);
+    cell.rect(x-3+phase*2,y+dir*(12+gap),2,1,'#e0f1cf');
+  }
+  s.blit(cell,Math.round(f.x/2)-(f.face<0?47:48),Math.round(f.y/2)-90,1,f.face<0);
+}
 function pxPaintFighter(s,S,f,impact) {
   const x=Math.round(f.x/2),y=Math.round(f.y/2),scale=f.big>0?1.3:1,alt=f.i===1&&S.f[0].ch===f.ch;
   if(!impact)s.ellipse(x,307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
@@ -228,7 +257,7 @@ function pxPaintFighter(s,S,f,impact) {
   else if(f.counter>0)pxStatusEffect(s,S,f,'counter');
   if(f.st==='stun')for(let n=0;n<3;n++){const a=S.t*.12+n*2.1;pxBurst(s,x+Math.cos(a)*14,y-97+Math.sin(a)*3,3,'#eed790');}
   if(f.nails>0)for(let n=0;n<f.nails;n++)s.line([x-5+n*6,y-43+n%2*5],[x-2+n*6,y-50+n%2*5],'#e8d7bc',2);
-  if(f.chg>0){pxRing(s,x+f.face*14,y-45,9+Math.floor(f.chg/25)*3,9,'#d8ecb0',2,Math.floor(S.t/4));}
+  pxChargeCue(s,f);
 }
 // Beam families use only the serialized zone's active age/material. Clip columns
 // before painting, including the wide Maximum cones; no animation state/cache.
