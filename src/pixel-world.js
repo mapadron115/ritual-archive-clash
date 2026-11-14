@@ -215,13 +215,74 @@ function pxBeam(s,z) {
     }
   }
 }
+// Lingering effects use their existing active age, including the exact simulation
+// detonation ages. No event history, global clock, cache or new match fields.
+function pxLingeringZone(s,z,paint) {
+  // Rasterize at one integer origin before clipping. Floating polygon/line math
+  // must not change a boundary pixel when a snapshot moves across a screen edge.
+  const cell=new PixelSurface(168,168);paint(cell,{...z,x:168,y:168});
+  s.blit(cell,Math.round(z.x/2)-84,Math.round(z.y/2)-84);
+}
+function pxAttraction(s,z) {
+  const x=Math.round(z.x/2),y=Math.round(z.y/2),t=Math.max(0,z.t||0);
+  if(t<48) {
+    // Three inward-moving hooked streams disappear behind a faceted dark well.
+    for(let n=0;n<3;n++) {
+      const r=80-(t*2+n*22)%66,points=[];
+      for(let i=0;i<8;i++) {
+        const a=n*Math.PI*2/3+i*.18,rr=Math.max(8,r-i*2);
+        points.push([x+Math.cos(a)*rr,y+Math.sin(a)*rr*.8]);
+      }
+      for(const [col,width]of [[PX_INK,4],['#3869a9',3],['#87c9e7',1]])
+        for(let i=1;i<points.length;i++)s.line(points[i-1],points[i],col,width);
+    }
+    const r=17-Math.max(0,t-40),oct=[[0,-1],[.7,-.7],[1,0],[.7,.7],[0,1],[-.7,.7],[-1,0],[-.7,-.7]];
+    s.poly(oct.map(([a,b])=>[x+a*r,y+b*r]),'#214477',PX_INK);
+    s.poly([[x-r+2,y],[x-r*.6,y-r*.6],[x,y-r+2],[x+r*.6,y-r*.6],[x,y-2]],'#87c9e7');
+    s.poly([[x-r+2,y],[x,y-2],[x+r-2,y],[x,y+r-2]],'#3869a9');
+    s.poly([[x,y-r*.5],[x+r*.35,y],[x,y+r*.5],[x-r*.35,y]],PX_INK);
+  } else {
+    // The pull is spent at tick 48: open the core and disperse six shaded shards.
+    const age=t-48,r=18+age*2,len=Math.max(3,9-Math.floor(age/2));
+    for(let n=0;n<6;n++) {
+      const a=n*Math.PI/3,c=Math.cos(a),d=Math.sin(a),cx=x+c*r,cy=y+d*r*.8;
+      const point=(u,v)=>[cx+c*u-d*v,cy+d*u*.8+c*v];
+      s.poly([point(-len,0),point(0,-3),point(len,0),point(0,3)],'#3869a9',PX_INK);
+      s.line(point(-len+2,0),point(len-2,0),'#87c9e7');
+    }
+  }
+}
+function pxCutMark(s,z) {
+  const x=Math.round(z.x/2),y=Math.round(z.y/2),t=Math.max(0,z.t||0);
+  if(t<z.delay) {
+    // Four contracting corners frame the place being cut, leaving its body clear.
+    const r=Math.round(z.r/2*(1.4-.4*t/z.delay)),corner=Math.round(r*.72);
+    for(const a of [-1,1])for(const b of [-1,1]) {
+      const points=[[x+a*(corner-10),y+b*corner],[x+a*corner,y+b*corner],[x+a*corner,y+b*(corner-10)]];
+      for(const [col,width]of [[PX_INK,4],['#9acfd5',2]])for(let i=1;i<points.length;i++)s.line(points[i-1],points[i],col,width);
+      s.line([x+a*(corner-4),y+b*(corner+2)],[x+a*(corner+2),y+b*(corner-4)],'#477d8d');
+    }
+  } else {
+    // Crossed cut planes replace the generic star. They shrink through the tail.
+    const age=t-z.delay,r=Math.max(7,Math.round(z.r/2*(1-age/(z.dur-z.delay))));
+    for(const face of [-1,1]) {
+      const p=(u,v)=>[x+u,y+face*u*.66+v];
+      s.poly([p(-r,0),p(-r*.2,-3),p(r,0),p(r*.2,3)],'#477d8d',PX_INK);
+      s.line(p(-r+3,0),p(r-3,0),'#c7e9de');
+    }
+    if(age<8)for(const a of [-1,1])for(const b of [-1,1]) {
+      const u=12+age*2;s.line([x+a*u,y+b*(u-5)],[x+a*(u+4),y+b*u],PX_INK,3);
+      s.line([x+a*u,y+b*(u-5)],[x+a*(u+4),y+b*u],'#9acfd5');
+    }
+  }
+}
 function pxZone(s,S,z) {
   const x=z.x/2,y=z.y/2,t=z.t;
-  if(z.k==='blue') {for(let n=0;n<3;n++){const r=(80-(t*3+n*25)%80);pxRing(s,x,y,r,r*.8,'#7fb7da',1,n*3);}s.ellipse(x,y,17,17,'#3869a9');s.ellipse(x-3,y-3,10,10,'#87c9e7');s.ellipse(x-4,y-4,4,4,PX_LIGHT);}
+  if(z.k==='blue')pxLingeringZone(s,z,pxAttraction);
   if(z.k==='beam')pxBeam(s,z);
   if(z.k==='pebble')pxProjectile(s,{k:'stone',x:z.x,y:z.y,r:7,vx:0,vy:0,t});
   if(z.k==='tongue')pxToad(s,z);
-  if(z.k==='mark') {const r=z.r/2*(1.4-.4*t/z.delay);if(t<z.delay){pxRing(s,x,y,r,r,'#9acfd5',1,Math.floor(t/3));s.line([x-5,y],[x+5,y],'#9acfd5');s.line([x,y-5],[x,y+5],'#9acfd5');}else pxBurst(s,x,y,z.r/2,'#c7e9de',t);}
+  if(z.k==='mark')pxLingeringZone(s,z,pxCutMark);
   if(z.k==='trap') {s.line([x,306],[x+3,293],PX_INK,3);s.line([x,306],[x+3,293],'#c1c1b0');s.rect(x,291,6,3,'#d8ad78');}
   if(z.k==='target') {pxRing(s,x,306,z.r/2,8,t%6<3?'#df985f':'#f0d19b',2);s.line([x-6,306],[x+6,306],PX_LIGHT);}
 }

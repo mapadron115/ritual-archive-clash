@@ -18,6 +18,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Projectile bodies have distinct pixel shapes: pressure bands, curling flame, a hooked wheel, folded fan, brass shot, elastic knot, knife and nail. Active projectile age animates the energy shapes; impact pauses and time stops hold their frames.
 - Stage atmosphere uses sixteen discrete phases over 128 ticks: clouds ease through a wind loop, rain continues forward across the reset, and the observatory pointer turns in smaller steps. Stonework and the fighting floor remain still. Stage scenery retains its existing global clock during impact/cinematic pauses.
 - Beam attacks have distinct pixel forms: shaded cannon pressure with moving ribs, three blood ribbons, and a fine compressed-air core with paired fins. Existing beam age controls their detail; attack timing and damage remain the same.
+- Lingering attraction has inward streams and a faceted dark core that disperses at the burst. Delayed cuts use contracting corner marks followed by crossed blades; the warning leaves the defender's center clear. Existing active ages select these phases.
 
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
@@ -30,6 +31,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/zones.cjs` checks all 94 attraction/cut ages, hard alpha, material colors, clear warning centers, exact detonation boundaries, spent-core disappearance, edge/fractional-position clipping and snapshots. Eight actual input timelines cover contact and escape from both slots, pull behavior, expiry, freeze holds and identical simulation outcomes. Existing zones still advance during time stop. An output directory and optional prefix save phase and actual-input scene sheets; `--baseline --preview-only` audits HEAD, and `--preview-only --timing` samples world-only CPU raster cost. These are script/raster checks, not browser motion or human play.
 
 `node tests/beams.cjs` checks 184 hard-alpha beam frames, exact facing mirrors, three distinct material silhouettes, active-age detail, ten real art/Maximum input timelines across both slots, contact/expiry, snapshots, read-only drawing, freezes and unchanged simulation outcomes. Existing beam zones continue during time stop. An output directory and optional prefix save body and stage composites; `--baseline --preview-only` audits HEAD's renderer. `--preview-only --timing` samples world-only CPU raster cost, excluding browser display, HUD, audio and input. These are script/raster checks, not human play or observed motion.
 
