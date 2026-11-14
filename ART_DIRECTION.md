@@ -2,6 +2,8 @@
 
 Owner choice passed on by coordinator 2026-11-14: pixel art for the whole game.
 
+Second-punch return (v33): withdraw the far fist for three recovery ticks, fold that elbow for three, then rebuild guard for three. Keep the near hand forward and both soles at their contact positions. Three new cells bring each build/costume to 134; their calf contours end inside the boots. Only p2 selects them; shared punch-shaped arts and Maximums keep their prior return. Preserve all four startup, three active and nine recovery ticks, with immediate third-press chaining from every recovery tick. No simulation state, timing or combat changes.
+
 First punch (v32): withdraw the fist for three recovery ticks, fold the elbow for two, then raise guard for three. Both soles stay at the contact stance's positions through recovery; thick calf contours fit inside the new return boots. Three new cells bring each build/costume to 131. Select these cells only for p1, leaving shared punch-shaped arts and Maximums intact. Preserve all four startup, three active and eight recovery ticks, including the immediate second-press chain from every recovery tick. No new simulation state, control delay or combat changes.
 
 Ground kick (v31): after the existing extension, retract for four recovery ticks, fold the shin behind the raised knee for four, lower the boot for four, then plant it and rebuild guard for four. Three new cells bring each build/costume to 128. The rear sole stays at the same point through recovery; calf contours fit inside the boots for every build. Only the basic grounded kick selects the new return. Preserve its ten startup, four active and sixteen recovery ticks; air kicks and arts keep their sequences. No new simulation state or combat changes.
