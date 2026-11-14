@@ -365,18 +365,21 @@ function pxFighterShadow(s,f) {
   const scale=f.big>0?1.3:1;
   s.ellipse(Math.round(f.x/2),307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
 }
-// The two opening punches travel straight through the arm lane. Their short
-// tapered wakes end beneath the fist and share the existing three active ticks.
+// Confine the opening punches' wakes to the elbow-to-fist lane. The muted
+// material stays below the fist's value; the existing active ticks are the clock.
 function pxStraightPunchWake(s,f) {
   if(f.st!=='atk'||(f.move!=='p1'&&f.move!=='p2'))return;
   const move=BASIC[f.move];if(f.mt<move.su||f.mt>=move.su+move.ac)return;
-  const age=f.mt-move.su,h=PX_KITS[f.ch].height||1,scale=f.big>0?1.3:1;
-  const cell=new PixelSurface(144,128),x=64,y=120,tail=age*6,cross=f.move==='p2';
-  const poly=(pts,col)=>cell.poly(pts.map(([a,b])=>[x+a,y+(b+(cross?(a-53)*.16:0))*h]),col);
-  poly([[-31+tail,-55],[-7+tail*.4,-69],[36,-76],[54,-70],[58,-63],[52,-54],[24,-46],[-20+tail,-44],[2+tail*.5,-57]],PX_INK);
-  poly([[-25+tail,-55],[-5+tail*.4,-66],[36,-73],[52,-68],[55,-63],[50,-57],[24,-49],[-12+tail,-47],[8+tail*.5,-58]],'#a7aaa5');
-  poly([[-14+tail,-57],[4+tail*.4,-64],[37,-71],[50,-67],[45,-65],[17,-61]],'#f1e5cd');
-  poly([[-6+tail,-49],[25,-51],[48,-58],[51,-61],[46,-56],[24,-48]],'#f1e5cd');
+  const age=f.mt-move.su,kit=PX_KITS[f.ch],h=kit.height||1,scale=f.big>0?1.3:1;
+  const cross=f.move==='p2',pose=PX_POSES[cross?'punch2':'punch'],[elbow,hand]=cross?pose.b:pose.a;
+  const cell=new PixelSurface(144,128),start=elbow[0]+age*.5,end=hand[0]-6;
+  const fist=pxRGB(kit.skin[cross?(kit.limbDetail?1:0):2]);
+  const value=Math.min(165,(fist[0]*.2126+fist[1]*.7152+fist[2]*.0722)*.85);
+  const tone=factor=>'rgb('+[value*factor-5,value*factor,value*factor-2].map(Math.round).join(',')+')';
+  const poly=(pts,col)=>cell.poly(pts.map(([a,b])=>[64+a,120+(elbow[1]+(a-elbow[0])*(hand[1]-elbow[1])/(hand[0]-elbow[0])+b)*h]),col);
+  poly([[start,-4],[start+4,-7],[end,-4],[end,4],[start+5,10],[start,6]],PX_INK);
+  poly([[start+1,-3],[start+5,-5],[end-1,-3],[end-1,3],[start+5,8],[start+1,5]],tone(.76));
+  poly([[start+2,5],[start+5,7],[end-1,2],[start+6,9]],tone(1));
   s.blit(cell,Math.round(f.x/2)-(f.face<0?79:64)*scale,Math.round(f.y/2)-120*scale,scale,f.face<0);
 }
 // A brief boot wake connects the kick's low load to its high extension. It is

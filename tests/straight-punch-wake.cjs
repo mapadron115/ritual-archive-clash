@@ -33,7 +33,7 @@ for(let ch=0;ch<15;ch++)for(const owner of [0,1])for(const dir of [-1,1])for(con
         if(!previewOnly) {
           assert.equal(JSON.stringify(S),before,'renderer mutates punch');assert.deepEqual(frame.data,snap.data);rasters++;
           let visible=0;for(let p=0;p<frame.data.length;p+=4)if(!frame.data.subarray(p,p+4).every((v,k)=>v===old.data[p+k]))visible++;
-          if(active&&kind==='whiff'){assert(visible>=300,'straight punch lacks a native-size wake: '+[ch,owner,dir,f.move,f.mt,visible]);minVisible=Math.min(minVisible,visible);}
+          if(active&&kind==='whiff'){assert(visible>=8,'straight punch lacks an elbow-to-fist wake: '+[ch,owner,dir,f.move,f.mt,visible]);minVisible=Math.min(minVisible,visible);}
           if(!active)assert.deepEqual(frame.data,old.data,'wake leaked into windup/recovery');
           const body=new PixelSurface(640,360);
           for(const actor of S.f) {
@@ -62,11 +62,28 @@ if(!previewOnly) {
   for(let ch=0;ch<15;ch++)for(const big of [0,60])for(const move of ['p1','p2'])for(const age of [4,5,6]) {
     const f=newFighter(0,ch);Object.assign(f,{x:640,y:GROUND,st:'atk',move,mt:age,big});
     const a=new PixelSurface(640,360),b=new PixelSurface(640,360);pxStraightPunchWake(a,f);pxStraightPunchWake(b,{...f,face:-1});
+    // The cue belongs to the forearm, never the shoulder/head or ahead of the fist.
+    const h=PX_KITS[ch].height,scale=big?1.3:1,pose=PX_POSES[move==='p1'?'punch':'punch2'];
+    const [elbow,hand]=move==='p1'?pose.a:pose.b;
+    const sprite=pxSprite(ch,move==='p1'?'punch':'punch2'),luma=p=>p[0]*.2126+p[1]*.7152+p[2]*.0722;
+    let fistValue=0;
+    for(let y=Math.round(PX_OY+hand[1]*h)-4;y<=Math.round(PX_OY+hand[1]*h)+4;y++)for(let x=PX_OX+hand[0]-4;x<=PX_OX+hand[0]+4;x++) {
+      const pixel=sprite.data.subarray((y*sprite.w+x)*4,(y*sprite.w+x)*4+4);
+      if(pixel[3])fistValue=Math.max(fistValue,luma(pixel));
+    }
+    let top=360,bottom=0,area=0;
     for(let y=0;y<360;y++)for(let x=0;x<640;x++) {
       const p=(y*640+x)*4,q=(y*640+640-x)*4;
       if(x>0&&!big)for(let k=0;k<4;k++)assert.equal(a.data[p+k],b.data[q+k],'root reflection');
       if(a.data[p+3])assert(y<GROUND/2&&a.data[p+3]===255,'wake below floor or soft alpha');
+      if(a.data[p+3]) {
+        top=Math.min(top,y);bottom=Math.max(bottom,y);area++;
+        assert(x>=320+Math.floor(elbow[0]*scale)&&x<=320+Math.ceil((hand[0]-5)*scale),'wake leaves elbow-to-fist lane');
+        assert(y>=GROUND/2+Math.floor((elbow[1]-8)*h*scale),'wake rises toward head/face');
+        assert(luma(a.data.subarray(p,p+4))<fistValue,'wake is brighter than the fist');
+      }
     }
+    assert(area>0&&bottom-top+1<=Math.ceil(18*h*scale),'wake exceeds half-height envelope');
     for(const st of ['idle','hit','stun','down','ko','cast']){const s=new PixelSurface(144,128);pxStraightPunchWake(s,{...f,x:128,y:240,st});assert(s.data.every(v=>v===0));}
   }
   const S=newMatch(14,14,947);S.phase='fight';S.t=120;
@@ -86,6 +103,6 @@ if(!previewOnly) {
     assert.deepEqual(actual.data,reference.data,'wake spoils the existing impact silhouette');
   }
   S.f[0].inv=5;assert.deepEqual(pxWorldSurface(S,{}).data,oldFrame(S).data,'wake survives an invisible recovery blink');
-  console.log('PASS',timelines,'real two-punch whiff/hit/block chains;',ticks,'parallel-state ticks;',rasters,'native frames/snapshots;',holds,'freeze holds;',contacts,'contacts; minimum visible wake',minVisible,'pixels; unchanged windup/recovery and both bodies, reflections, giant bounds, hard alpha/floor bounds, 20 edge crops and interruption cleanup');
+  console.log('PASS',timelines,'real two-punch whiff/hit/block chains;',ticks,'parallel-state ticks;',rasters,'native frames/snapshots;',holds,'freeze holds;',contacts,'contacts; minimum visible wake',minVisible,'pixels; half-height elbow-to-fist bounds, fist brighter than wake, unchanged windup/recovery and both bodies, reflections, giant bounds, hard alpha/floor bounds, 20 edge crops and interruption cleanup');
 }
 `)(assert,writePNG,output,prefix,previewOnly,oldFrame,previewCh);
