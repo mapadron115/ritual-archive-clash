@@ -12,7 +12,8 @@ function inspect(S) {
   let hud;try{hud=pxHUDSurface(S,labels,neutral);}finally{pxText=paint;}
   for(const f of S.f)if(f.st!=='ko') {
     const x=(f.i?373:52)+121;
-    assert(text.some(p=>p.x===x&&p.y===55&&p.t===(f.guardHp<35?'GUARD LOW':'GUARD '+Math.ceil(clamp(f.guardHp,0,100))+'%')),'guard has no readable fixed HUD label');
+    const locked=['hit','stun','down'].includes(f.st);
+    assert(text.some(p=>p.x===x&&p.y===55&&p.t===(locked?'GUARD LOCKED':f.guardHp<35?'GUARD LOW':'GUARD '+Math.ceil(clamp(f.guardHp,0,100))+'%')),'guard has no readable fixed HUD label');
     // Resources, setup, Zone and stop plaques must not paint over the meter.
     const only=new PixelSurface(640,360);pxGuardHUD(only,f,x);
     for(let y=53;y<73;y++)for(let xx=x-2;xx<x+82;xx++) {
