@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
 const writePNG=require('./png.cjs'),root=path.join(__dirname,'..'),ctx=vm.createContext({console,assert});
-vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-world','pixel-hud','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
+vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
 vm.runInContext(`
 const bg=pxStage();assert.equal(bg,pxStage());assert.equal(bg.sky.w,640);assert.equal(bg.sky.h,360);
 for(const layer of Object.values(bg)) for(let i=3;i<layer.data.length;i+=4) assert(layer.data[i]===0 || layer.data[i]===255);

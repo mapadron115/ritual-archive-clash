@@ -1,7 +1,7 @@
 // Actual move/state timelines, sprite origins and read-only animation selection. No human play claim.
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
 const writePNG=require('./png.cjs'),root=path.join(__dirname,'..'),ctx=vm.createContext({console,assert});
-vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-world','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
+vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
 vm.runInContext(`
 let timelines=0,groundFrames=0;
 for(let ch=0;ch<15;ch++) for(const move of [...Object.keys(BASIC),'a0','a1','a2']) {

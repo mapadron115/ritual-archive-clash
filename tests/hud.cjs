@@ -1,7 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
 const writePNG=require('./png.cjs'),root=path.join(__dirname,'..');
 const ctx=vm.createContext({console,assert,setTimeout,requestAnimationFrame(){},addEventListener(){},window:{},document:{getElementById(){return {getContext(){return {};}};},querySelectorAll(){return [];}}});
-vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-world','pixel-hud','ai','render','main'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
+vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','ai','render','main'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
 vm.runInContext(`
 let checked=0;
 for(let ch=0;ch<15;ch++)for(const mode of ['ai','local','watch','host','guest']) {

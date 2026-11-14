@@ -30,7 +30,7 @@ const context=vm.createContext({console,assert,document,window:{},setTimeout(){}
 context.events=events;
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,10);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,11);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 vm.runInContext(`
 assert.equal($('title').style.display,'flex');
@@ -38,7 +38,10 @@ pickMode('ai');assert.equal($('col0').children.length,15);assert.equal($('col1')
 assert.equal($('stageChoices').children.length,3);
 $('stageChoices').children[1].onclick();assert.equal(G.stage,'gallery');assert.equal($('stageChoices').children[1].attributes['aria-pressed'],'true');
 assert($('selBasics').innerHTML.includes('Black Flash'));
-startFight();for(let n=0;n<101;n++){step(G.S,[0,0]);G.S.ev.length=0;}
+startFight();
+for(const f of G.S.f){assert(PX_DOMAIN_BACKDROPS.has(CH[f.ch].dom.kind),'selected Domain was not prewarmed');assert.equal(f.domUsed,0);}
+assert.equal(G.S.dom,null);
+for(let n=0;n<101;n++){step(G.S,[0,0]);G.S.ev.length=0;}
 assert.equal(G.S.stage,'gallery');
 frame(17);frame(34);
 const key=code=>({code,repeat:false,preventDefault(){}});

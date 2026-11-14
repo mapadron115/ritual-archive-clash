@@ -1,7 +1,7 @@
 // Velocity-aligned, age/lifetime phased projectile wakes. No simulation history or new state.
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
 const root=path.join(__dirname,'..'),writePNG=require('./png.cjs'),ctx=vm.createContext({console,assert});
-vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-world','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
+vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
 vm.runInContext(`
 const kinds=['cut','knife','nail','wave','stone','shell','pellet','red','flame','orb','gum'];let frames=0;
 const count=s=>{let n=0;for(let i=3;i<s.data.length;i+=4)if(s.data[i])n++;return n;};

@@ -1,7 +1,7 @@
 // Remaining cast families: actual effect ticks, frozen clocks and flat silhouettes.
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
 const root=path.join(__dirname,'..'),writePNG=require('./png.cjs'),ctx=vm.createContext({console,assert});
-vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-world','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
+vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
 vm.runInContext(`
 const words=new Set(['dontmove','blastaway','crushed']);let silhouettes=0,timelines=0;
 const overlap=(a,b)=>{let common=0,union=0;for(let i=3;i<a.data.length;i+=4){common+=!!a.data[i]&&!!b.data[i];union+=!!a.data[i]||!!b.data[i];}return common/union;};

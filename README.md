@@ -18,9 +18,13 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Code
 
-`src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
+`src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/domain-backdrops.cjs` checks fifteen distinct layered three-tone Domain/Maximum spaces, eight hard-alpha motion phases, unchanged stage floors, freeze/snapshot stability, bounded caches and actual input-driven timelines across all stages. Add an output directory for all-fifteen and detail scene previews. Selected spaces are cached before a round starts. Domain scenery follows the active Domain clock.
+
+`node tests/guard-animation.cjs` checks actual block, guard-break and shock timelines for both player slots, distinct recoil/recovery silhouettes across all builds, repeated contacts, freeze/time-stop holds, snapshots and unchanged simulation. Add an output directory for phase, silhouette and actual-contact scene previews.
 
 `node tests/domain-animation.cjs` checks all fifteen input-driven Domain/Maximum timelines in both player slots, cinematic countdown poses, actual release ticks, held casts, interruption/clash/expiry, snapshots and unchanged simulation. Add an output directory for phase, silhouette and actual-timeline scene previews.
 

@@ -1,7 +1,7 @@
 // Domain presentation sampled from actual input-driven casts, not invented move clocks.
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
 const root=path.join(__dirname,'..'),writePNG=require('./png.cjs'),ctx=vm.createContext({console,assert});
-vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-world','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
+vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
 vm.runInContext(`
 const samples=new Map();let timelines=0,events=0,effects=0,silhouettes=0;
 const save=(key,S,owner)=>{if(!samples.has(key))samples.set(key,{S:JSON.parse(JSON.stringify(S)),owner});};
