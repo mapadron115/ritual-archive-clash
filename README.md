@@ -29,6 +29,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Standing Ovation's broad gold stones brighten on the next swap's side; paired brackets close before each later clap and recoil afterward. The first hit stays immediate.
 - Shrine's four rose cut planes close and brighten around the foe before each existing hit, then split and recoil. They leave the fighter's center clear and show the cut rhythm, not collision boundaries.
 
+- Repeated damage values on the same target use separate rows with a clear gap; each hit keeps its own value and color.
+
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
 - Arts cost Cursed Energy, which refills by itself and faster when you land blows.
@@ -40,6 +42,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/damage-stacks.cjs` checks 18 real Shrine/Web/Judgement Cut End timelines across three stages/both owners, 11,700 snapshot/read-only layouts, every separate damage value and 114 native body/HUD/glyph composites. Same-target values occupy separate rows with four-pixel gaps; hit counts, full damage, expiry, trades, swap grouping and legacy FX snapshots are checked. An optional output directory/prefix exports native scenes and lifecycle sheets; `--baseline` compares the committed presentation without enforcing the new row rule. These are script/raster checks, not play or motion assessment.
 
 `node tests/jce-rhythm.cjs` checks all 73 ages, broad closing/value phases, hard alpha/materials, clear face/body/HUD lanes, root reflection, snapshots, 66 actual-event native composites (minimum 460 visible bright pixels) and 60 fractional/edge crops. Six actual front/guard/jump input timelines preserve all seven tick-8..56 cuts and damage (224 unguarded/jumping, 89.6 guarded), with 372 cinematic/impact/global freeze holds, Domain clash/reset and existing time-stop advancement. Optional output directory/prefix exports 96 native scenes and six lifecycle sheets; `--baseline --rules-only` checks committed combat and `--baseline --preview-only` exports the prior presentation. Script/raster evidence is not play or observed motion.
 

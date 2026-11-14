@@ -25,7 +25,7 @@ function fxEvent(S, e) {
       const big = e.a > 70; contact(S,e,'hit');
       if (e.a >= 4) {
         const target=S.f.reduce((best,f)=>Math.abs(f.x-e.x)<Math.abs(best.x-e.x)?f:best);
-        FX.nums.push({x:e.x,y:pxActorAnchor(target).y*2-12,dir:e.b<0?-1:1,txt:Math.round(e.a),t:0,life:40,big});
+        FX.nums.push({x:e.x,y:pxActorAnchor(target).y*2-12,target:target.i,dir:e.b<0?-1:1,txt:Math.round(e.a),t:0,life:40,big});
       }
       if (e.a >= 110) FX.impact = { t: 0, sil: 3, kind: 'white' };   // the heaviest blows get an impact frame
       FX.shake = Math.max(FX.shake, Math.min(16, 3 + e.a / 10)); break;

@@ -113,6 +113,7 @@ function pxBodyBounds(S,f) {
   return {x:Math.floor(x+(f.face<0?ox-r:l-ox)*scale)-2,y:Math.floor(y+(t-oy)*scale)-2,w:Math.ceil((r-l+1)*scale)+4,h:Math.ceil((b-t+1)*scale)+4};
 }
 // Keep damage values near their contact, but out of bodies, actor tags and banners.
+// Each target's live values occupy separate rows, newest nearest the contact.
 // All placement is presentation-only and repeatable from the same state/effect snapshot.
 function pxDamageLayout(S,nums,F={}) {
   if(!nums.length)return [];
@@ -124,6 +125,9 @@ function pxDamageLayout(S,nums,F={}) {
   const overlap=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));
   const out=[];
   for(const n of nums.slice().reverse()) {
+    // Old effect snapshots have no target; retain their nearest-contact fallback.
+    const target=n.target??S.f.reduce((best,f)=>Math.abs(f.x-n.x)<Math.abs(best.x-n.x)?f:best).i;
+    const rows=out.filter(p=>p.target===target).map(p=>({x:0,y:p.y-4,w:640,h:p.h+8}));
     const size=n.bf?3:2,w=pxTextWidth(n.txt,size)+2,h=7*size+2,dir=n.dir<0?-1:1;
     const x=Math.round(n.x/2+dir*26-w/2),y=Math.round(n.y/2-h);
     let best=null,score=Infinity;
@@ -131,12 +135,12 @@ function pxDamageLayout(S,nums,F={}) {
     search: for(let radius=0;radius<=32;radius++) {
       for(let dx=-radius;dx<=radius;dx++)for(const dy of radius===Math.abs(dx)?[0]:[-(radius-Math.abs(dx)),radius-Math.abs(dx)]) {
         const box={x:clamp(x+dir*dx*(w+4),4,636-w),y:clamp(y+dy*(h+4),96,302-h),w,h};
-        const area=blocked.reduce((sum,b)=>sum+overlap(box,b),0);
+        const area=blocked.concat(rows).reduce((sum,b)=>sum+overlap(box,b),0);
         if(area<score){score=area;best=box;}
         if(score===0)break search;
       }
     }
-    blocked.push(best);out.push({...best,n,size});
+    blocked.push(best);out.push({...best,n,size,target});
   }
   return out.reverse();
 }
