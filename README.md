@@ -22,6 +22,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Script checks
 
+`node tests/air-attacks.cjs` checks actual early/crest/late airborne punch and kick inputs, slowed jumps, real hit/block contacts in both slots, distinct suspended wind-up/recovery silhouettes, floor clearance, freezes, interruptions, snapshots and unchanged outcomes. Add an output directory for phase, silhouette and actual-input scene previews.
+
 `node tests/jump-animation.cjs` checks actual straight/directional jumps under ordinary and Domain-slowed motion, distinct ascent/crest/descent/approach silhouettes, floor clearance, attack/hit interruptions, freezes, snapshots and unchanged outcomes. Add an output directory for phase, silhouette and actual-jump scene previews.
 
 `node tests/victory.cjs` checks knockout, timeout and airborne-winner timelines in both slots, grounded victory phases, recovery eligibility, ties, freezes, snapshots and unchanged outcomes. Add an output directory for phase, silhouette and actual-round previews.

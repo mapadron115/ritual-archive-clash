@@ -53,7 +53,7 @@ for(let ch=0;ch<15;ch++)for(let owner=0;owner<2;owner++)for(const kind of ['punc
   assert.equal(pxPose(S,f),'jumpcrest');
   if(kind==='punch'||kind==='kick') {
     const key=kind==='punch'?BTN.P:BTN.K;step(S,owner?[0,key]:[key,0]);assert.equal(f.st,'atk');assert.equal(f.move,kind==='punch'?'jp':'jk');
-    assert.equal(pxPose(S,f),kind==='punch'?'jump':'kickw');
+    assert.equal(pxPose(S,f),kind==='punch'?'jpunchw':'jkickw');
   } else {
     if(kind==='ko')f.hp=1;
     hit(S,1-owner,f,o.x,{dmg:10,kb:3,lift:7});assert.equal(f.st,kind==='ko'?'ko':'hit');assert.equal(pxPose(S,f),pxAirHitPose(f));
