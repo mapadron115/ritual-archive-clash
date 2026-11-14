@@ -33,8 +33,8 @@ function pxHUDSurface(S,labels,F=FX) {
     const fill=(fraction,col,y,h,w=bw,xx=x)=>{const len=Math.round(w*clamp(fraction,0,1));s.rect(left?xx+w-len:xx,y,len,h,col);};
     fill(f.ghost/maxHp(f),'#c4756d',25,12);fill(f.hp/maxHp(f),f.hp<=maxHp(f)*DOM_HP?'#e6b26d':'#87bc94',25,12);
     fill(f.hp/maxHp(f),'#b8d4ad',25,2);s.rect(left?x+bw-bw*DOM_HP:x+bw*DOM_HP,25,1,12,PX_INK);
-    const cx=left?x+bw-125:x;pxPanel(s,cx,44,125,5,'#343748','#596679');fill(f.ce/MAXCE,ac,44,5,125,cx);
-    const ce='CE '+Math.floor(f.ce);pxText(s,ce,left?cx-pxTextWidth(ce)-6:cx+132,43,ac);
+    const cx=left?x+bw-113:x;pxPanel(s,cx,44,113,5,'#343748','#596679');fill(f.ce/MAXCE,ac,44,5,113,cx);
+    const ce='CE '+Math.floor(f.ce)+'/'+MAXCE;pxText(s,ce,left?cx-pxTextWidth(ce)-6:cx+120,43,ac);
     for(let n=0;n<2;n++){const rx=left?x+6+n*14:x+bw-6-n*14;s.poly([[rx,42],[rx+4,46],[rx,50],[rx-4,46]],S.wins[i]>n?'#edcf8d':'#4b5166',PX_INK);}
     const px=left?10:594;pxPanel(s,px,9,36,36,'#263346',ac);s.blit(pxPortrait(f.ch,alt),px,9,1,!left);s.rect(px,44,36,1,ac);
     let sy=55;
@@ -48,20 +48,24 @@ function pxHUDSurface(S,labels,F=FX) {
       s.rect(tx-tw/2-3,ty-2,tw+6,11,PX_INK);pxText(s,tag,tx-tw/2,ty,left?'#8ecddf':'#efa394');s.poly([[tx-3,ty+9],[tx+3,ty+9],[tx,ty+12]],left?'#8ecddf':'#efa394');
     }
     if(f.guardHp<99){const gx=f.x/2-15,gy=f.y/2+8;pxPanel(s,gx,gy,30,3,'#263346');s.rect(gx,gy,30*clamp(f.guardHp/100,0,1),3,f.guardHp<35?'#e99588':'#9bb8d0');}
-    const cardX=left?14:331,cy=322;
+    const cardX=left?14:331,cy=319,cardH=39;
     for(let n=0;n<4;n++) {
       const xx=cardX+n*72,dom=n===3,cw=dom?83:67,a=dom?c.dom:c.arts[n],ready=dom?domReady(f):f.cd[n]<=0&&f.ce>=a.cost,used=dom&&f.domUsed;
-      pxPanel(s,xx,cy,cw,32,dom&&ready?ac:ready?'#293a50':'#202c3d',ready?ac:'#475367');
-      if(F.nope&&F.nope[i]>0&&!ready){s.rect(xx,cy,cw,1,'#e99588');s.rect(xx,cy+31,cw,1,'#e99588');}
+      pxPanel(s,xx,cy,cw,cardH,dom&&ready?ac:ready?'#293a50':'#202c3d',ready?ac:'#475367');
+      if(F.nope&&F.nope[i]>0&&!ready){s.rect(xx,cy,cw,1,'#e99588');s.rect(xx,cy+cardH-1,cw,1,'#e99588');}
       const ink=dom&&ready?PX_INK:ready?PX_LIGHT:'#95a0af',key=lab?lab[dom?'DOM':'A'+(n+1)]:null;
       if(key){s.rect(xx+3,cy+21,10,9,PX_INK);pxText(s,key,xx+8-pxTextWidth(key)/2,cy+22,ready?PX_LIGHT:'#95a0af');}
       pxWrap(a.name,cw-8).forEach((line,j)=>pxText(s,line,xx+4,cy+3+j*8,ink));
-      const footer=dom?(used?'USED':ready?'READY!':'GAUGE/HP'):a.cost+' CE';pxText(s,footer,xx+(key?17:4),cy+23,dom&&ready?PX_INK:ready?ac:'#95a0af');
-      if(!dom&&f.cd[n]>0){const cd=(f.cd[n]/60).toFixed(1);pxText(s,cd,xx+cw-pxTextWidth(cd)-3,cy+23,PX_LIGHT);}
-      const ratio=dom?(used?0:f.gauge/GAUGE_MAX):1-f.cd[n]/a.cd;s.rect(xx+3,cy+30,cw-6,1,PX_INK);s.rect(xx+3,cy+30,(cw-6)*clamp(ratio,0,1),1,ac);
+      const type=dom?(a.maximum?'MAXIMUM':'DOMAIN'):null;
+      const footer=dom?type+(used||ready?'':' '+Math.floor(clamp(f.gauge/GAUGE_MAX,0,1)*100)+'%'):a.cost+' CE';
+      pxText(s,footer,xx+(key?17:4),cy+22,dom&&ready?PX_INK:ready?ac:'#b1bccb');
+      const status=dom?(used?'USED 1/1':ready?(f.hp<=maxHp(f)*DOM_HP?'HP READY':'FULL READY'):'OR 30% HP'):
+        f.cd[n]>0?'WAIT '+(Math.ceil(f.cd[n]/6)/10).toFixed(1)+'S':f.ce<a.cost?'NEED '+Math.ceil(a.cost-f.ce)+' CE':'CE READY';
+      pxText(s,status,xx+4,cy+30,dom&&ready?PX_INK:ready?PX_LIGHT:'#c4cbd4');
+      const ratio=dom?(used?0:f.gauge/GAUGE_MAX):1-f.cd[n]/a.cd;s.rect(xx+3,cy+cardH-1,cw-6,1,PX_INK);s.rect(xx+3,cy+cardH-1,(cw-6)*clamp(ratio,0,1),1,ac);
     }
-    const hint=lab?'MOVE '+lab.move.replace(/ /g,'')+'  JUMP '+lab.U+'  GUARD '+lab.G+'  P '+lab.P+'  K '+lab.K:(labels.other||'Computer');
-    pxOutlinedText(s,hint,cardX,310,'#e2d6bb');
+    const hint=lab?'MOVE '+lab.move.replace(/ /g,'')+'  JUMP '+lab.U+'  GUARD '+lab.G+'  PUNCH '+lab.P+'  KICK '+lab.K:(labels.other||'Computer');
+    pxOutlinedText(s,hint,cardX,309,'#e2d6bb');
   }
   pxPanel(s,299,19,42,29,'#243448','#b1a08a');const timer=String(Math.ceil(S.timer/60));pxText(s,timer,320-pxTextWidth(timer,2)/2,25,'#ecd3a0',2);
   const round='ROUND '+S.round;pxText(s,round,320-pxTextWidth(round)/2,53,PX_LIGHT);

@@ -32,9 +32,22 @@ function clearValues(S) {
   const before=JSON.stringify(S),effects=JSON.stringify(FX),layout=pxDamageLayout(S,FX.nums,FX);
   assert.equal(layout.length,FX.nums.length,'a damage value was hidden');
   assert.deepEqual(layout,pxDamageLayout(JSON.parse(before),JSON.parse(effects).nums,JSON.parse(effects)),'snapshot layout changed');
-  const bodies=new PixelSurface(640,360),hud=pxHUDSurface(S,labels());
+  const bodies=new PixelSurface(640,360),hud=pxHUDSurface(S,labels()),world=pxWorldSurface(S);
   for(const f of S.f)pxPaintFighter(bodies,S,f,null);
   for(const p of layout) {
+    assert.equal(p.size,p.n.bf?3:2,'normal damage must use the larger size');
+    const glyph=new PixelSurface(p.w,p.h);pxText(glyph,p.n.txt,1,1,PX_LIGHT,p.size);
+    const fill=pxRGB(p.n.bf?'#ff7585':p.n.big?'#ffe3a4':PX_LIGHT),edge=pxRGB(PX_INK);
+    // Check the final world raster, including every diagonal around a glyph.
+    for(let y=0;y<p.h;y++)for(let x=0;x<p.w;x++) {
+      let around=false;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++) {
+        const xx=x+dx,yy=y+dy;
+        if(xx>=0&&xx<p.w&&yy>=0&&yy<p.h&&glyph.data[(yy*p.w+xx)*4+3])around=true;
+      }
+      const at=(y*p.w+x)*4;
+      if(around)assert.deepEqual(Array.from(world.data.slice(((p.y+y)*640+p.x+x)*4,((p.y+y)*640+p.x+x)*4+4)),glyph.data[at+3]?fill:edge,'final value lacks its bright fill / full one-pixel outline');
+    }
     assert(p.x>=4&&p.x+p.w<=636&&p.y>=90&&p.y+p.h<=302,'value left the gameplay lane');
     for(let y=p.y;y<p.y+p.h;y++)for(let x=p.x;x<p.x+p.w;x++) {
       const at=(y*640+x)*4+3;
@@ -47,7 +60,7 @@ function clearValues(S) {
     for(const q of layout)if(p!==q)assert(p.x+p.w<=q.x||q.x+q.w<=p.x||p.y+p.h<=q.y||q.y+q.h<=p.y,'damage values overlap');
     values++;
   }
-  pxWorldSurface(S);assert.equal(JSON.stringify(S),before,'drawing mutated simulation');
+  assert.equal(JSON.stringify(S),before,'drawing mutated simulation');
   assert.equal(JSON.stringify(FX),effects,'drawing mutated effects');checks++;
 }
 for(let ch=0;ch<15;ch++)for(let owner=0;owner<2;owner++)for(const face of [-1,1])for(const kind of ['hit','block','break','heavy','blackflash']) {
@@ -105,4 +118,4 @@ for(const [n,kind,airAt]of [[0,'hit',0],[1,'block',0],[2,'blackflash',15],[3,'he
 console.log('PASS',timelines,'actual ground hit/block/break/kick/Black Flash timelines,',checks,'read-only layout/raster/snapshot checks,',values,'unhidden values clear of body/HUD pixels and each other; jumps, edges, giants, banners, trades, 60 actual KOs, expiry and identical outcomes');
 `)(assert,()=>{},{},{getElementById(){return {getContext(){return {};}};}});
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'v37-contact-audit.png'),globalThis.audit);
-if(process.argv[2])writePNG(path.join(process.argv[2],'v37-contact-expansion.png'),globalThis.followup);
+if(process.argv[2])writePNG(path.join(process.argv[2],(process.argv[3]?.match(/^(v\d+)-/)?.[1]||'preview')+'-contact-expansion.png'),globalThis.followup);

@@ -25,17 +25,17 @@ const low=pxWorldSurface(S);low.blit(pxHUDSurface(S,labels()),0,0);lowhealth.bli
 assert.equal(pxWrap('Worldbreaker',51).join(''),'WORLDBREAKER');
 globalThis.cards=[];
 for(let page=0;page<3;page++) {
-  const sheet=new PixelSurface(1280,550);sheet.rect(0,0,1280,550,PX_INK);
+  const sheet=new PixelSurface(1280,620);sheet.rect(0,0,1280,620,PX_INK);
   pxText(sheet,'ALL CARD LABELS / LOCAL CONTROLS / PAGE '+(page+1),16,12,PX_LIGHT,2);
   for(let row=0;row<5;row++) {
     const ch=page*5+row,T=newMatch(ch,ch,1000);G.mode='local';
     T.f[0].cd=[90,100,120];T.f[0].ce=50;T.f[1].gauge=GAUGE_MAX;
-    const hud=pxHUDSurface(T,labels()),strip=new PixelSurface(640,36);
-    for(let y=0;y<36;y++)strip.data.set(hud.data.subarray((320+y)*640*4,(321+y)*640*4),y*640*4);
-    pxText(sheet,CH[ch].name,16,42+row*100,PX_KITS[ch].accent,2);sheet.blit(strip,0,62+row*100,2);
+    const hud=pxHUDSurface(T,labels()),strip=new PixelSurface(640,43);
+    for(let y=0;y<43;y++)strip.data.set(hud.data.subarray((317+y)*640*4,(318+y)*640*4),y*640*4);
+    pxText(sheet,CH[ch].name,16,42+row*114,PX_KITS[ch].accent,2);sheet.blit(strip,0,62+row*114,2);
   }
   cards.push(sheet);
 }
 console.log('PASS',checked,'HUD states, all 60 complete names within two lines, mirrored portraits and status combinations');
 `,ctx);
-if(process.argv[2])ctx.cards.forEach((sheet,n)=>writePNG(path.join(process.argv[2],'v8-card-labels-'+(n+1)+'.png'),sheet));
+if(process.argv[2])ctx.cards.forEach((sheet,n)=>writePNG(path.join(process.argv[2],(process.argv[3]||'preview')+'-card-labels-'+(n+1)+'.png'),sheet));

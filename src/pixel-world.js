@@ -67,9 +67,12 @@ function pxContactShape(s,e) {
     });
   }
 }
-function pxOutlinedText(s,text,x,y,col,scale=1) {
-  for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]])pxText(s,text,Math.round(x)+dx,Math.round(y)+dy,PX_INK,scale);
+function pxOutlinedText(s,text,x,y,col,scale=1,full=false) {
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if((dx||dy)&&(full||!dx||!dy))pxText(s,text,Math.round(x)+dx,Math.round(y)+dy,PX_INK,scale);
   pxText(s,text,Math.round(x),Math.round(y),col,scale);
+}
+function pxDamageText(s,p) {
+  pxOutlinedText(s,p.n.txt,p.x+1,p.y+1,p.n.bf?'#ff7585':p.n.big?'#ffe3a4':PX_LIGHT,p.size,true);
 }
 function pxActorAnchor(f) {
   const tall=(-PX_IDLES[f.ch].h[1]+18)*(PX_KITS[f.ch].height||1)*(f.big>0?1.3:1);
@@ -103,7 +106,7 @@ function pxDamageLayout(S,nums,F={}) {
   const overlap=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));
   const out=[];
   for(const n of nums.slice().reverse()) {
-    const size=n.bf?3:n.big?2:1,w=pxTextWidth(n.txt,size)+2,h=7*size+2,dir=n.dir<0?-1:1;
+    const size=n.bf?3:2,w=pxTextWidth(n.txt,size)+2,h=7*size+2,dir=n.dir<0?-1:1;
     const x=Math.round(n.x/2+dir*26-w/2),y=Math.round(n.y/2-h);
     let best=null,score=Infinity;
     // Nearest free lane first. The outline is inside the reserved rectangle.
@@ -327,7 +330,7 @@ function pxWorldSurface(S,F=FX) {
   if(F.bf) {const b=F.bf,x=b.x/2,y=b.y/2;pxBurst(s,x,y,Math.max(5,65-b.t*2),'#ed5266',b.t);for(let n=0;n<6;n++){const a=n*Math.PI/3+Math.floor(b.t/3)*.2;pxBolt(s,[x,y],[x+Math.cos(a)*105,y+Math.sin(a)*75],n+Math.floor(b.t/3));}}
   if(S.stop&&S.stop.t>0) {s.rect(0,0,640,2,'#e5cc8f');s.rect(0,358,640,2,'#e5cc8f');s.rect(0,0,2,360,'#e5cc8f');s.rect(638,0,2,360,'#e5cc8f');}
   if(F.flash>.2&&!impact)for(let y=0;y<360;y+=4)for(let x=(y%8?0:2);x<640;x+=8)s.dot(x,y,F.flashCol||PX_LIGHT);
-  for(const p of pxDamageLayout(S,F.nums||[],F))pxOutlinedText(s,p.n.txt,p.x+1,p.y+1,p.n.bf?'#ed5266':p.n.big?'#eed49b':PX_LIGHT,p.size);
+  for(const p of pxDamageLayout(S,F.nums||[],F))pxDamageText(s,p);
   return s;
 }
 let PX_SCREEN=null,PX_SCREEN_IMAGE=null;
