@@ -2,7 +2,7 @@
 // Menus, input, the main loop, sound and online play.
 const $ = id => document.getElementById(id);
 const cv = $('cv'), ctx = cv.getContext('2d');
-const G = { S: null, mode: 'ai', pick: [0, 1], paused: false, running: false, keys: {}, taps: {}, acc: 0, last: 0, netEv: [], remoteIn: 0, remoteTap: 0, guestPick: -1, sendT: 0, slow: 0 };
+const G = { S: null, mode: 'ai', pick: [0, 1], stage: 'courtyard', paused: false, running: false, keys: {}, taps: {}, acc: 0, last: 0, netEv: [], remoteIn: 0, remoteTap: 0, guestPick: -1, sendT: 0, slow: 0 };
 
 const BIND = {
   solo: { L: ['KeyA'], R: ['KeyD'], U: ['KeyW'], G: ['KeyS'], P: ['KeyJ'], K: ['KeyK'], A1: ['KeyU'], A2: ['KeyI'], A3: ['KeyO'], DOM: ['KeyL'],
@@ -100,16 +100,26 @@ function buildSelect() {
     });
   }
   const lab = labels();
+  const stageChoices=$('stageChoices');stageChoices.innerHTML='';
+  for(const stage of PX_STAGES) {
+    const b=document.createElement('button');b.className='stageChoice'+(G.stage===stage.id?' on':'');
+    b.disabled=G.mode==='guest';b.setAttribute('aria-pressed',String(G.stage===stage.id));
+    const thumb=document.createElement('canvas');thumb.width=160;thumb.height=90;thumb.setAttribute('aria-hidden','true');
+    thumb.getContext('2d').imageSmoothingEnabled=false;thumb.getContext('2d').drawImage(pxCanvas(pxBackdrop(0,stage.id)),0,0,160,90);
+    b.innerHTML='<b>'+stage.name+'</b><span>'+stage.desc+'</span>';b.appendChild(thumb);
+    b.onclick=()=>{G.stage=stage.id;if(G.mode==='host')netSend({t:'stage',stage:G.stage});buildSelect();};stageChoices.appendChild(b);
+  }
   $('detail').innerHTML = moveList(G.pick[me], lab[me] || BIND.solo.lab);
   $('selBasics').innerHTML = G.mode === 'local' ? '<b>Player 1</b>' + basics(BIND.p1.lab) + '<b>Player 2</b>' + basics(BIND.p2.lab) : basics(BIND.solo.lab);
   $('start').style.display = G.mode === 'guest' ? 'none' : '';
-  $('selNote').textContent = G.mode === 'guest' ? 'The host starts the fight.' : '';
+  $('selNote').textContent = G.mode === 'guest' ? 'The host selects the stage and starts the fight.' : '';
 }
 function pickMode(m) { G.mode = m; show('select'); buildSelect(); }
 function startFight() {
   G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); FX.parts = []; FX.banner = null; FX.impact = null; FX.bf = null;
+  G.S.stage=pxStageId(G.stage);
   AI_MEM[0] = {}; AI_MEM[1] = {}; FX.rings = []; FX.shake = 0; FX.flash = 0; FX.nope = [0, 0]; FX.stars = []; FX.puffs = []; FX.nums = []; FX.lines = []; FX.words = []; FX.silent = false; G.paused = false; G.running = true; G.over = false; G.acc = 0; G.remoteIn = 0; G.remoteTap = 0; G.lastSent = -1; clearInput();
-  if (G.mode === 'host') netSend({ t: 'start', p: G.pick });
+  if (G.mode === 'host') netSend({ t: 'start', p: G.pick, stage: G.S.stage });
   show('none'); initAudio();
 }
 function togglePause() {
@@ -134,11 +144,12 @@ function loadPeer(cb) {
 }
 function netWire(conn, mode) {
   NET.conn = conn;
-  conn.on('open', () => { G.mode = mode; G.pick = [0, 1]; netSend({ t: 'pick', ch: G.pick[mode === 'guest' ? 1 : 0] }); show('select'); buildSelect(); });
+  conn.on('open', () => { G.mode = mode; G.pick = [0, 1]; netSend({ t: 'pick', ch: G.pick[mode === 'guest' ? 1 : 0] }); if(mode==='host')netSend({t:'stage',stage:G.stage});show('select'); buildSelect(); });
   conn.on('data', m => {
     if (m.t === 'pick') { G.pick[mode === 'guest' ? 0 : 1] = m.ch; if (!G.running) buildSelect(); }
     else if (m.t === 'in') { G.remoteIn = m.b & INPUT_MASK; G.remoteTap |= m.b >>> INPUT_SHIFT; }
-    else if (m.t === 'start') { G.pick = m.p; startFight(); }
+    else if (m.t === 'stage' && mode==='guest') { G.stage=pxStageId(m.stage);if(!G.running)buildSelect(); }
+    else if (m.t === 'start' && mode==='guest') { G.pick = m.p; G.stage=pxStageId(m.stage);startFight(); }
     else if (m.t === 'select') toSelect();
     else if (m.t === 's' && G.mode === 'guest') { G.S = m.s; for (const e of m.e) fxEvent(G.S, e); if (G.S.phase === 'over' && !G.over) endMatch(); if (G.S.phase !== 'over' && G.over) { G.over = false; show('none'); } }
   });
@@ -179,7 +190,7 @@ function frame(now) {
   if (!FX.lite && document.visibilityState === 'visible') { if (dt > 22 && dt < 70) { if (++G.slow > 180) FX.lite = true; } else if (dt <= 18) G.slow = Math.max(0, (G.slow || 0) - 2); }
   if (!G.running || !G.S) {   // a computer match plays behind the menus
     if (!G.demo || G.demo.phase === 'over') { const a = Math.random() * CH.length | 0; G.demo = newMatch(a, (a + 1 + (Math.random() * (CH.length - 1) | 0)) % CH.length, (Math.random() * 1e9) | 0); AI_MEM[0] = {}; AI_MEM[1] = {}; }
-    FX.silent = true; G.acc += dt; let n = 0;
+    G.demo.stage=G.stage;FX.silent = true; G.acc += dt; let n = 0;
     while (G.acc >= 1000 / TPS && n++ < 3) { G.acc -= 1000 / TPS; step(G.demo, [aiInput(G.demo, 0), aiInput(G.demo, 1)]); for (const e of G.demo.ev) fxEvent(G.demo, e); G.demo.ev.length = 0; fxTick(); }
     if (n > 3) G.acc = 0;
     FX.banner = null; drawWorld(ctx, G.demo); FX.silent = false;

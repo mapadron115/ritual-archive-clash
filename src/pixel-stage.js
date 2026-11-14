@@ -1,4 +1,10 @@
 'use strict';
+const PX_STAGES = [
+  {id:'courtyard',name:'Archive Courtyard',desc:'Dusk / copper roofs / drifting banners'},
+  {id:'gallery',name:'Rainlit Gallery',desc:'Night / tall windows / quiet shelves'},
+  {id:'observatory',name:'Dawn Observatory',desc:'Daybreak / open sky / turning brass'},
+];
+function pxStageId(id) {return PX_STAGES.some(stage=>stage.id===id)?id:'courtyard';}
 // Original Archive Courtyard. These are native pixel layers, shared by the game and review previews.
 let PX_STAGE = null;
 function pxStage() {
@@ -106,4 +112,113 @@ function pxMakeBG() {
     const c=cv.getContext('2d');c.imageSmoothingEnabled=false;c.drawImage(pxCanvas(src),0,0,cv.width,cv.height);out[key]=cv;
   }
   return out;
+}
+
+// Two new original arenas. Background art only: no collision, hazard or simulation hooks.
+const PX_STAGE_VARIANTS = new Map();
+function pxStageVariant(id) {
+  if(PX_STAGE_VARIANTS.has(id))return PX_STAGE_VARIANTS.get(id);
+  const s=new PixelSurface(640,360);
+  if(id==='gallery')pxGallery(s);else pxObservatory(s);
+  PX_STAGE_VARIANTS.set(id,s);return s;
+}
+function pxGallery(s) {
+  s.rect(0,0,640,360,'#21313e');
+  for(let n=0;n<9;n++) {const y=21+n*31;s.line([0,y],[640,y],'#2c3d49');for(let x=(n%2)*36;x<640;x+=72)s.line([x,y],[x,y+30],'#2b3b48');}
+  // Deep, arched panes looking out over rain and a distant canal.
+  for(const [x,w]of [[90,132],[250,140],[418,132]]) {
+    s.rect(x-6,108,w+12,173,'#121f2e');s.ellipse(x+w/2,108,w/2+6,64,'#121f2e');
+    s.rect(x,108,w,167,'#344858');s.ellipse(x+w/2,108,w/2,58,'#344858');
+    s.rect(x+5,111,w-10,160,'#172b41');s.ellipse(x+w/2,111,w/2-5,52,'#172b41');
+    for(let n=0;n<3;n++)s.rect(x+6,177+n*25,w-12,19,['#263d50','#304959','#3e5863'][n]);
+    for(let n=0;n<5;n++){const bx=x+8+n*24,h=18+n%3*9;s.rect(bx,207-h,19,h,'#243747');s.rect(bx+4,211-h,2,4,'#6e8990');}
+    s.rect(x+7,247,w-14,24,'#44616c');s.rect(x+10,252,w-20,1,'#718b8c');
+    for(let n=1;n<4;n++)s.rect(x+n*w/4-1,66,3,208,'#4c6069');
+    s.rect(x+3,151,w-6,5,'#4c6069');s.rect(x+3,219,w-6,4,'#4c6069');
+    s.rect(x-9,272,w+18,6,'#607077');s.rect(x-9,278,w+18,4,'#182735');
+  }
+  // Vault ribs and asymmetric shelf bays, with broad book-spine clusters.
+  for(const x of [62,231,402,571]) {
+    s.rect(x-6,0,12,282,'#182735');s.rect(x-3,0,5,279,'#42535d');s.rect(x-8,166,16,7,'#617078');
+    s.line([x,166],[x-30,67],'#42535d',5);s.line([x,166],[x+30,67],'#42535d',5);
+  }
+  for(const [x,w,top]of [[0,51,95],[590,50,116]]) {
+    s.rect(x,top,w,166,'#15212e');s.rect(x,top,w,5,'#6a625b');
+    for(let row=0;row<4;row++) {
+      const y=top+9+row*36;
+      for(let n=0;n<7;n++) {const bx=x+4+n*6,h=18+(n*7+row*3)%11,col=['#635a60','#79705f','#566a69','#76616c'][n%4];s.rect(bx,y+28-h,4,h,col);s.rect(bx,y+31-h,3,1,'#b1a184');}
+      s.rect(x,y+29,w,4,'#716a60');s.rect(x,y+33,w,2,'#172432');
+    }
+    s.rect(x+1,top,3,166,'#a08b71');s.rect(x+w-4,top,3,166,'#494d52');
+  }
+  // Warm reading lamps soften the cool panes without any glow/filter.
+  for(const x of [65,574]) {
+    s.rect(x-2,191,4,33,'#131f2b');s.rect(x-7,219,14,3,'#a18a68');
+    s.poly([[x-10,191],[x-5,182],[x+5,182],[x+10,191]],'#a78b65','#14212e');s.rect(x-6,191,12,3,'#efd4a0');
+  }
+  s.rect(0,282,640,78,'#586571');s.rect(0,282,640,3,'#96a0a0');
+  for(const y of [296,314,337])s.rect(0,y,640,1,'#3b4d5b');
+  for(let n=-6;n<9;n++){s.line([320+n*59,285],[320+n*91,359],'#3b4d5b');s.line([321+n*59,285],[321+n*91,359],'#718087');}
+  // Muted reflected window strips stay below the fighters' feet.
+  for(const x of [127,286,452])for(let n=0;n<3;n++)s.rect(x-n*3,318+n*7,69+n*4,2,'#6e7e85');
+  s.ellipse(320,306,77,9,'#65737b');s.ellipse(320,306,73,7,'#586571');
+  s.poly([[300,306],[320,300],[340,306],[320,312]],'#9c927d');s.poly([[305,306],[320,302],[335,306],[320,310]],'#586571');
+  s.rect(0,348,640,12,'#263644');s.rect(0,348,640,2,'#99917f');
+}
+function pxObservatory(s) {
+  ['#403c61','#514969','#6b5875','#8b6d83','#b1838e','#ce9b98','#dfb39e','#e6c9ad'].forEach((col,n)=>s.rect(0,n*36,640,36,col));
+  s.rect(0,288,640,72,'#8c8b8d');
+  s.ellipse(482,139,29,29,'#efd3ab');s.ellipse(482,139,24,24,'#f6dfbb');
+  s.poly([[0,251],[0,207],[41,202],[78,219],[114,187],[146,206],[187,191],[228,217],[266,201],[307,221],[352,186],[396,199],[433,175],[464,191],[513,179],[559,208],[600,195],[640,208],[640,282],[0,282]],'#887b91');
+  s.poly([[0,256],[61,238],[113,247],[171,226],[234,239],[293,229],[355,245],[416,224],[479,239],[542,220],[596,237],[640,229],[640,282],[0,282]],'#a48c99');
+  // A distant stepped viaduct runs toward the river, well behind the terrace.
+  for(let n=0;n<14;n++){const x=n*49;s.rect(x,244,6,36,'#7a788b');s.rect(x+6,244,43,5,'#c1a2a1');s.line([x+6,249],[x+20,263],'#8c8394',3);s.line([x+43,249],[x+29,263],'#8c8394',3);}
+  s.rect(0,277,640,5,'#a29c9e');
+  // Offset observatory dome, service door, and copper ribs.
+  s.rect(41,174,136,108,'#8c8183');s.ellipse(109,174,73,58,'#344957');s.ellipse(109,174,68,53,'#52737a');s.rect(36,174,146,9,'#334957');
+  for(let n=-2;n<=2;n++)s.line([109+n*9,123],[109+n*27,173],'#88a19a',2);
+  s.rect(101,116,17,7,'#344957');s.rect(103,113,13,4,'#d3b194');s.rect(51,185,116,3,'#c4aa94');
+  s.rect(77,211,56,70,'#584f62');s.ellipse(105,211,28,23,'#584f62');s.rect(82,216,46,66,'#293b4c');s.ellipse(105,215,23,20,'#293b4c');
+  s.rect(104,197,3,83,'#8f9996');s.rect(118,247,3,7,'#dfbf91');
+  for(const x of [55,146]){s.rect(x,201,12,26,'#384d59');s.rect(x+2,204,8,20,'#c7aca0');}
+  // Original brass sky instrument: intersecting offset rings and an open fork pedestal.
+  s.poly([[369,281],[379,250],[399,250],[407,281]],'#6a6974','#394858');s.rect(373,274,32,7,'#b2a08b');
+  s.line([383,255],[383,205],'#384958',9);s.line([383,255],[383,205],'#b69d7e',5);
+  s.line([383,229],[352,207],'#384958',7);s.line([383,229],[352,207],'#b69d7e',3);
+  pxStageRing(s,392,178,67,65,'#394858',6);pxStageRing(s,392,178,67,65,'#c6aa83',3);
+  pxStageRing(s,392,178,67,24,'#394858',6);pxStageRing(s,392,178,67,24,'#a58f77',3);
+  s.line([352,126],[432,230],'#394858',6);s.line([352,126],[432,230],'#d5b98e',3);
+  s.ellipse(392,178,9,9,'#394858');s.ellipse(392,178,6,6,'#d9bf96');
+  // Back rail and broad, level stone fighting platform at exactly GROUND/2.
+  s.rect(0,281,640,6,'#4b5365');s.rect(0,281,640,2,'#dbc5aa');
+  for(let x=14;x<640;x+=42){s.rect(x,262,5,20,'#6e7180');s.rect(x-2,261,9,3,'#c7b5a2');}
+  s.rect(0,287,640,73,'#b2a48f');s.rect(0,287,640,4,'#ddc7a5');
+  for(const y of [298,316,338])s.rect(0,y,640,1,'#887f7b');
+  for(let n=-7;n<9;n++){s.line([320+n*48,291],[320+n*77,360],'#8e837a');s.line([321+n*48,291],[321+n*77,360],'#c4b39a');}
+  s.ellipse(320,307,87,9,'#c5b39a');s.ellipse(320,307,82,7,'#b2a48f');
+  s.line([293,307],[347,307],'#887f7b');s.line([320,303],[320,311],'#887f7b');
+  s.rect(0,348,640,12,'#4c4c60');s.rect(0,348,640,2,'#dec5a1');
+  for(const x of [29,593]){s.rect(x,190,4,91,'#394957');s.rect(x-3,187,10,5,'#c4aa83');s.rect(x-2,278,9,7,'#776f76');}
+}
+function pxStageRing(s,x,y,rx,ry,col,width) {
+  let prev=[x+rx,y];for(let n=1;n<=64;n++){const a=n*Math.PI/32,p=[x+Math.cos(a)*rx,y+Math.sin(a)*ry];s.line(prev,p,col,width);prev=p;}
+}
+function pxStageMotion(s,id,frame) {
+  if(id==='gallery') {
+    // Rain stays outside individual window panes, never across fighter silhouettes or the floor.
+    for(const [x,w]of [[97,118],[257,126],[425,118]])for(let n=0;n<20;n++) {
+      const rx=x+5+(n*29)%Math.floor(w-12),ry=113+(n*31+frame*7)%148;
+      for(let j=0;j<7;j++) {
+        const px=Math.round(rx-j/3),py=ry+j,p=(py*s.w+px)*4;
+        // Keep the stone mullions and crossbars in front of the rain.
+        const r=s.data[p],g=s.data[p+1],b=s.data[p+2];
+        if((r===23&&g===43&&b===65)||(r===38&&g===61&&b===80)||(r===48&&g===73&&b===89)||(r===62&&g===88&&b===99)||(r===36&&g===55&&b===71)||(r===68&&g===97&&b===108))s.dot(px,py,n%3?'#526d7c':'#78909a');
+      }
+    }
+    for(const x of [65,574])s.rect(x-4,192,8,1,frame%3?'#e1c394':'#f2d9ac');
+  } else {
+    for(let n=0;n<4;n++){const x=(n*173+frame*2)%700-40,y=78+n%2*23;s.rect(x,y,64,3,'#aa8c99');s.rect(x+10,y-3,39,3,'#aa8c99');}
+    const angle=frame*Math.PI/4;s.line([392,178],[392+Math.cos(angle)*51,178+Math.sin(angle)*18],'#e4cda2',2);
+    for(const x of [33,597])for(let j=0;j<46;j++) {const wave=Math.round(Math.sin(frame*Math.PI/4+j*.12)*3*j/46);s.rect(x+wave,195+j,15,1,'#3c596b');s.rect(x+wave+2,195+j,2,1,'#a5c6c1');}
+  }
 }

@@ -62,7 +62,7 @@ const PX_POSES = {
   idle: {h:[1,-78],s:[-2,-63],hip:[-5,-35],a:[[14,-48],[22,-62]],b:[[-17,-48],[-7,-59]],l:[[13,-18],[22,0]],r:[[-20,-19],[-28,0]]},
   breathe: {h:[1,-77],s:[-2,-62],hip:[-5,-34],a:[[14,-47],[22,-61]],b:[[-17,-47],[-7,-58]],l:[[13,-18],[22,0]],r:[[-20,-19],[-28,0]]},
   guard: {h:[-4,-76],s:[-6,-61],hip:[-6,-33],a:[[13,-55],[12,-78]],b:[[0,-49],[20,-68]],l:[[12,-17],[24,0]],r:[[-23,-18],[-31,0]]},
-  wind: {h:[-10,-78],s:[-12,-62],hip:[-6,-34],a:[[-25,-51],[-17,-64]],b:[[8,-50],[17,-60]],l:[[11,-18],[20,0]],r:[[-25,-18],[-33,0]]},
+  wind: {h:[-15,-75],s:[-17,-59],hip:[-11,-31],a:[[-31,-48],[-28,-63]],b:[[0,-46],[11,-58]],l:[[8,-15],[22,0]],r:[[-24,-16],[-34,0]]},
   punch: {h:[15,-77],s:[12,-62],hip:[1,-34],a:[[33,-61],[53,-63]],b:[[-3,-45],[11,-52]],l:[[22,-17],[31,0]],r:[[-21,-19],[-32,0]]},
   punch2: {h:[17,-76],s:[13,-61],hip:[2,-34],a:[[8,-44],[26,-49]],b:[[36,-60],[55,-61]],l:[[24,-18],[35,0]],r:[[-19,-21],[-29,0]]},
   hook: {h:[15,-76],s:[10,-60],hip:[1,-33],a:[[28,-57],[35,-83]],b:[[-3,-44],[12,-49]],l:[[27,-18],[35,0]],r:[[-18,-20],[-29,0]]},
@@ -83,6 +83,32 @@ const PX_POSES = {
   walk1: {h:[3,-78],s:[1,-62],hip:[-2,-33],a:[[12,-46],[20,-54]],b:[[-13,-47],[-12,-59]],l:[[1,-16],[7,0]],r:[[-10,-17],[-14,-8]]},
   walk2: {h:[3,-80],s:[1,-64],hip:[-2,-35],a:[[1,-48],[-6,-59]],b:[[8,-49],[22,-53]],l:[[-15,-19],[-29,-3]],r:[[12,-18],[31,0]]},
   walk3: {h:[3,-78],s:[1,-62],hip:[-2,-33],a:[[1,-47],[-5,-59]],b:[[9,-46],[20,-54]],l:[[-10,-17],[-14,-8]],r:[[1,-16],[7,0]]},
+  punchload: {h:[-17,-73],s:[-19,-58],hip:[-12,-30],a:[[-33,-44],[-28,-61]],b:[[2,-45],[15,-57]],l:[[9,-15],[23,0]],r:[[-28,-16],[-35,0]]},
+  punchre: {h:[9,-77],s:[7,-62],hip:[-1,-34],a:[[25,-56],[36,-59]],b:[[-8,-47],[5,-57]],l:[[18,-18],[27,0]],r:[[-22,-19],[-31,0]]},
+  punch2re: {h:[10,-77],s:[7,-62],hip:[-1,-34],a:[[10,-47],[22,-56]],b:[[24,-55],[38,-58]],l:[[18,-18],[29,0]],r:[[-21,-19],[-30,0]]},
+  ready: {h:[3,-78],s:[0,-63],hip:[-4,-35],a:[[17,-49],[25,-62]],b:[[-16,-48],[-4,-59]],l:[[15,-18],[24,0]],r:[[-21,-19],[-29,0]]},
+  hookw: {h:[-14,-68],s:[-17,-51],hip:[-12,-28],a:[[-16,-35],[-24,-26]],b:[[3,-44],[15,-56]],l:[[13,-13],[29,0]],r:[[-29,-14],[-37,0]]},
+  hookload: {h:[-18,-67],s:[-20,-50],hip:[-14,-27],a:[[-23,-33],[-31,-25]],b:[[1,-44],[14,-55]],l:[[13,-12],[28,0]],r:[[-29,-14],[-38,0]]},
+  hookre: {h:[9,-78],s:[5,-63],hip:[-2,-35],a:[[25,-61],[28,-74]],b:[[-10,-48],[4,-56]],l:[[20,-18],[29,0]],r:[[-21,-20],[-30,0]]},
+  kickload: {h:[-12,-82],s:[-13,-66],hip:[-5,-38],a:[[5,-52],[17,-65]],b:[[-28,-53],[-29,-66]],l:[[23,-51],[19,-30]],r:[[-12,-19],[-16,0]]},
+  kickre: {h:[-14,-81],s:[-15,-65],hip:[-4,-37],a:[[4,-52],[17,-63]],b:[[-30,-52],[-27,-66]],l:[[23,-38],[34,-25]],r:[[-13,-19],[-18,0]]},
+  kickplant: {h:[-4,-79],s:[-5,-63],hip:[-3,-35],a:[[13,-48],[23,-61]],b:[[-21,-49],[-18,-61]],l:[[19,-20],[26,-2]],r:[[-18,-19],[-25,0]]},
+  jpunchre: {h:[7,-81],s:[4,-65],hip:[-2,-37],a:[[22,-56],[32,-62]],b:[[-15,-50],[-3,-60]],l:[[19,-35],[14,-14]],r:[[-17,-27],[-30,-37]]},
+  jkickre: {h:[-8,-82],s:[-9,-66],hip:[-2,-38],a:[[9,-53],[20,-66]],b:[[-24,-56],[-25,-70]],l:[[20,-42],[26,-22]],r:[[-18,-24],[-32,-29]]},
+  castw: {h:[-5,-79],s:[-7,-63],hip:[-5,-35],a:[[7,-48],[4,-58]],b:[[-21,-49],[-11,-60]],l:[[10,-18],[20,0]],r:[[-23,-19],[-31,0]]},
+  castre: {h:[5,-78],s:[2,-63],hip:[-3,-35],a:[[23,-49],[29,-57]],b:[[-15,-48],[-5,-58]],l:[[15,-18],[25,0]],r:[[-21,-19],[-29,0]]},
+  clapw: {h:[-2,-79],s:[-4,-64],hip:[-4,-35],a:[[23,-55],[32,-65]],b:[[-21,-55],[-29,-65]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
+  signw: {h:[-2,-80],s:[-3,-65],hip:[-4,-35],a:[[12,-49],[8,-56]],b:[[-12,-49],[-1,-57]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
+  throww: {h:[-10,-79],s:[-12,-63],hip:[-6,-35],a:[[-22,-53],[-29,-74]],b:[[7,-50],[21,-60]],l:[[10,-18],[20,0]],r:[[-25,-19],[-34,0]]},
+  boww: {h:[-4,-80],s:[-6,-65],hip:[-5,-35],a:[[12,-60],[24,-65]],b:[[-20,-58],[-22,-70]],l:[[11,-18],[21,0]],r:[[-22,-19],[-30,0]]},
+  hitrecover: {h:[-8,-73],s:[-8,-58],hip:[-3,-32],a:[[9,-43],[18,-49]],b:[[-25,-44],[-24,-54]],l:[[18,-16],[27,0]],r:[[-21,-18],[-29,0]]},
+  launch: {h:[-18,-73],s:[-15,-57],hip:[0,-32],a:[[5,-40],[20,-48]],b:[[-32,-42],[-40,-53]],l:[[22,-29],[32,-10]],r:[[-14,-20],[-30,-26]]},
+  fall: {h:[-15,-66],s:[-13,-50],hip:[-1,-28],a:[[8,-32],[21,-40]],b:[[-30,-34],[-39,-43]],l:[[20,-20],[35,-8]],r:[[-16,-12],[-32,-18]]},
+  // Composed curled bodies, raster-rotated only for their horizontal ground contact.
+  collapse: {h:[3,-58],s:[-3,-43],hip:[3,-18],a:[[16,-32],[29,-44]],b:[[-18,-30],[-26,-41]],l:[[20,-21],[30,-2]],r:[[-10,-10],[-19,0]]},
+  down: {h:[0,-76],s:[-2,-60],hip:[0,-32],a:[[9,-48],[7,-62]],b:[[-13,-43],[-18,-29]],l:[[5,-15],[10,0]],r:[[-8,-18],[-3,-1]]},
+  rise1: {h:[-18,-47],s:[-15,-32],hip:[1,-20],a:[[9,-18],[17,-10]],b:[[-27,-20],[-35,-8]],l:[[23,-12],[35,0]],r:[[-8,-9],[-18,0]]},
+  rise2: {h:[-7,-64],s:[-8,-48],hip:[-3,-26],a:[[12,-32],[25,-40]],b:[[-23,-32],[-19,-42]],l:[[21,-13],[31,0]],r:[[-22,-13],[-32,0]]},
 };
 const PX_KITS = [
   {fit:'coat',sl:2,width:9,hair:'sweep',scarf:true,skin:['#986c75','#d49b98','#f6cbc0'],top:['#17253f','#2c4366','#536b8d'],pants:['#141f32','#29354b','#48546b'],hairCol:['#8294ae','#c3d1de','#edf0dc'],accent:'#75d9e8',inner:'#e8d7be'},
@@ -303,30 +329,63 @@ function pxCanvas(surface) {
 function pxPose(S,f) {
   if(f.portrait) return 'idle';
   if(f.st === 'atk') {
-    const m=moveDef(f), pose=m.pose;
-    if(f.mt < m.su) return pose.indexOf('kick') >= 0 ? 'kickw' : 'wind';
-    if(f.mt >= m.su + (m.ac || 5) + Math.max(2,m.re/2)) return f.y<GROUND?'jump':'idle';
-    return ({slash:'punch2',slashw:'punch2',cannon:'cast1',guard:'guard'})[pose] || (PX_POSES[pose] ? pose : 'cast1');
+    const m=moveDef(f);
+    if(!m)return f.y<GROUND?'jump':'ready';
+    const pose=({slash:'punch2',slashw:'punch2',cannon:'cast1'})[m.pose] || m.pose;
+    const sequence=PX_ATTACKS[pose] || PX_ATTACKS.cast1;
+    if(f.mt<m.su)return sequence[f.mt<Math.ceil(m.su/2)?0:1];
+    // Arts fire at startup; only basics have a separate active window. Never imply idle during recovery.
+    const contact=m.ac || Math.min(3,Math.ceil(m.re/3)),elapsed=f.mt-m.su;
+    if(elapsed<contact)return pose in PX_POSES?pose:'cast1';
+    const settle=m.ac ? m.ac+Math.ceil(m.re/2) : Math.ceil(m.re*.65);
+    return sequence[elapsed<settle?2:3];
   }
   if(f.st === 'walk') return 'walk'+(Math.floor(f.walkT/6)%4);
   if(f.st === 'block') return 'guard';
-  if(f.st === 'down' || f.st === 'ko') return 'hit';
+  if(f.st === 'down') return f.stT>28?'collapse':f.stT>12?'down':f.stT>6?'rise1':'rise2';
+  if(f.st === 'ko') return f.y<GROUND ? (f.vy<0?'launch':'fall') : 'down';
+  if(f.st === 'hit') return f.y<GROUND ? (f.vy<0?'launch':'fall') : f.stT>8?'hit':'hitrecover';
   if(f.st === 'cast') return 'clap';
   if(f.st === 'idle' && S.phase === 'over' && S.wins[f.i] >= 2) return 'win';
   if(f.st === 'idle') return Math.floor(S.t/22)%2 ? 'breathe' : 'idle';
   return PX_POSES[f.st] ? f.st : 'idle';
 }
+// Startup pair, recoil, settle. All selection uses existing active simulation clocks.
+const PX_ATTACKS = {
+  punch:['wind','punchload','punchre','ready'],punch2:['wind','punchload','punch2re','ready'],
+  hook:['hookw','hookload','hookre','ready'],kick:['kickw','kickload','kickre','kickplant'],
+  jpunch:['jump','punchload','jpunchre','jump'],jkick:['kickw','kickload','jkickre','jump'],
+  cast1:['castw','signw','castre','ready'],clap:['clapw','sign','castre','ready'],
+  sign:['signw','sign','castre','ready'],throw:['throww','wind','castre','ready'],
+  bow:['boww','bow','castre','ready'],guard:['guard','guard','guard','guard'],
+  jump:['kickw','jump','jump','jump'],
+};
+const PX_GROUNDED = new WeakMap();
+function pxFighterFrame(ch,pose,alt=false,flash='') {
+  const source=pxSprite(ch,pose,alt,flash);
+  if(pose!=='down' && pose!=='collapse')return {sprite:source,ox:PX_OX,oy:PX_OY};
+  if(!PX_GROUNDED.has(source)) {
+    const sprite=new PixelSurface(source.h,source.w);let bottom=0;
+    for(let y=0;y<source.h;y++)for(let x=0;x<source.w;x++) {
+      const p=(y*source.w+x)*4;if(!source.data[p+3])continue;
+      const ry=source.w-1-x,q=(ry*sprite.w+y)*4;bottom=Math.max(bottom,ry);
+      for(let n=0;n<4;n++)sprite.data[q+n]=source.data[p+n];
+    }
+    // Horizontal bodies are centered at the sim root instead of putting the head a body-length behind it.
+    PX_GROUNDED.set(source,{sprite,ox:PX_OY-40,oy:bottom});
+  }
+  return PX_GROUNDED.get(source);
+}
 function pxDrawFighter(c,S,f,alpha=1) {
   const pose=pxPose(S,f), alt=f.portrait ? !!f.alt : f.i === 1 && S.f[0].ch === f.ch;
   const imp=!f.portrait && FX.impact && FX.impact.t < FX.impact.sil ? FX.impact : null;
   const flash=imp ? (imp.kind === 'black' ? f.i===imp.a ? '#f8edce' : '#ef5260' : PX_INK) : S.t-f.hurtT<4 ? '#fff0ca' : '';
-  const frame=pxSprite(f.ch,pose,alt,flash), scale=PX_SCALE*(f.big>0?1.3:1);
+  const {sprite:frame,ox,oy}=pxFighterFrame(f.ch,pose,alt,flash), scale=PX_SCALE*(f.big>0?1.3:1);
   c.save(); c.imageSmoothingEnabled=false; c.globalAlpha*=alpha;
   if(!f.portrait) {c.save();c.fillStyle='#111623';c.globalAlpha*=.35;c.fillRect(Math.round(f.x/2)*2-40,GROUND,80,6);c.restore();}
   if(f.inv>0 && S.t%4<2) c.globalAlpha*=.5;
   c.translate(Math.round(f.x/2)*2,Math.round(f.y/2)*2); c.scale(f.face,1);
   if(f.portrait) {c.translate(-4,156);}
-  else if(f.st==='down' || f.st==='ko') {c.translate(0,-16);c.rotate(-Math.PI/2);}
-  c.drawImage(pxCanvas(frame),-PX_OX*scale,-PX_OY*scale,frame.w*scale,frame.h*scale);
+  c.drawImage(pxCanvas(frame),-ox*scale,-oy*scale,frame.w*scale,frame.h*scale);
   c.restore();
 }

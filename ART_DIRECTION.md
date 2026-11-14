@@ -16,3 +16,9 @@ Owner choice passed on by coordinator 2026-11-14: pixel art for the whole game.
 No existing game's sprites, poses, palettes or stages are used as references or copied assets.
 
 Silhouette pass (v7): all fifteen idle poses are individually composed. Visible build profiles range from compact/narrow through tall/slender to broad/heavy; shoulders, limbs, stance spread, arm carriage and weight differ. The larger transparent sprite cell leaves room for tall builds, raised fists and the hammer. Simulation hitboxes remain unchanged. Black silhouettes are reviewed separately from color/props.
+
+Animation pass (v9): 49 authored poses per costume, including paired anticipation, attack-specific recoil, settling, launch/fall, curled ground impact, a resting body and two get-up poses. Attack frames follow move time; ground recovery follows the existing down-state timer. Grounded bodies use an exact quarter-turn raster with the lowest opaque pixel on the floor and the body centered at its simulation root. KO bodies stay down. Art contact frames occupy their existing recovery time; no timing, control, damage or collision changes.
+
+Stage expansion (v10): Rainlit Gallery uses cool, recessed canal windows, stone vaults, warm reading lamps, original book bays and slate tiles. Rain is masked behind the window stonework. Dawn Observatory uses an offset copper dome, distant viaduct, brass sky instrument, dawn sky and wind streamers. Each stage has eight cached motion frames; all keep the same clear floor and fighting bounds. The host's stage choice is presentation metadata in the existing match snapshot.
+
+Anticipation refinement (v11): punches pull the shoulder and striking fist visibly behind the root, lower the hips, bend the rear knee and lengthen the front leg. Heavy punches coil lower before rising into contact. Keep these tells inside the existing startup ticks; visual weight transfer never moves the simulation root or collision box.

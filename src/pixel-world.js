@@ -1,12 +1,15 @@
 'use strict';
 // All active world drawing now happens in source pixels, before one nearest-neighbor presentation.
-const PX_BACKDROPS=new Map(),PX_ROTATED=new WeakMap();
-function pxBackdrop(frame) {
-  frame%=8;if(PX_BACKDROPS.has(frame))return PX_BACKDROPS.get(frame);
+const PX_BACKDROPS=new Map();
+function pxBackdrop(frame,id='courtyard') {
+  id=pxStageId(id);frame%=8;const key=id+':'+frame;if(PX_BACKDROPS.has(key))return PX_BACKDROPS.get(key);
+  if(id!=='courtyard') {
+    const s=new PixelSurface(640,360);s.data.set(pxStageVariant(id).data);pxStageMotion(s,id,frame);PX_BACKDROPS.set(key,s);return s;
+  }
   const bg=pxStage(),s=new PixelSurface(640,360);
   s.blit(bg.sky,0,0);s.blit(bg.cloud,35+frame,68);s.blit(bg.cloud,344+frame*2,102);
   s.blit(bg.far,-30,0);s.blit(bg.town,-30,0);s.blit(bg.arena,-30,0);s.blit(pxStageLife(frame),0,0);
-  PX_BACKDROPS.set(frame,s);return s;
+  PX_BACKDROPS.set(key,s);return s;
 }
 function pxRing(s,x,y,rx,ry,col,width=1,phase=0) {
   const n=40;let prev=null;
@@ -53,23 +56,14 @@ function pxDomain(s,S) {
   }
   s.rect(0,280,640,3,PX_INK);
 }
-function pxRotateDown(src) {
-  if(PX_ROTATED.has(src))return PX_ROTATED.get(src);
-  const s=new PixelSurface(src.h,src.w);
-  for(let y=0;y<src.h;y++)for(let x=0;x<src.w;x++) {
-    const p=(y*src.w+x)*4,q=((src.w-1-x)*s.w+y)*4;for(let n=0;n<4;n++)s.data[q+n]=src.data[p+n];
-  }
-  PX_ROTATED.set(src,s);return s;
-}
 function pxPaintFighter(s,S,f,impact) {
   const x=Math.round(f.x/2),y=Math.round(f.y/2),scale=f.big>0?1.3:1,alt=f.i===1&&S.f[0].ch===f.ch;
   if(!impact)s.ellipse(x,307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
   if(f.inv>0 && S.t%4<2)return;
   if(f.zone>0&&!impact)for(let n=0;n<6;n++) {const u=(S.t*2+n*23)%90,fx=x-18+n*7;s.poly([[fx-4,y-u],[fx+2,y-u-12],[fx+5,y-u+5]],'#ed5266');s.poly([[fx-2,y-u],[fx+1,y-u-8],[fx+3,y-u+3]],PX_INK);}
   const flash=impact ? impact.kind==='black' ? f.i===impact.a?'#f8edce':'#ed5266' : PX_INK : S.t-f.hurtT<4 ? PX_LIGHT : '';
-  let sprite=pxSprite(f.ch,pxPose(S,f),alt,flash),ox=PX_OX,oy=PX_OY;
-  if(f.st==='down'||f.st==='ko'){sprite=pxRotateDown(sprite);ox=PX_OY;oy=PX_W-1-PX_OX;}
-  s.blit(sprite,x-(f.face<0?sprite.w-1-ox:ox)*scale,y-oy*scale-(f.st==='down'||f.st==='ko'?7:0),scale,f.face<0);
+  const {sprite,ox,oy}=pxFighterFrame(f.ch,pxPose(S,f),alt,flash);
+  s.blit(sprite,x-(f.face<0?sprite.w-1-ox:ox)*scale,y-oy*scale,scale,f.face<0);
   if(f.inf>0){pxRing(s,x,y-44,30,47,'#8ed9e1',1,Math.floor(S.t/4));s.rect(x+24,y-51,3,8,PX_LIGHT);}
   if(f.counter>0||f.abs>0){const fx=x+f.face*21;s.poly([[fx,y-74],[fx+f.face*12,y-51],[fx,y-23],[fx-f.face*3,y-51]],'#79c9a5',PX_INK);}
   if(f.st==='stun')for(let n=0;n<3;n++){const a=S.t*.12+n*2.1;pxBurst(s,x+Math.cos(a)*14,y-97+Math.sin(a)*3,3,'#eed790');}
@@ -113,7 +107,7 @@ function pxProjectile(s,p) {
   else {poly([[-r*2.7,0],[-r,-r*.8],[r*.7,-r*.8],[r,0],[r*.7,r*.8],[-r,r*.8]]);s.ellipse(x,y,r,r,col);s.ellipse(x-r*.2,y-r*.2,r*.55,r*.55,PX_LIGHT);if(p.spin)pxRing(s,x,y,r+4,r+4,col,2,Math.floor(p.t/3));}
 }
 function pxWorldSurface(S,F=FX) {
-  const s=new PixelSurface(640,360);s.data.set(pxBackdrop(Math.floor(S.t/8)%8).data);
+  const s=new PixelSurface(640,360);s.data.set(pxBackdrop(Math.floor(S.t/8)%8,S.stage).data);
   pxDomain(s,S);
   const impact=F.impact&&F.impact.t<F.impact.sil?F.impact:null;
   if(impact)s.rect(0,0,640,360,impact.kind==='black'?'#111623':'#f8edce');
