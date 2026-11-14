@@ -103,6 +103,13 @@ function pxHUDSurface(S,labels,F=FX) {
     const hint=lab?'MOVE '+lab.move.replace(/ /g,'')+'  JUMP '+lab.U+'  GUARD '+lab.G+'  PUNCH '+lab.P+'  KICK '+lab.K:(labels.other||'Computer');
     pxOutlinedText(s,hint,cardX,309,'#e2d6bb');
   }
+  // Keep the move-list shortcut visible after selection closes. This promises
+  // only a move list: online fights keep advancing when it is opened.
+  if(S.phase!=='over') {
+    pxPanel(s,273,3,94,11,'#243448','#b1a08a');
+    s.rect(275,4,21,9,'#ecd3a0');pxText(s,'ESC',277,5,PX_INK);
+    pxText(s,'MOVE LIST',301,5,PX_LIGHT);
+  }
   pxPanel(s,299,19,42,29,'#243448','#b1a08a');const timer=String(Math.ceil(S.timer/60));pxText(s,timer,320-pxTextWidth(timer,2)/2,25,'#ecd3a0',2);
   const round='ROUND '+S.round;pxText(s,round,320-pxTextWidth(round)/2,53,PX_LIGHT);
   pxTimeStopHUD(s,S);

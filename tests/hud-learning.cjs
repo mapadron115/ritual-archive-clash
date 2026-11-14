@@ -8,6 +8,12 @@ function inspect(S,mode) {
   G.mode=mode;const before=JSON.stringify(S),effects=JSON.stringify(FX),texts=[],paint=pxText;
   pxText=function(s,text,x,y,col,scale=1){texts.push({text:String(text).toUpperCase(),x,y,w:pxTextWidth(text,scale),h:7*scale});return paint(s,text,x,y,col,scale);};
   let hud;try{hud=pxHUDSurface(S,labels());}finally{pxText=paint;}
+  const shortcut=texts.filter(t=>t.text==='ESC'||t.text==='MOVE LIST');
+  assert.equal(shortcut.length,S.phase==='over'?0:2,'missing move-list shortcut');
+  for(const p of shortcut) {
+    assert(p.x>=273&&p.x+p.w<=367&&p.y>=3&&p.y+p.h<=14,'shortcut left its panel');
+    for(const q of texts)if(p!==q)assert(p.x+p.w<=q.x||q.x+q.w<=p.x||p.y+p.h<=q.y||q.y+q.h<=p.y,'shortcut crosses HUD text: '+q.text);
+  }
   assert.equal(JSON.stringify(S),before,'HUD changed simulation');assert.equal(JSON.stringify(FX),effects,'HUD changed FX');
   for(let i=3;i<hud.data.length;i+=4)assert(hud.data[i]===0||hud.data[i]===255,'soft HUD alpha');
   const cards=[];
@@ -42,6 +48,10 @@ for(let ch=0;ch<15;ch++)for(const mode of ['ai','local','watch','host','guest'])
   f.ce=100;f.cd=CH[ch].arts.map(a=>a.cd);inspect(S,mode);
   f.cd=[1,1,1];const last=inspect(S,mode);for(let n=0;n<3;n++)assert(last[owner*4+n].includes('WAIT 0.1S'));
   const snap=JSON.parse(JSON.stringify(S));assert.deepEqual(inspect(S,mode),inspect(snap,mode));
+}
+// The shortcut is available between rounds too, but final match controls take over.
+for(const mode of ['ai','local','watch','host','guest'])for(const phase of ['intro','ko','over']) {
+  const S=newMatch(0,14,1000);S.phase=phase;S.phaseT=40;S.winner=0;inspect(S,mode);
 }
 // Real art presses and active cooldown expiry, not a duplicate timing implementation.
 for(let ch=0;ch<15;ch++)for(let owner=0;owner<2;owner++)for(let n=0;n<3;n++) {
