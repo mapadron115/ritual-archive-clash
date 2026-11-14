@@ -373,6 +373,18 @@ function pxKickSweep(s,f) {
   poly([[tail+4,-8-tail*.35],[24,-11],[40,-22],[54,-41],[60,-50],[59,-43],[51,-27],[37,-16],[21,-9]],'#f1e5cd');
   s.blit(cell,Math.round(f.x/2)-(f.face<0?79:64)*scale,Math.round(f.y/2)-120*scale,scale,f.face<0);
 }
+// The chain's lifting finish leaves a rising fist wake, distinct from the low
+// boot sweep. Its four active ticks are the sole clock, including during freezes.
+function pxHookSweep(s,f) {
+  if(f.st!=='atk'||f.move!=='p3'||f.mt<BASIC.p3.su||f.mt>=BASIC.p3.su+BASIC.p3.ac)return;
+  const age=f.mt-BASIC.p3.su,h=PX_KITS[f.ch].height||1,scale=f.big>0?1.3:1;
+  const cell=new PixelSurface(144,128),x=64,y=120,tail=age*7;
+  const poly=(pts,col)=>cell.poly(pts.map(([a,b])=>[x+a,y+b*h]),col);
+  poly([[11+tail*.6,-28-tail],[30,-37],[46,-53],[54,-74],[49,-91],[39,-102],[31,-101],[39,-84],[39,-70],[31,-54],[18,-42],[7+tail*.6,-36-tail]],PX_INK);
+  poly([[13+tail*.6,-31-tail],[30,-40],[43,-55],[50,-74],[46,-89],[39,-98],[35,-99],[42,-84],[42,-70],[34,-52],[20,-40],[10+tail*.6,-35-tail]],'#a7aaa5');
+  poly([[19+tail*.4,-37-tail],[32,-45],[44,-61],[47,-75],[43,-89],[38,-96],[44,-83],[44,-69],[36,-51],[23,-40]],'#f1e5cd');
+  s.blit(cell,Math.round(f.x/2)-(f.face<0?79:64)*scale,Math.round(f.y/2)-120*scale,scale,f.face<0);
+}
 function pxPaintFighter(s,S,f,impact) {
   const x=Math.round(f.x/2),y=Math.round(f.y/2),scale=f.big>0?1.3:1,alt=f.i===1&&S.f[0].ch===f.ch;
   if(f.inv>0 && S.t%4<2)return;
@@ -1008,7 +1020,7 @@ function pxWorldSurface(S,F=FX) {
   pxJceRhythm(s,S);
   pxOvationRhythm(s,S);
   pxGumTether(s,S);
-  if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2))pxKickSweep(s,f);
+  if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2)){pxKickSweep(s,f);pxHookSweep(s,f);}
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
   for(const p of S.proj)pxProjectile(s,p);
