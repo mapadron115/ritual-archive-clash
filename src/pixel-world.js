@@ -272,6 +272,27 @@ function pxMaximumCharge(s,S,f) {
   }
   s.blit(cell,Math.round(f.x/2)-(f.face<0?111-ox:ox),Math.round(f.y/2)-oy,1,f.face<0);
 }
+// Three separate blood feeds gather around an open hand lane. Their spacing
+// and broad value steps follow Convergence's own prefire age, not global time.
+function pxConvergenceCharge(s,S,f) {
+  const d=S.dom;
+  if(!d||d.o!==f.i||d.k!=='bloodsweep'||d.t<1||d.t>=40||f.st!=='cast')return;
+  const cell=new PixelSurface(128,112),ox=24,oy=100,x=ox+28,y=oy-45;
+  const phase=Math.min(5,Math.floor((d.t-1)/7)),tier=Math.floor(phase/2),gap=24-phase*3;
+  const dark='#790f30',body=['#d4102e','#ed5266','#ffb4bf'][tier],light='#ffb4bf';
+  for(const dir of [-1,1]) {
+    const points=[[-13,-8],[6,-8],[17,0],[7,5],[-7,5],[6,0],[1,-3],[-13,-3]];
+    cell.poly(points.map(([a,b])=>[x+a,y+dir*(gap+b)]),dark,PX_INK);
+    cell.poly([[-11,-7],[5,-7],[14,0],[6,3],[-2,3],[9,0],[2,-5],[-11,-5]].map(([a,b])=>[x+a,y+dir*(gap+b)]),body);
+    cell.line([x-10,y+dir*(gap-6)],[x+4,y+dir*(gap-6)],light,2);
+  }
+  const fx=x+gap;
+  cell.poly([[fx+18,y-8],[fx+3,y-8],[fx-5,y],[fx+3,y+8],[fx+18,y+8],[fx+8,y]],dark,PX_INK);
+  cell.poly([[fx+15,y-6],[fx+4,y-6],[fx-2,y],[fx+4,y+6],[fx+15,y+6],[fx+5,y]],body);
+  cell.line([fx+14,y-5],[fx+4,y-5],light,2);
+  cell.line([fx+4,y-5],[fx,y],light,2);
+  s.blit(cell,Math.round(f.x/2)-(f.face<0?127-ox:ox),Math.round(f.y/2)-oy,1,f.face<0);
+}
 function pxPaintFighter(s,S,f,impact) {
   const x=Math.round(f.x/2),y=Math.round(f.y/2),scale=f.big>0?1.3:1,alt=f.i===1&&S.f[0].ch===f.ch;
   if(!impact)s.ellipse(x,307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
@@ -287,6 +308,7 @@ function pxPaintFighter(s,S,f,impact) {
   if(f.nails>0)for(let n=0;n<f.nails;n++)s.line([x-5+n*6,y-43+n%2*5],[x-2+n*6,y-50+n%2*5],'#e8d7bc',2);
   pxChargeCue(s,f);
   pxMaximumCharge(s,S,f);
+  pxConvergenceCharge(s,S,f);
 }
 // Beam families use only the serialized zone's active age/material. Clip columns
 // before painting, including the wide Maximum cones; no animation state/cache.

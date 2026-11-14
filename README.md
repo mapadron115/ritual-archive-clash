@@ -21,6 +21,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Lingering attraction has inward streams and a faceted dark core that disperses at the burst. Delayed cuts use contracting corner marks followed by crossed blades; the warning leaves the defender's center clear. Existing active ages select these phases.
 - The diving Maximum's landing warning has tall bright outer posts, broad gold rails, closing inner arrows and a descending center tip. It marks the locked destination through the existing countdown and clears on impact.
 - Rock's charge has an open mint cuff that brightens at each existing strength threshold, with three larger lit indicators visible at native play size. The cue holds during pauses and clears when charging ends, including after interruption.
+- Convergence gathers three blood feeds toward the forward hand. They close and brighten through its existing wind-up, then clear when the blood beam fires.
 - Nuclear Shell has a sustained copper pressure collar ahead of the hands. Its broad face brightens and its vanes close through the existing charge; it clears when the beam fires.
 
 ## Rules
@@ -34,6 +35,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/convergence-charge.cjs` checks all 39 prefire ages, six closing phases, broad value progression, exact mirrors, hard alpha, clear hand/floor lanes, snapshots, native scene visibility and edge clipping. Six actual front/guard/swap timelines check the existing tick-40 release and outcomes, pause holds, cancellation and reset. An optional output directory and prefix export native before/after scenes and lifecycle sheets; `--baseline --rules-only` checks unchanged combat against HEAD's renderer. These are script/raster checks, not play.
 
 `node tests/maximum-charge.cjs` checks all 71 Nuclear Shell prefire ages, six pressure phases, hollow center, hard alpha, exact mirrors, materials, snapshots, 24 native composites and 30 fractional edge crops. Six actual front/guard/swap timelines preserve tick-72 firing and existing damage; cinematic/global/impact holds, cancellation/reset and existing time-stop advancement are checked. An output directory and prefix export 36 separate native scenes and six lifecycle sheets. `--baseline --rules-only` checks committed state/combat behavior; `--baseline --preview-only` exports committed scenes. Script/raster checks are not human play or browser motion.
 
