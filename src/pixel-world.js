@@ -594,6 +594,42 @@ function pxShrineRhythm(s,S) {
   const flip=d.o===1;
   s.blit(cell,Math.round(o.x/2)-(flip?cell.w-1-ox:ox),Math.round((o.y-70)/2)-oy,1,flip);
 }
+// Ovation's existing swaps alternate right/left, irrespective of the actor slot.
+// Broad imbued stones count toward the next clap; they are not collision shapes.
+function pxOvationRhythm(s,S) {
+  const d=S.dom;
+  if(!d||d.k!=='ovation'||S.phase!=='fight'||d.t<1||d.t>=75)return;
+  const f=S.f[d.o],o=S.f[1-d.o];
+  if(f.st==='ko'||o.st==='ko')return;
+  const beat=Math.floor((d.t-1)/14),age=(d.t-1)%14,snap=age<4;
+  const phase=snap?Math.floor(age/2):Math.min(2,Math.floor((age-4)/4));
+  const side=(beat+(snap?0:1))%2?-1:1;
+  const cell=new PixelSurface(224,144),ox=112,oy=100;
+  const poly=(pts,c)=>cell.poly(pts.map(([x,y])=>[ox+x,oy+y]),c,PX_INK);
+  const line=(a,b,c,w=1)=>cell.line([ox+a[0],oy+a[1]],[ox+b[0],oy+b[1]],c,w);
+  // The inactive stone stays dim. The next swap's side closes and grows pale.
+  for(const lane of [-1,1]) {
+    const lit=lane===1,p=lit?(snap?2:phase):0;
+    const shade=['#725936','#a88248','#c6a46b'][p],body=['#cca368','#e1bd75','#ffe8a5'][p];
+    const x=lane*(lit?(snap?62+phase*9:76-phase*8):83),y=-29;
+    poly([[x-15,y-15],[x+8,y-18],[x+20,y-7],[x+16,y+13],[x-8,y+18],[x-20,y+5]],shade);
+    poly([[x-12,y-12],[x+7,y-14],[x+15,y-5],[x+11,y+6],[x-8,y+10],[x-15,y+2]],body);
+    line([x-10,y-10],[x+6,y-12],lit?'#fff2ce':'#dfbd82',3);
+    line([x-6,y+13],[x+12,y+8],shade,3);
+    if(lit) {
+      // Paired inward brackets close like palms, then open away from the clap.
+      const spread=snap?23+phase*7:33-phase*6;
+      for(const v of [-1,1]) {
+        const a=[x-lane*17,y+v*spread],b=[x-lane*28,y+v*(spread-7)],c=[x-lane*20,y+v*(spread-13)];
+        line(a,b,PX_INK,7);line(b,c,PX_INK,7);
+        line(a,b,body,4);line(b,c,body,4);
+      }
+    }
+  }
+  // Mirror the finished cell about the defender's exact root, not its bounds.
+  const flip=side<0;
+  s.blit(cell,Math.round(o.x/2)-(flip?cell.w-1-ox:ox),Math.round((o.y-70)/2)-oy,1,flip);
+}
 // Finite authored cells, mirrored after rasterization. Active clocks and velocity
 // come from the existing snapshot; rendering never adds animation state to it.
 const PX_SUMMONS=new Map();
@@ -829,6 +865,7 @@ function pxWorldSurface(S,F=FX) {
   pxWebVolley(s,S);
   pxEffigyRite(s,S);
   pxShrineRhythm(s,S);
+  pxOvationRhythm(s,S);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const f of S.f)if(f.gum>0){const o=S.f[1-f.i];s.line([o.x/2,o.y/2-40],[(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],'#d78bb7',2);s.line([(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],[f.x/2,f.y/2-40],'#d78bb7',2);}
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
