@@ -35,17 +35,34 @@ if(!previewOnly) {
       const m=cue(S,{...f,face:-1}),colors=new Set();let area=0;
       for(let y=0;y<360;y++)for(let x=0;x<640;x++) {
         const p=(y*640+x)*4,a=s.data[p+3];assert(a===0||a===255,'soft alpha');
-        if(a){area++;colors.add(s.data.slice(p,p+3).join(','));assert(x>=315&&x<=358&&y>=240&&y<=283,'cue outside hand lane');}
+        if(a){area++;colors.add(s.data.slice(p,p+3).join(','));assert(x>=315&&x<=359&&y>=240&&y<=283,'cue outside hand lane');}
         if(x>0)assert.deepEqual(s.data.subarray(p,p+4),m.data.subarray((y*640+640-x)*4,(y*640+640-x)*4+4),'cue facing mismatch');
       }
       assert(area>120&&area<800,'missing/excessive charge');assert(colors.size>=4&&colors.size<=6,'flat/noisy charge');
       for(let tier=1;tier<=3;tier++) {
         const p=((250+(tier-1)*10)*640+354)*4;
-        assert.deepEqual(Array.from(s.data.slice(p,p+3)),age>=tier*25?[224,241,207]:[57,118,95],'tier lamp lies at '+age+'/'+tier);
+        assert.deepEqual(Array.from(s.data.slice(p,p+3)),age>=tier*25?[224,241,207]:[40,83,70],'tier lamp lies at '+age+'/'+tier);
+        // A whole 6-by-5 face must light, rather than a near-invisible glint.
+        for(let ly=-2;ly<=2;ly++)for(let lx=-3;lx<=2;lx++) {
+          const q=p+(ly*640+lx)*4,v=s.data.subarray(q,q+3);
+          assert(age>=tier*25?v[0]>=155&&v[1]>=215:v[0]===40&&v[1]===83,'lamp face too small/incorrect');
+        }
       }
       if([1,25,50,75].includes(age))tiers.add(hash(s));frames++;
     }
     assert.equal(tiers.size,4,'strength tiers indistinct');
+    for(const age of [25,50,75]) {
+      const a=cue(S,{...f,chg:age-1}),b=cue(S,{...f,chg:age});let changed=0,gain=0,count=0;
+      for(let y=250;y<=272;y++)for(let x=323;x<=346;x++) {
+        const p=(y*640+x)*4;if(!a.data[p+3])continue;
+        assert.equal(a.data[p+3],b.data[p+3],'tier changes cuff silhouette');
+        const light=s=>.2126*s.data[p]+.7152*s.data[p+1]+.0722*s.data[p+2];
+        const delta=light(b)-light(a);assert(delta>=0,'cuff dims as charge rises');
+        gain+=delta;count++;if(delta>0)changed++;
+      }
+      assert(changed>=200&&gain/count>15,'tier lacks a broad native-size value change: '+age+' / '+changed+' pixels / '+gain/count+' mean gain');
+    }
+    assert.equal(cue(S,f).data[(261*640+334)*4+3],0,'cuff covers hand center');
     for(const age of [24,25,49,50,74,75])for(const x of [-31,0,640,1280,1311])for(const y of [0,612,720])for(const face of [-1,1]) {
       const a=new PixelSurface(640,360),b=new PixelSurface(840,560),q={...f,x:x+.5,y:y+.5,face,chg:age};
       pxChargeCue(a,q);pxChargeCue(b,{...q,x:q.x+200,y:q.y+200});
@@ -102,7 +119,7 @@ if(!previewOnly) {
     }
     assert(interrupted,'punch failed to interrupt real charge');interruptions++;
   }
-  if(!rulesOnly)console.log('PASS',frames,'charge ages / four strength tiers, exact mirrors, hard alpha, active clock, snapshots;',crops,'fractional edge crops');
+  if(!rulesOnly)console.log('PASS',frames,'charge ages / four strength tiers, 6x5 lit faces / broad cuff value steps, clear center, exact mirrors, hard alpha, active clock, snapshots;',crops,'fractional edge crops');
   console.log('PASS',timelines,'real release/whiff/hit/guard timelines;',holds,'freeze/time-stop state holds'+(rulesOnly?'':' and rasters')+';',interruptions,'shock/punch interruptions, eight round resets / unchanged outcomes');
 }
 if(timing) {
@@ -123,10 +140,22 @@ if(output) {
     const frame=pxWorldSurface(S,{});frame.blit(pxHUDSurface(S,[null,null]),0,0);pxOutlinedText(frame,'CHARGE '+S.f[owner].chg+' / FACING '+(owner?'LEFT':'RIGHT'),12,88,PX_LIGHT);
     scenes.blit(frame,i%2*640,Math.floor(i/2)*360);
   }writePNG(output+'/'+prefix+'-charge-scenes.png',scenes);
+  // Same stage/costume across all four tiers, with separate 640x360 native
+  // frames so review never depends on scaling a large contact sheet to fit.
+  for(const stage of PX_STAGES)for(const owner of [0,1]) {
+    const compare=new PixelSurface(1280,720),side=owner?'left':'right';
+    [24,25,50,75].forEach((age,i)=>{
+      const S=active(owner,age);S.stage=stage.id;
+      const frame=pxWorldSurface(S,{});frame.blit(pxHUDSurface(S,[null,null]),0,0);
+      pxOutlinedText(frame,'ROCK / TIER '+Math.floor(age/25)+' / '+side.toUpperCase(),12,88,PX_LIGHT);
+      compare.blit(frame,i%2*640,Math.floor(i/2)*360);
+      writePNG(output+'/'+prefix+'-'+stage.id+'-'+side+'-tier'+Math.floor(age/25)+'.png',frame);
+    });writePNG(output+'/'+prefix+'-'+stage.id+'-'+side+'-tiers.png',compare);
+  }
   const states=new PixelSurface(1000,210);states.rect(0,0,1000,210,PX_INK);pxText(states,'CHARGED - RELEASE - RECOVERY - IDLE - INTERRUPTED',10,10,PX_LIGHT,2);
   const S=active(0,50),samples=[JSON.parse(JSON.stringify(S))];
   for(let n=0;n<3;n++){while(n===0?S.f[0].mt<14:n===1?S.f[0].mt<20:S.f[0].st!=='idle')step(S,[0,0]);samples.push(JSON.parse(JSON.stringify(S)));}
   const H=active(0,50);hit(H,1,H.f[0],H.f[1].x,{dmg:5,shock:12,noCounter:1});samples.push(H);
   samples.forEach((S,i)=>{const cell=new PixelSurface(192,132);cell.rect(0,0,192,132,'#334053');pxPaintFighter(cell,S,{...S.f[0],x:192,y:240},null);states.blit(cell,i*200,40);pxText(states,['CHARGED','RELEASE','RECOVERY','IDLE','SHOCK BYPASS'][i],i*200+5,183,PX_LIGHT);});writePNG(output+'/'+prefix+'-charge-lifecycle.png',states);
 }
-`)(assert,writePNG,process.argv[2]&&!process.argv[2].startsWith('--')?process.argv[2]:null,process.argv[3]||'v48',previewOnly,process.argv.includes('--rules-only'),process.argv.includes('--timing'),require('node:perf_hooks').performance);
+`)(assert,writePNG,process.argv[2]&&!process.argv[2].startsWith('--')?process.argv[2]:null,process.argv[3]||'v49',previewOnly,process.argv.includes('--rules-only'),process.argv.includes('--timing'),require('node:perf_hooks').performance);
