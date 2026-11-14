@@ -5,10 +5,10 @@ const source=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain',
 Function('assert','addEventListener','window','document','auditOnly',source+'\n'+`
 function resetEffects(){for(const k of ['parts','rings','lines','contacts','dust','ghosts','stars','puffs','nums','words'])FX[k]=[];FX.banner=FX.impact=FX.bf=null;FX.flash=FX.shake=0;FX.silent=true;}
 function advance(S){S.ev=[];step(S,[0,0]);for(const e of S.ev)fxEvent(S,e);fxTick();}
-function result(ch,owner,kind,final=false){
+function result(ch,owner,kind,final=false,score=null){
   resetEffects();const S=newMatch(ch,ch,1000);S.phase='fight';S.t=120;S.stage=['courtyard','gallery','observatory'][ch%3];
-  S.wins=final?(owner?[0,1]:[1,0]):[0,0];S.f[0].x=500;S.f[1].x=580;
-  if(kind==='draw'){S.wins=[1,1];S.timer=1;advance(S);}
+  S.wins=score?score.slice():final?(owner?[0,1]:[1,0]):[0,0];S.round=1+S.wins[0]+S.wins[1];S.f[0].x=500;S.f[1].x=580;
+  if(kind==='draw'){S.timer=1;advance(S);}
   else if(kind==='timeout'){S.timer=1;S.f[1-owner].hp=1;advance(S);}
   else {S.f[1-owner].hp=1;const input=[0,0];input[owner]=BTN.P<<INPUT_SHIFT;S.ev=[];step(S,input);for(const e of S.ev)fxEvent(S,e);fxTick();while(S.phase==='fight')advance(S);}
   assert.equal(S.phase,'ko');assert.equal(S.winner,kind==='draw'?-1:owner);return S;
@@ -19,7 +19,7 @@ for(const [n,mode,ch,owner,kind,final,target]of [
   [2,'watch',14,0,'draw',false,45],[3,'ai',0,1,'ko',true,170],
   [4,'host',7,0,'timeout',true,170],[5,'local',14,0,'draw',false,160]
 ]){
-  G.mode=mode;const S=result(ch,owner,kind,final);while(S.phase==='ko'&&S.phaseT<target)advance(S);
+  G.mode=mode;const S=result(ch,owner,kind,final,n===5?[1,1]:null);while(S.phase==='ko'&&S.phaseT<target)advance(S);
   FX.flash=FX.shake=0;const view=pxWorldSurface(S);view.blit(pxHUDSurface(S,labels()),0,0);
   const x=n%2*640,y=Math.floor(n/2)*376;pxText(audit,kind+' / '+mode+' / '+(final?'MATCH END':'ROUND END')+' / T'+target,x+8,y+4,PX_LIGHT);audit.blit(view,x,y+16);
 }
@@ -43,6 +43,7 @@ for(let ch=0;ch<15;ch++)for(let owner=0;owner<2;owner++)for(const kind of ['ko',
         const ink=texts.filter(t=>t.y>=r.y&&t.y<r.y+r.h);
         for(const t of ink)assert(t.x>=r.x+6&&t.x+t.w<=r.x+r.w-6&&t.y+t.h<=r.y+r.h-4,'result text escaped: '+t.text);
         assert(ink.some(t=>t.text===(kind==='draw'?'NO ROUND AWARDED':pxResultRole(labels(),owner)+' / '+CH[ch].name.toUpperCase()+' WINS')));
+        assert(ink.some(t=>t.text===pxResultRole(labels(),0)+' '+S.wins[0]+' - '+S.wins[1]+' '+pxResultRole(labels(),1)),'result omitted actual score');
         assert(ink.some(t=>t.text===(r.final?'MATCH COMPLETE':'ROUND '+(S.round+1)+' NEXT')));
         for(let a=0;a<ink.length;a++)for(let b=a+1;b<ink.length;b++){const p=ink[a],q=ink[b];assert(p.x+p.w<=q.x||q.x+q.w<=p.x||p.y+p.h<=q.y||q.y+q.h<=p.y,'overlapping result lines');}
       }
@@ -55,6 +56,27 @@ for(let ch=0;ch<15;ch++)for(let owner=0;owner<2;owner++)for(const kind of ['ko',
   if(S.phase==='intro')assert.equal(pxRoundResultLayout(S),null,'stale winner after new round');else assert(pxRoundResultLayout(S));
   timelines++;
 }
+// Reach every unfinished score through actual timed rounds, then draw three times.
+// A draw advances the round number but awards neither side a win, even at 1-1.
+let drawHistories=0,consecutiveDraws=0;
+for(let ch=0;ch<15;ch++)for(const score of [[0,0],[1,0],[0,1],[1,1]]){
+  resetEffects();const S=newMatch(ch,ch,1000);
+  function fight(){while(S.phase==='intro')advance(S);assert.equal(S.phase,'fight');}
+  function next(){while(S.phase==='ko')advance(S);assert.equal(S.phase,'intro');}
+  for(let owner=0;owner<2;owner++)if(score[owner]){
+    fight();S.timer=1;S.f[1-owner].hp=1;advance(S);assert.equal(S.winner,owner);next();
+  }
+  assert.deepEqual(S.wins,score);assert.equal(S.round,1+score[0]+score[1]);
+  for(let n=0;n<3;n++){
+    fight();const round=S.round;S.timer=1;advance(S);
+    assert.equal(S.phase,'ko');assert.equal(S.winner,-1);assert.deepEqual(S.wins,score,'draw awarded a round');
+    while(S.phaseT<30)advance(S);
+    assert.equal(pxRoundResultLayout(S).final,false,'draw ended an unfinished match');
+    next();assert.deepEqual(S.wins,score);assert.equal(S.round,round+1);consecutiveDraws++;
+  }
+  drawHistories++;
+}
+console.log('PASS',drawHistories,'actual prior-round score histories and',consecutiveDraws,'consecutive draws: no wins awarded, next round continues');
 // Result clocks pause with the existing phase clock, and snapshots need no event history.
 for(const pause of ['hitstop','freeze']){
   const S=result(0,0,'ko');while(S.phaseT<30)advance(S);const expected=pxRoundResultLayout(S);S[pause]=3;
@@ -75,4 +97,4 @@ for(const ch of [0,7,14]){
 console.log('PASS',timelines,'actual knockout/timeout/draw timelines; '+rasters+' all-mode read-only result rasters/snapshots; active boundaries, score progression, freeze holds and unchanged outcomes');
 }
 `)(assert,()=>{},{},{getElementById(){return {getContext(){return {};}};}},process.argv.includes('--preview-only'));
-if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'v40-results.png'),globalThis.audit);
+if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'round-results.png'),globalThis.audit);
