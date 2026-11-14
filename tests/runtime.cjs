@@ -295,6 +295,111 @@ G.S.phase='fight';G.S.t=130;G.S.f[0].ch=0;G.S.f[1].ch=14;G.S.f[0].x=400;G.S.f[1]
 frame(119);assert.equal(G.S.f[0].hp,1000);
 console.log('PASS real script order, title, fighter/stage selection, start, input-to-frame, pause/resume, rematch, host/guest stage messages and composite canvas presentation');
 `,context);
+// Exercise delayed WebRTC/library events through the real menu actions. These
+// fakes control event ordering; they do not establish real network behavior.
+vm.runInContext(`
+const mockConnection=()=>({open:true,events:{},sent:[],on(name,fn){this.events[name]=fn;},send(m){this.sent.push(m);}});
+const staleConn=mockConnection();netWire(staleConn,'guest');staleConn.events.open();
+netClose();show('title');pickMode('local');startFight();
+const offlineMatch=G.S,offlinePicks=G.pick.slice();
+staleConn.events.data({t:'start',p:[5,6],stage:'gallery'});
+assert.equal(G.S,offlineMatch,'closed room restarted the current match');
+assert.deepEqual(G.pick,offlinePicks);assert.equal(G.mode,'local');
+staleConn.events.open();assert.equal(G.mode,'local','closed room reopened selection');
+toMenu();
+
+const peers=[];
+class MockPeer {
+  constructor(id){this.id=id;this.events={};this.destroyed=0;this.connection=mockConnection();peers.push(this);}
+  on(name,fn){this.events[name]=fn;}
+  connect(id,options){this.target=id;this.options=options;return this.connection;}
+  destroy(){this.destroyed++;if(this.attached)this.attached.events.close();}
+}
+globalThis.Peer=window.Peer=MockPeer;
+// A real close may fire synchronously from destroy(), or arrive afterward.
+show('online');hostGame();const oldPeer=peers.at(-1);
+oldPeer.events.open();const oldConn=mockConnection();oldPeer.attached=oldConn;
+oldPeer.events.connection(oldConn);oldConn.events.open();
+netClose();show('title');
+assert.equal($('netStatus').textContent.includes('disconnected'),false,'intentional exit reported a disconnect');
+assert.equal(NET.peer,null);assert.equal(NET.conn,null);assert.equal(oldPeer.destroyed,1);
+
+// Rehost before the old room's queued events finish. No old callback may
+// destroy the replacement, change its status, or mutate its match/selection.
+show('online');hostGame();const freshPeer=peers.at(-1);freshPeer.events.open();
+const freshStatus=$('netStatus').textContent,freshConn=mockConnection();
+freshPeer.attached=freshConn;freshPeer.events.connection(freshConn);freshConn.events.open();
+const freshControls=$('col0').children.slice(),freshPicks=G.pick.slice(),freshStage=G.stage;
+let staleEvents=0;
+const unchanged=()=>{
+  assert.equal(NET.peer,freshPeer);assert.equal(NET.conn,freshConn);assert.equal(freshPeer.destroyed,0);
+  assert.equal(G.mode,'host');assert.equal(G.running,false);assert.deepEqual(G.pick,freshPicks);
+  assert.equal(G.stage,freshStage);assert.equal($('stage').attributes['data-screen'],'select');
+  assert.equal($('netStatus').textContent,freshStatus);assert.equal($('col0').children[0],freshControls[0]);
+  assert.equal(G.remoteIn,0);assert.equal(G.remoteTap,0);staleEvents++;
+};
+G.remoteIn=0;G.remoteTap=0;
+oldPeer.events.open();unchanged();
+oldPeer.events.error({type:'peer-unavailable'});unchanged();
+oldPeer.events.connection(mockConnection());unchanged();
+oldConn.events.open();unchanged();
+for(const packet of [{t:'pick',ch:12},{t:'stage',stage:'gallery'},{t:'in',b:1023},
+  {t:'select'},{t:'start',p:[3,4],stage:'gallery'},{t:'s',s:null,e:[]}]){
+  oldConn.events.data(packet);unchanged();
+}
+oldConn.events.close();unchanged();
+// Superseded connections in the same room are isolated too.
+const priorConn=freshConn,replacement=mockConnection();freshPeer.attached=replacement;
+netWire(replacement,'host');replacement.events.open();
+priorConn.events.close();assert.equal(NET.conn,replacement);assert.equal(NET.peer,freshPeer);
+priorConn.events.data({t:'pick',ch:10});assert.deepEqual(G.pick,[0,1]);
+replacement.events.data({t:'pick',ch:8});assert.equal(G.pick[1],8,'current connection stopped receiving');
+replacement.events.close();assert.equal($('stage').attributes['data-screen'],'online');
+assert.equal($('netStatus').textContent,'The other player disconnected.');
+assert.equal(NET.peer,null);assert.equal(NET.conn,null);assert.equal(freshPeer.destroyed,1);
+
+// Normal joins still connect reliably; leaving cancels a pending peer open.
+$('code').value=' abcd ';joinGame();const joining=peers.at(-1);
+joining.events.open();assert.equal(joining.target,'ritual-demo-ABCD');assert.equal(joining.options.reliable,true);
+joining.connection.events.open();assert.equal(G.mode,'guest');
+joining.connection.events.data({t:'stage',stage:'gallery'});assert.equal(G.stage,'gallery');
+joining.connection.events.data({t:'start',p:[2,3],stage:'gallery'});assert.equal(G.S.stage,'gallery');
+const joinedMatch=G.S;
+for(const stale of [staleConn,oldConn,priorConn]){
+  stale.events.data({t:'s',s:null,e:[]});assert.equal(G.S,joinedMatch,'old snapshot replaced the current guest match');
+  stale.events.close();assert.equal(NET.peer,joining);assert.equal(G.running,true);
+}
+netClose();show('online');joinGame();const pending=peers.at(-1);netClose();show('title');
+pending.events.open();pending.events.error({type:'peer-unavailable'});
+assert.equal(Object.keys(pending.connection.events).length,0);assert.equal(NET.peer,null);
+assert.equal($('stage').attributes['data-screen'],'title');
+
+// Back, rehost, join, and library failure while PeerJS is still loading.
+delete window.Peer;delete globalThis.Peer;
+hostGame();const cancelledScript=document.head.children.at(-1),beforeCancel=peers.length;
+netClose();show('title');window.Peer=globalThis.Peer=MockPeer;
+cancelledScript.onload();assert.equal(peers.length,beforeCancel,'Back did not cancel pending library load');
+netStatus('current status');cancelledScript.onerror();assert.equal($('netStatus').textContent,'current status');
+delete window.Peer;delete globalThis.Peer;
+show('online');hostGame();const firstScript=document.head.children.at(-1);
+hostGame();const secondScript=document.head.children.at(-1);
+window.Peer=globalThis.Peer=MockPeer;
+const beforeLoad=peers.length;firstScript.onload();assert.equal(peers.length,beforeLoad);
+secondScript.onload();assert.equal(peers.length,beforeLoad+1);netClose();
+delete window.Peer;delete globalThis.Peer;
+joinGame();const joinScript=document.head.children.at(-1);window.Peer=globalThis.Peer=MockPeer;
+joinScript.onload();const loadedJoin=peers.at(-1);loadedJoin.events.open();
+assert.equal(loadedJoin.target,'ritual-demo-ABCD');netClose();
+hostGame();peers.at(-1).events.error({type:'network'});
+assert.equal($('netStatus').textContent,'Network error: network');netClose();
+joinGame();peers.at(-1).events.error({type:'peer-unavailable'});
+assert.equal($('netStatus').textContent,'No room with that code.');netClose();
+delete window.Peer;delete globalThis.Peer;
+hostGame();document.head.children.at(-1).onerror();
+assert.equal($('netStatus').textContent,'Could not load the network library. Is this computer online?');
+netClose();show('title');
+console.log('PASS closed-room start/open isolation,',staleEvents,'stale peer/connection events, synchronous destroy, replacement connection, current disconnect, joins and cancelled/superseded PeerJS loads');
+`,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
 if(process.argv[2]) {

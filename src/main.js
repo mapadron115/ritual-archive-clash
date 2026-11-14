@@ -250,19 +250,26 @@ function toMenu(fromNet) { G.running = false; G.paused = false; clearInput(); if
 function toSelect() { G.running = false; G.paused = false; if (G.mode === 'host') netSend({ t: 'select' }); show('select'); buildSelect(); }
 
 // ---------- online (WebRTC through PeerJS; the host runs the fight, the guest sends buttons)
-const NET = { peer: null, conn: null };
+const NET = { peer: null, conn: null, session: 0 };
 function netStatus(t) { $('netStatus').textContent = t; }
 function netSend(m) { if (NET.conn && NET.conn.open) NET.conn.send(m); }
-function netClose() { try { if (NET.peer) NET.peer.destroy(); } catch (e) { } NET.peer = NET.conn = null; }
+function netClose() {
+  // Invalidate callbacks before destroy(), which can itself emit close events.
+  const peer=NET.peer;NET.session++;NET.peer=NET.conn=null;
+  try { if (peer) peer.destroy(); } catch (e) { }
+}
 function loadPeer(cb) {
+  const session=NET.session,active=()=>NET.session===session;
   if (window.Peer) return cb();
   netStatus('Loading the network library…');
-  const s = document.createElement('script'); s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'; s.onload = cb; s.onerror = () => netStatus('Could not load the network library. Is this computer online?'); document.head.appendChild(s);
+  const s = document.createElement('script'); s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'; s.onload = () => { if(active())cb(); }; s.onerror = () => { if(active())netStatus('Could not load the network library. Is this computer online?'); }; document.head.appendChild(s);
 }
 function netWire(conn, mode) {
   NET.conn = conn;
-  conn.on('open', () => { G.mode = mode; G.pick = [0, 1]; netSend({ t: 'pick', ch: G.pick[mode === 'guest' ? 1 : 0] }); if(mode==='host')netSend({t:'stage',stage:G.stage});show('select'); buildSelect(); });
+  const session=NET.session,active=()=>NET.session===session&&NET.conn===conn;
+  conn.on('open', () => { if(!active())return;G.mode = mode; G.pick = [0, 1]; netSend({ t: 'pick', ch: G.pick[mode === 'guest' ? 1 : 0] }); if(mode==='host')netSend({t:'stage',stage:G.stage});show('select'); buildSelect(); });
   conn.on('data', m => {
+    if(!active())return;
     // Keep the local player's focused roster/arena button attached while the
     // other player chooses. The connection already built these controls.
     if (m.t === 'pick') { G.pick[mode === 'guest' ? 0 : 1] = m.ch; if (!G.running) refreshSelection(); }
@@ -272,25 +279,27 @@ function netWire(conn, mode) {
     else if (m.t === 'select') toSelect();
     else if (m.t === 's' && G.mode === 'guest') { G.S = m.s; for (const e of m.e) fxEvent(G.S, e); if (G.S.phase === 'over' && !G.over) endMatch(); if (G.S.phase !== 'over' && G.over) { G.over = false; show('none'); } }
   });
-  conn.on('close', () => { if (G.mode === 'host' || G.mode === 'guest') { toMenu(true); netClose(); show('online'); netStatus('The other player disconnected.'); } });
+  conn.on('close', () => { if (active() && (G.mode === 'host' || G.mode === 'guest')) { toMenu(true); netClose(); show('online'); netStatus('The other player disconnected.'); } });
 }
 function hostGame() {
   netClose();
   loadPeer(() => {
     const code = Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.random() * 24 | 0]).join('');
-    NET.peer = new Peer('ritual-demo-' + code);
-    NET.peer.on('open', () => netStatus('Room code: ' + code + '  — give it to your friend. Waiting for them…'));
-    NET.peer.on('connection', c => netWire(c, 'host'));
-    NET.peer.on('error', e => netStatus('Network error: ' + e.type));
+    const peer=NET.peer=new Peer('ritual-demo-' + code),session=NET.session;
+    const active=()=>NET.session===session&&NET.peer===peer;
+    peer.on('open', () => { if(active())netStatus('Room code: ' + code + '  — give it to your friend. Waiting for them…'); });
+    peer.on('connection', c => { if(active())netWire(c, 'host'); });
+    peer.on('error', e => { if(active())netStatus('Network error: ' + e.type); });
   });
 }
 function joinGame() {
   const code = $('code').value.trim().toUpperCase(); if (code.length !== 4) return netStatus('Type the 4-letter room code.');
   netClose();
   loadPeer(() => {
-    NET.peer = new Peer();
-    NET.peer.on('open', () => { netStatus('Connecting…'); netWire(NET.peer.connect('ritual-demo-' + code, { reliable: true }), 'guest'); });
-    NET.peer.on('error', e => netStatus(e.type === 'peer-unavailable' ? 'No room with that code.' : 'Network error: ' + e.type));
+    const peer=NET.peer=new Peer(),session=NET.session;
+    const active=()=>NET.session===session&&NET.peer===peer;
+    peer.on('open', () => { if(!active())return;netStatus('Connecting…'); netWire(peer.connect('ritual-demo-' + code, { reliable: true }), 'guest'); });
+    peer.on('error', e => { if(active())netStatus(e.type === 'peer-unavailable' ? 'No room with that code.' : 'Network error: ' + e.type); });
   });
 }
 
