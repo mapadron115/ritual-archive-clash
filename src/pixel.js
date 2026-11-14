@@ -123,6 +123,9 @@ const PX_POSES = {
   back6: {h:[-11,-78],s:[-10,-62],hip:[-5,-33],a:[[11,-55],[17,-74]],b:[[-13,-49],[-1,-63]],l:[[-3,-28],[-10,-13]],r:[[-10,-18],[-12,0]]},
   back7: {h:[-10,-78],s:[-9,-62],hip:[-4,-33],a:[[12,-55],[18,-74]],b:[[-11,-49],[1,-63]],l:[[-22,-25],[-22,-6]],r:[[-5,-18],[-6,0]]},
   punchload: {h:[-17,-73],s:[-19,-58],hip:[-12,-30],a:[[-33,-44],[-28,-61]],b:[[2,-45],[15,-57]],l:[[9,-15],[23,0]],r:[[-28,-16],[-35,0]]},
+  // The second punch uses the far arm: keep the near hand guarding while that fist loads behind.
+  punch2w: {h:[4,-76],s:[0,-60],hip:[-7,-32],a:[[23,-49],[29,-66]],b:[[-25,-53],[-29,-71]],l:[[20,-16],[30,0]],r:[[-24,-18],[-33,0]]},
+  punch2load: {h:[-8,-73],s:[-12,-57],hip:[-9,-30],a:[[23,-47],[29,-64]],b:[[-34,-51],[-36,-70]],l:[[20,-15],[31,0]],r:[[-28,-17],[-36,0]]},
   punchre: {h:[9,-77],s:[7,-62],hip:[-1,-34],a:[[25,-56],[36,-59]],b:[[-8,-47],[5,-57]],l:[[18,-18],[27,0]],r:[[-22,-19],[-31,0]]},
   punch2re: {h:[10,-77],s:[7,-62],hip:[-1,-34],a:[[10,-47],[22,-56]],b:[[24,-55],[38,-58]],l:[[18,-18],[29,0]],r:[[-21,-19],[-30,0]]},
   ready: {h:[3,-78],s:[0,-63],hip:[-4,-35],a:[[17,-49],[25,-62]],b:[[-16,-48],[-4,-59]],l:[[15,-18],[24,0]],r:[[-21,-19],[-29,0]]},
@@ -511,7 +514,7 @@ function pxArtPose(m) {
 }
 // Startup pair, recoil, settle. All selection uses existing active simulation clocks.
 const PX_ATTACKS = {
-  punch:['wind','punchload','punchre','ready'],punch2:['wind','punchload','punch2re','ready'],
+  punch:['wind','punchload','punchre','ready'],punch2:['punch2w','punch2load','punch2re','ready'],
   hook:['hookw','hookload','hookre','ready'],kick:['kickw','kickload','kickre','kickplant'],
   jpunch:['jpunchw','jpunchload','jpunchre','jpunchsettle'],jkick:['jkickw','jkickload','jkickre','jkicksettle'],
   cast1:['castw','castload','castre','castsettle'],speech:['speechw','speechload','speechre','speechsettle'],

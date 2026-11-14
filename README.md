@@ -22,6 +22,10 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Script checks
 
+`node tests/air-facing.cjs` checks the actual world painter for all fifteen builds, both costumes and both facings: complete sprite reflection about the simulation root and forward fist/boot pixels at airborne contact. Add an output directory for an explicitly labeled Greta direction sheet.
+
+`node tests/punch-chain.cjs` checks actual two- and three-press punch chains, whiffs/hits/blocks, both slots/facings, distinct first/second punch loads, phase boundaries, freeze holds, snapshots and unchanged outcomes. Add an output directory for phase, silhouette and actual-input scene previews.
+
 `node tests/air-attacks.cjs` checks actual early/crest/late airborne punch and kick inputs, slowed jumps, real hit/block contacts in both slots, distinct suspended wind-up/recovery silhouettes, floor clearance, freezes, interruptions, snapshots and unchanged outcomes. Add an output directory for phase, silhouette and actual-input scene previews.
 
 `node tests/jump-animation.cjs` checks actual straight/directional jumps under ordinary and Domain-slowed motion, distinct ascent/crest/descent/approach silhouettes, floor clearance, attack/hit interruptions, freezes, snapshots and unchanged outcomes. Add an output directory for phase, silhouette and actual-jump scene previews.
