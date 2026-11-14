@@ -249,7 +249,8 @@ function togglePause() {
   else show('none');
 }
 function toMenu(fromNet) { G.running = false; G.paused = false; clearInput(); if (!fromNet && (G.mode === 'host' || G.mode === 'guest')) netClose(); show('title'); }
-function toSelect() { G.running = false; G.paused = false; if (G.mode === 'host') netSend({ t: 'select' }); show('select'); buildSelect(); }
+// Either player's Change fighters button leaves the fight; received requests never echo.
+function toSelect(fromNet) { G.running = false; G.paused = false; if (!fromNet && (G.mode === 'host' || G.mode === 'guest')) netSend({ t: 'select' }); show('select'); buildSelect(); }
 
 // ---------- online (WebRTC through PeerJS; the host runs the fight, the guest sends buttons)
 const NET = { peer: null, conn: null, session: 0 };
@@ -278,7 +279,7 @@ function netWire(conn, mode) {
     else if (m.t === 'in') { G.remoteIn = m.b & INPUT_MASK; G.remoteTap |= m.b >>> INPUT_SHIFT; }
     else if (m.t === 'stage' && mode==='guest') { G.stage=pxStageId(m.stage);if(!G.running)refreshSelection(); }
     else if (m.t === 'start' && mode==='guest') { G.pick = m.p; G.stage=pxStageId(m.stage);startFight(); }
-    else if (m.t === 'select') toSelect();
+    else if (m.t === 'select') toSelect(true);
     else if (m.t === 's' && G.mode === 'guest') { G.S = m.s; for (const e of m.e) fxEvent(G.S, e); if (G.S.phase === 'over' && !G.over) endMatch(); if (G.S.phase !== 'over' && G.over) { G.over = false; show('none'); } }
   });
   conn.on('close', () => { if (active() && (G.mode === 'host' || G.mode === 'guest')) { toMenu(true); netClose(); show('online'); netStatus('The other player disconnected.'); } });

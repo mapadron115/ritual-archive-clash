@@ -290,6 +290,38 @@ stale.fn();assert.equal($('over').style.display,'none');current.fn();assert.equa
 toSelect();assert.equal($('select').style.display,'flex');assert.equal(G.running,false);
 toMenu();assert.equal($('title').style.display,'flex');
 console.log('PASS ten actual match endings in five modes, score/role/guest guidance, delayed focus, rematch reset, snapshot restart, navigation and stale timer isolation');
+// Either player's existing Change fighters action must return BOTH clients to
+// selection. Relaying the received request must not echo it back indefinitely.
+let selectionReturnChecks=0;
+for(const [sender,fromResult] of [['guest',false],['host',false],['host',true]]){
+  G.running=false;netWire(conn,sender);wire.open();G.pick=[4,9];G.stage='gallery';startFight();
+  if(fromResult){G.S.phase='over';G.S.wins=[2,0];endMatch();timeouts.pop().fn();}
+  else togglePause();
+  const screen=fromResult?'over':'pause';
+  const menuHTML=html.slice(html.indexOf('id="'+screen+'"'));
+  const action=menuHTML.match(/onclick="([^"]+)">Change fighters/)[1];
+  sent.length=0;eval(action);
+  const requests=sent.filter(m=>m.t==='select');
+  assert.equal(requests.length,1,sender+' did not notify opponent of Change fighters');
+  assert.equal(G.running,false);assert.equal(G.paused,false);assert.equal($('stage').attributes['data-screen'],'select');
+  assert.deepEqual(G.pick,[4,9]);assert.equal(G.stage,'gallery');
+  const receiver=sender==='guest'?'host':'guest';
+  netWire(conn,receiver);wire.open();G.pick=[4,9];G.stage='gallery';startFight();togglePause();
+  sent.length=0;wire.data(requests[0]);
+  assert.equal(sent.length,0,'received Change fighters echoed to sender');
+  assert.equal(G.running,false);assert.equal(G.paused,false);assert.equal($('stage').attributes['data-screen'],'select');
+  assert.deepEqual(G.pick,[4,9]);assert.equal(G.stage,'gallery');
+  assert.equal($('start').style.display,receiver==='guest'?'none':'');
+  assert($('col'+(receiver==='guest'?0:1)).children.every(b=>b.disabled));
+  // The resulting selection still supports picks and a host-started new fight.
+  const other=receiver==='guest'?0:1;wire.data({t:'pick',ch:6});assert.equal(G.pick[other],6);
+  if(receiver==='host'){
+    startFight();const restart=sent.findLast(m=>m.t==='start');assert(restart);assert.deepEqual(restart.p,[4,6]);
+  }else wire.data({t:'start',p:[6,9],stage:'gallery'});
+  assert.equal(G.running,true);assert.equal(G.paused,false);assert.equal(G.S.phase,'intro');assert.equal(G.S.stage,'gallery');
+  selectionReturnChecks++;
+}
+console.log('PASS',selectionReturnChecks,'actual online Change fighters actions notify either role, receive without echo and retain selection/start authority');
 // A hit on an odd host tick waits for the next snapshot. Starting another
 // fight before that snapshot must not deliver the old hit with the new state.
 let eventResetChecks=0;
