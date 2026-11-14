@@ -13,24 +13,36 @@ function begin(owner=0) {
 function active(owner=0) {const S=begin(owner);for(let n=0;n<160&&!S.zones.length;n++)step(S,[0,0]);assert(S.zones[0]?.k==='target');return S;}
 function layer(S) {const s=new PixelSurface(640,360);for(const z of S.zones)pxZone(s,S,z);return s;}
 if(!previewOnly) {
-  let frames=0,crops=0,timelines=0,holds=0;const S=active(),z=S.zones[0],phases=new Set();
+  let frames=0,crops=0,timelines=0,holds=0;const S=active(),z=S.zones[0],phases=new Set(),brightAreas=[],nativeAreas=[];
   if(!rulesOnly) {
   for(let t=0;t<z.dur;t++) {
     const A=JSON.parse(JSON.stringify(S));A.zones[0]={...z,x:640,t};const before=JSON.stringify(A),s=layer(A);
     assert.equal(JSON.stringify(A),before,'warning mutates state');
     assert.deepEqual(layer({...A,t:A.t+991}).data,s.data,'warning uses global clock');
     assert.deepEqual(layer(JSON.parse(before)).data,s.data,'snapshot changes warning');
-    const colors=new Set();let area=0;
+    const colors=new Set();let area=0,bright=0;
     for(let y=0;y<s.h;y++)for(let x=0;x<s.w;x++) {
       const p=(y*s.w+x)*4,a=s.data[p+3];assert(a===0||a===255,'soft alpha');
-      if(a){area++;colors.add(s.data.slice(p,p+3).join(','));assert(x>=242&&x<=398&&y>=270&&y<=316,'warning outside floor lane');}
+      if(a){area++;colors.add(s.data.slice(p,p+3).join(','));assert(x>=242&&x<=398&&y>=270&&y<=316,'warning outside floor lane');if(s.data[p]===240&&s.data[p+1]===209&&s.data[p+2]===155)bright++;}
       if(x>0)assert.deepEqual(s.data.subarray(p,p+4),s.data.subarray((y*s.w+640-x)*4,(y*s.w+640-x)*4+4),'asymmetric warning');
     }
-    assert(area>200&&area<1500,'missing or excessive warning');assert(colors.size>=3&&colors.size<=6,'flat/noisy warning');
+    assert(area>200&&area<2600,'missing or excessive warning: '+area);assert(colors.size>=3&&colors.size<=6,'flat/noisy warning');
+    assert(bright>=450,'warning lacks a substantial bright area at native size: '+bright);brightAreas.push(bright);
     // Fixed outer posts show the locked landing width throughout the countdown.
     for(const x of [245,395])assert.equal(s.data[(306*s.w+x)*4+3],255,'landing boundary drifts');
     for(let y=180;y<270;y++)for(let x=295;x<=345;x++)assert.equal(s.data[(y*s.w+x)*4+3],0,'warning obscures upper body');
     if(ages.includes(t))phases.add(Buffer.from(s.data).toString('base64'));frames++;
+  }
+  // Judge visible area after the actual world/fighter/HUD composition, too.
+  // These are native scenes from real inputs, across all stages and both slots.
+  for(const owner of [0,1])for(const stage of PX_STAGES)for(const age of [1,13,25]) {
+    const A=active(owner);while(A.zones[0].t<age)step(A,[0,0]);A.stage=stage.id;
+    const mark=A.zones[0],raster=layer(A),frame=pxWorldSurface(A,{});frame.blit(pxHUDSurface(A,[null,null]),0,0);let bright=0;
+    for(let y=270;y<=316;y++)for(let x=Math.round(mark.x/2)-78;x<=Math.round(mark.x/2)+78;x++) {
+      const p=(y*640+x)*4;
+      if(raster.data[p]===240&&raster.data[p+1]===209&&raster.data[p+2]===155&&frame.data[p]===240&&frame.data[p+1]===209&&frame.data[p+2]===155)bright++;
+    }
+    assert(bright>=350,'fighters/HUD hide the native warning: '+bright);nativeAreas.push(bright);
   }
   assert.equal(phases.size,ages.length,'missing countdown stages');
   const expired=new PixelSurface(640,360);pxZone(expired,S,{...z,t:z.dur});assert(expired.data.every(v=>v===0),'expired zone still painted');
@@ -78,6 +90,7 @@ if(!previewOnly) {
     timelines++;
   }
   console.log('PASS',frames,'hard-alpha landing ages / fixed boundaries, six countdown stages, symmetry, clear body lane, snapshots;',crops,'fractional/edge crops;',timelines,'real Maximum stand/run/guard/jump/swap timelines / locked target, exact impact, unchanged outcomes;',holds,'freeze holds; existing time-stop advance retained');
+  if(nativeAreas.length)console.log('Bright pixel minima layer/native:',Math.min(...brightAreas),Math.min(...nativeAreas),'across',nativeAreas.length,'native composites');
 }
 if(timing) {
   const S=active(),z=S.zones[0];for(let n=0;n<40;n++){z.t=n%26;pxWorldSurface(S,{});}
@@ -98,5 +111,15 @@ if(output) {
     pxOutlinedText(frame,'FACING '+(owner?'LEFT':'RIGHT')+' / T'+S.zones[0]?.t+(i===3?' / MOVING FOE':''),12,88,PX_LIGHT);
     scenes.blit(frame,i%2*640,Math.floor(i/2)*360);
   }writePNG(output+'/'+prefix+'-landing-scenes.png',scenes);
+  for(const stage of PX_STAGES)for(const owner of [0,1]) {
+    const strip=new PixelSurface(640,1080);
+    [1,13,25].forEach((age,row)=>{
+      const A=active(owner);while(A.zones[0].t<age)step(A,[0,0]);A.stage=stage.id;
+      const frame=pxWorldSurface(A,{});frame.blit(pxHUDSurface(A,[null,null]),0,0);
+      pxOutlinedText(frame,stage.id.toUpperCase()+' / FACING '+(owner?'LEFT':'RIGHT')+' / T'+age,12,88,PX_LIGHT);
+      const name=prefix+'-'+stage.id+'-'+(owner?'left':'right');
+      writePNG(output+'/'+name+'-t'+age+'.png',frame);strip.blit(frame,0,row*360);
+    });writePNG(output+'/'+prefix+'-'+stage.id+'-'+(owner?'left':'right')+'-countdown.png',strip);
+  }
 }
 `)(assert,writePNG,process.argv[2]&&!process.argv[2].startsWith('--')?process.argv[2]:null,process.argv[3]||'v47',previewOnly,process.argv.includes('--rules-only'),process.argv.includes('--timing'),require('node:perf_hooks').performance);

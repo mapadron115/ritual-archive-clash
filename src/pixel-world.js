@@ -372,23 +372,25 @@ function pxLandingWarning(s,z) {
   const age=Math.max(0,z.t||0),u=clamp(age/z.dur,0,1),phase=Math.min(5,Math.floor(u*6));
   const shade='#945c43',col='#df985f',light='#f0d19b';
   const line=(a,b,c,w=1)=>cell.line([ox+a[0],oy+a[1]],[ox+b[0],oy+b[1]],c,w);
-  // Broken ground ellipse stays visible beneath boots, with solid landing posts.
+  // Broad gold rails and tall end posts survive a native-size full-scene view.
+  // Keep the same boundary positions and floor lane; add filled value.
   for(const side of [-1,1]) {
-    const pts=[[side*10,-8],[side*(r-15),-6],[side*r,0],[side*(r-15),6],[side*10,8]];
-    for(const [c,w]of [[PX_INK,4],[shade,2]])for(let n=1;n<pts.length;n++)line(pts[n-1],pts[n],c,w);
-    line([side*(r-14),-5],[side*(r-3),-1],col);
-    line([side*(r-13),5],[side*(r-3),1],light);
-    line([side*r,-5],[side*r,5],PX_INK,5);line([side*r,-4],[side*r,4],col,3);
-    line([side*r,-2],[side*r,2],light);
+    const pts=[[side*10,-8],[side*(r-15),-6],[side*r,0],[side*(r-15),6],[side*10,7]];
+    for(const [c,w]of [[PX_INK,6],[col,4]])for(let n=1;n<pts.length;n++)line(pts[n-1],pts[n],c,w);
+    line([side*12,-8],[side*(r-15),-6],shade,2);
+    line([side*(r-14),-5],[side*(r-3),-1],light,2);
+    line([side*12,7],[side*(r-13),6],light,2);
+    line([side*r,-17],[side*r,6],PX_INK,7);line([side*r,-16],[side*r,5],col,5);
+    line([side*r,-15],[side*r,-5],light,3);
     // Paired inward teeth close in six legible steps, separate from the boundary.
     const a=15+(5-phase)*8;
-    const teeth=[[side*(a+5),-4],[side*a,0],[side*(a+5),4]];
-    for(const [c,w]of [[PX_INK,4],[light,2]])for(let n=1;n<teeth.length;n++)line(teeth[n-1],teeth[n],c,w);
+    const teeth=[[side*(a+8),-17],[side*a,-10],[side*(a+8),-3]];
+    for(const [c,w]of [[PX_INK,6],[light,4]])for(let n=1;n<teeth.length;n++)line(teeth[n-1],teeth[n],c,w);
   }
   // A descending tip marks the landing center without covering the upper body.
-  const h=-30+phase*4;
-  cell.poly([[ox-5,oy+h],[ox,oy+h+5],[ox+5,oy+h],[ox,oy+h+9]],col,PX_INK);
-  line([-2,h+1],[0,h+3],light);line([-4,0],[4,0],PX_INK,4);line([-3,0],[3,0],light,2);
+  const h=-34+phase*4;
+  cell.poly([[ox-7,oy+h],[ox,oy+h+6],[ox+7,oy+h],[ox,oy+h+12]],col,PX_INK);
+  line([-4,h+2],[0,h+6],light,2);line([-4,0],[4,0],PX_INK,6);line([-3,0],[3,0],light,4);
   // Reflect the finished left half so polygon scan rounding cannot bias the cue.
   for(let y=0;y<cell.h;y++)for(let x=0;x<ox;x++) {
     const p=(y*cell.w+x)*4,q=(y*cell.w+2*ox-x)*4;
