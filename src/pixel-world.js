@@ -25,6 +25,48 @@ function pxBolt(s,a,b,seed,col='#ed5266',width=2) {
   let prev=a;
   for(let i=1;i<=7;i++) {const t=i/7,off=i===7?0:Math.sin(seed*13+i*9)*9,pt=[a[0]+(b[0]-a[0])*t+off,a[1]+(b[1]-a[1])*t-off*.5];s.line(prev,pt,PX_INK,width+3);s.line(prev,pt,col,width);prev=pt;}
 }
+// Three authored phases: compressed contact, directional expansion, separated fragments.
+// Geometry is mirrored around the exact contact pixel; no random frame-to-frame flicker.
+const PX_CONTACTS=new Map();
+function pxContact(s,e) {
+  const key=e.kind+':'+e.t+':'+!!e.heavy;
+  if(!PX_CONTACTS.has(key)) {
+    const cell=new PixelSurface(160,160);pxContactShape(cell,{...e,x:160,y:160,dir:1});PX_CONTACTS.set(key,cell);
+  }
+  s.blit(PX_CONTACTS.get(key),Math.round(e.x/2)-(e.dir<0?79:80),Math.round(e.y/2)-80,1,e.dir<0);
+}
+function pxContactShape(s,e) {
+  const x=Math.round(e.x/2),y=Math.round(e.y/2),t=e.t,block=e.kind==='block',broken=e.kind==='break';
+  const col=block?'#8ed9e1':broken?'#edaa67':'#eed49b',light=block?'#dbf4ed':PX_LIGHT;
+  const poly=(pts,c)=>s.poly(pts.map(([a,b])=>[x+a*e.dir,y+b]),c);
+  const line=(a,b,c,w=1)=>s.line([x+a[0]*e.dir,y+a[1]],[x+b[0]*e.dir,y+b[1]],c,w);
+  if(t<2) {
+    poly([[-7,-3],[-3,-8],[2,-4],[8,-1],[5,4],[-2,8],[-4,3]],PX_INK);
+    poly([[-5,-2],[-2,-6],[2,-2],[6,0],[2,3],[-2,6],[-2,2]],light);
+    return;
+  }
+  if(block && t<7) {
+    const r=13+(t-2)*2;
+    line([5,-r],[-4,-r*.55],PX_INK,5);line([-4,-r*.55],[-7,0],PX_INK,5);
+    line([-7,0],[-4,r*.55],PX_INK,5);line([-4,r*.55],[5,r],PX_INK,5);
+    line([5,-r],[-4,-r*.55],col,3);line([-4,-r*.55],[-7,0],light,3);
+    line([-7,0],[-4,r*.55],light,3);line([-4,r*.55],[5,r],col,3);
+  } else if(!block && t<7) {
+    const r=(e.heavy?29:21)+(t-2)*2;
+    poly([[-12,-2],[-r*.7,-r*.7],[-2,-8],[4,-r],[9,-5],[r,0],[10,6],[9,r*.85],[-2,9],[-r*.65,r*.65],[-8,3]],PX_INK);
+    poly([[-9,-1],[-r*.5,-r*.5],[-1,-5],[4,-r*.75],[7,-3],[r*.8,0],[7,4],[7,r*.6],[-1,6],[-r*.45,r*.45],[-5,2]],col);
+    poly([[-7,0],[-2,-4],[4,-3],[12,0],[3,4],[-2,3]],light);
+  }
+  if(t>=4) {
+    const u=t-4;
+    const rays=block?[[-1,-1],[.4,-1],[-1,1],[.4,1]]:[[1,-.2],[.7,-.9],[.65,.85],[-.7,-.65],[-.6,.75]];
+    rays.forEach(([dx,dy],n)=>{
+      const r=(e.heavy?19:13)+u*(block?2:3),len=Math.max(1,(broken?10:7)-u*.7);
+      const a=[dx*r,dy*r+u*u*.12],b=[dx*(r+len),dy*(r+len)+u*u*.12];
+      line(a,b,PX_INK,3);line(a,b,n%2?col:light,1);
+    });
+  }
+}
 function pxOutlinedText(s,text,x,y,col,scale=1) {
   for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]])pxText(s,text,Math.round(x)+dx,Math.round(y)+dy,PX_INK,scale);
   pxText(s,text,Math.round(x),Math.round(y),col,scale);
@@ -122,6 +164,7 @@ function pxWorldSurface(S,F=FX) {
   for(const r of F.rings||[])pxRing(s,r.x/2,r.y/2,r.r/2,r.r/2,r.col,1,Math.floor(r.t/3));
   for(const p of F.parts||[]) {const r=Math.max(1,p.s/2*(1-p.t/p.life));s.rect(p.x/2-r,p.y/2-r,r*2,r*2,p.col);}
   for(const e of F.stars||[])pxBurst(s,e.x/2,e.y/2,e.r/2*(1-e.t/e.life*.7),e.col,e.t);
+  for(const e of F.contacts||[])pxContact(s,e);
   for(const n of F.nums||[]) {const size=n.bf?3:n.big?2:1;pxOutlinedText(s,n.txt,n.x/2-pxTextWidth(n.txt,size)/2,n.y/2,n.bf?'#ed5266':n.big?'#eed49b':PX_LIGHT,size);}
   for(const w of F.words||[]) {const size=w.txt.length>16?1:2;pxOutlinedText(s,w.txt,w.x/2-pxTextWidth(w.txt,size)/2,w.y/2-w.t/4,'#edcf9d',size);}
   if(F.bf) {const b=F.bf,x=b.x/2,y=b.y/2;pxBurst(s,x,y,Math.max(5,65-b.t*2),'#ed5266',b.t);for(let n=0;n<6;n++){const a=n*Math.PI/3+Math.floor(b.t/3)*.2;pxBolt(s,[x,y],[x+Math.cos(a)*105,y+Math.sin(a)*75],n+Math.floor(b.t/3));}}

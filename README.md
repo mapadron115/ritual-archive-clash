@@ -22,4 +22,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Script checks
 
+`node tests/contacts.cjs` checks contact-effect phases, real hit/block/break event wiring, exact directional mirroring, expiry and unchanged simulation state.
+
+`node tests/audio.cjs` checks synthesized sound scheduling, damage-dependent hit layers, shared compressor/master gain, mute, audio resume, cached noise, voice limits and node cleanup. Add an output directory to generate a browser audition page and envelope preview. Mocked audio checks do not establish how the game sounds.
+
 Node is optional for development checks; the game itself needs only a browser. Run `node tests/feel.cjs`, `node tests/smoke.cjs`, `node tests/pixel.cjs`, `node tests/animation.cjs`, `node tests/silhouettes.cjs`, `node tests/stage.cjs`, `node tests/world.cjs`, `node tests/hud.cjs` and `node tests/runtime.cjs`. These cover command timing, all matchups, sprite bounds, animation timelines and ground contact, rendering and main-loop integration. They are not human playtests. `node tests/performance.cjs` measures Node CPU raster time only.

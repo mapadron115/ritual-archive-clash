@@ -45,8 +45,8 @@ const key=code=>({code,repeat:false,preventDefault(){}});
 events.keydown(key('KeyJ'));events.keyup(key('KeyJ'));frame(51);
 assert.equal(G.S.f[0].move,'p1');
 togglePause();assert.equal($('pause').style.display,'flex');togglePause();
-FX.rings.push({x:10,y:10,r:20,vr:2,t:0,life:20,col:'#fff'});FX.shake=12;startFight();assert.equal(G.S.stage,'gallery');
-assert.equal(FX.rings.length,0);assert.equal(FX.shake,0);
+FX.rings.push({x:10,y:10,r:20,vr:2,t:0,life:20,col:'#fff'});FX.contacts.push({x:10,y:10,dir:1,kind:'hit',t:0,life:14});FX.shake=12;startFight();assert.equal(G.S.stage,'gallery');
+assert.equal(FX.rings.length,0);assert.equal(FX.contacts.length,0);assert.equal(FX.shake,0);
 // Serialized host choice, guest menu restrictions, rematch and old-message fallback.
 const sent=[],wire={};const conn={open:true,send(m){sent.push(JSON.parse(JSON.stringify(m)));},on(name,fn){wire[name]=fn;}};
 G.running=false;netWire(conn,'host');wire.open();

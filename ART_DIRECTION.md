@@ -15,6 +15,10 @@ Owner choice passed on by coordinator 2026-11-14: pixel art for the whole game.
 
 No existing game's sprites, poses, palettes or stages are used as references or copied assets.
 
+Contact pass (v12): warm directional hit shards, cool cyan guard arcs and wider orange guard-break shards. Two-frame compressed contact, five-frame expansion, then separated fragments; integer mirrored cells keep both directions exact. No soft glow or random frame flicker. Preserve established hit-stop, impact frames and Black Flash identity.
+
+Sound pass (v13): all audio remains original synthesis. A short filtered snap and falling bass body distinguish light/heavy contact; a brighter, shorter pair of tones identifies guard contact. Guard breaks add a falling crack, landings stay quiet, and knockdowns/walls have lower body tones. Black Flash keeps its own dark crack and bass tail. Two-millisecond attacks, shared compression/master gain and capped polyphony control dense effects. Listening on real speakers/headphones remains required.
+
 Silhouette pass (v7): all fifteen idle poses are individually composed. Visible build profiles range from compact/narrow through tall/slender to broad/heavy; shoulders, limbs, stance spread, arm carriage and weight differ. The larger transparent sprite cell leaves room for tall builds, raised fists and the hammer. Simulation hitboxes remain unchanged. Black silhouettes are reviewed separately from color/props.
 
 Animation pass (v9): 49 authored poses per costume, including paired anticipation, attack-specific recoil, settling, launch/fall, curled ground impact, a resting body and two get-up poses. Attack frames follow move time; ground recovery follows the existing down-state timer. Grounded bodies use an exact quarter-turn raster with the lowest opaque pixel on the floor and the body centered at its simulation root. KO bodies stay down. Art contact frames occupy their existing recovery time; no timing, control, damage or collision changes.

@@ -24,7 +24,7 @@ function readKeys(b) {
 function readRemote() { const b = G.remoteIn | (G.remoteTap << INPUT_SHIFT); G.remoteTap = 0; return b; }
 addEventListener('keydown', e => {
   if (e.code === 'Escape' && G.running) { if (!e.repeat) togglePause(); return; }
-  if (e.code === 'KeyM') { if (!e.repeat) AUDIO.mute = !AUDIO.mute; return; }
+  if (e.code === 'KeyM') { if (!e.repeat) setMute(!AUDIO.mute); return; }
   if (!e.repeat && !G.keys[e.code] && G.running && !G.paused) G.taps[e.code] = true;
   G.keys[e.code] = true; if (G.running && !e.ctrlKey && !e.metaKey && e.code !== 'F5' && e.code !== 'F12') e.preventDefault();
   initAudio();
@@ -33,17 +33,60 @@ addEventListener('keyup', e => { G.keys[e.code] = false; });
 addEventListener('blur', clearInput);
 
 // ---------- sound (all synthesized)
-const AUDIO = { ctx: null, mute: false };
-function initAudio() { if (!AUDIO.ctx) { try { AUDIO.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } } }
-function tone(f0, f1, dur, type, vol) { const a = AUDIO.ctx; if (!a || AUDIO.mute) return; const o = a.createOscillator(), g = a.createGain(), t = a.currentTime; o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur); g.gain.setValueAtTime(vol || .15, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur); }
-function noise(dur, vol, freq) { const a = AUDIO.ctx; if (!a || AUDIO.mute) return; const n = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n); const s = a.createBufferSource(), g = a.createGain(), fl = a.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = freq || 2000; s.buffer = buf; g.gain.value = vol || .2; s.connect(fl); fl.connect(g); g.connect(a.destination); s.start(); }
+const AUDIO = { ctx: null, mute: false, master: null, bus: null, noise: null, voices: 0, recent: {} };
+function initAudio() {
+  try {
+    if (!AUDIO.ctx) {
+      const a = new (window.AudioContext || window.webkitAudioContext)();
+      const master=a.createGain(),bus=a.createDynamicsCompressor();
+      master.gain.value=AUDIO.mute?0:.65;
+      bus.threshold.value=-12;bus.knee.value=12;bus.ratio.value=6;bus.attack.value=.003;bus.release.value=.12;
+      bus.connect(master);master.connect(a.destination);
+      AUDIO.ctx=a;AUDIO.master=master;AUDIO.bus=bus;
+    }
+    if(AUDIO.ctx.state==='suspended') {const p=AUDIO.ctx.resume();if(p&&p.catch)p.catch(()=>{});}
+  } catch (e) { /* Sound remains optional on browsers without Web Audio. */ }
+}
+function setMute(mute) {
+  AUDIO.mute=mute;
+  if(AUDIO.master) {const p=AUDIO.master.gain,t=AUDIO.ctx.currentTime;p.cancelScheduledValues(t);p.setTargetAtTime(mute?0:.65,t,.008);}
+}
+function soundVoice(source,dur,vol,filter) {
+  const a=AUDIO.ctx;if(!a||AUDIO.mute||AUDIO.voices>=48)return false;
+  const g=a.createGain(),t=a.currentTime;vol=clamp(vol,0,.55);dur=clamp(dur,.012,1.2);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol,t+.002);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  if(filter){source.connect(filter);filter.connect(g);}else source.connect(g);
+  g.connect(AUDIO.bus);AUDIO.voices++;
+  source.onended=()=>{source.disconnect();if(filter)filter.disconnect();g.disconnect();AUDIO.voices--;};
+  source.start(t);source.stop(t+dur+.005);return true;
+}
+function tone(f0, f1, dur, type, vol) {
+  const a=AUDIO.ctx;if(!a||AUDIO.mute||AUDIO.voices>=48)return;
+  const o=a.createOscillator(),t=a.currentTime;o.type=type||'sine';
+  o.frequency.setValueAtTime(Math.max(20,f0),t);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur);
+  soundVoice(o,dur,vol??.15);
+}
+function noise(dur, vol, freq) {
+  const a=AUDIO.ctx;if(!a||AUDIO.mute||AUDIO.voices>=48)return;
+  if(!AUDIO.noise) {
+    AUDIO.noise=a.createBuffer(1,Math.ceil(a.sampleRate*1.25),a.sampleRate);
+    const data=AUDIO.noise.getChannelData(0);for(let n=0;n<data.length;n++)data[n]=Math.random()*2-1;
+  }
+  const s=a.createBufferSource(),fl=a.createBiquadFilter();s.buffer=AUDIO.noise;
+  fl.type='lowpass';fl.frequency.value=freq||2000;fl.Q.value=.65;soundVoice(s,dur,vol??.2,fl);
+}
 function sfx(e) {
+  if(!AUDIO.ctx||AUDIO.mute)return;
+  const now=AUDIO.ctx.currentTime,gap=({hit:.018,block:.025,rain:.045,slash:.025,whoosh:.025})[e.k]||0;
+  if(gap && now-(AUDIO.recent[e.k]??-Infinity)<gap)return;
+  AUDIO.recent[e.k]=now;
   switch (e.k) {
-    case 'hit': noise(.09 + e.a / 900, .25 + e.a / 500, 900 + e.a * 8); tone(160, 50, .12, 'square', .1); break;
-    case 'blackflash': noise(.55, .5, 520); noise(.12, .35, 9000); tone(95, 24, .7, 'sine', .4); tone(2600, 180, .16, 'sawtooth', .14); tone(70, 35, .9, 'square', .1); break;
-    case 'block': noise(.05, .15, 3000); tone(500, 300, .05, 'triangle', .08); break;
-    case 'break': noise(.3, .3, 1500); tone(700, 100, .3, 'sawtooth', .12); break;
-    case 'whoosh': noise(.07, .06, 1200); break;
+    case 'hit': {const w=clamp((e.a-25)/85,0,1);noise(.028+w*.025,.18+w*.08,2400+w*900);tone(155-w*45,48-w*17,.085+w*.095,'sine',.19+w*.12);tone(330,95,.035+w*.025,'triangle',.055);break;}
+    case 'blackflash': noise(.09,.3,7000);noise(.36,.24,540);tone(105,28,.46,'sine',.38);tone(1900,120,.09,'sawtooth',.10);tone(62,32,.42,'triangle',.12);break;
+    case 'block': noise(.024,.13,4600);tone(1050,780,.065,'triangle',.12);tone(1575,1170,.035,'sine',.055);break;
+    case 'break': noise(.16,.24,3600);tone(740,120,.19,'triangle',.18);tone(130,38,.22,'sine',.23);break;
+    case 'whoosh': noise(.065,.055,1600);break;
     case 'clap': noise(.04, .4, 6000); tone(1200, 600, .05, 'square', .12); break;
     case 'slash': case 'rain': noise(.08, .14, 7000); tone(1800, 500, .08, 'sawtooth', .05); break;
     case 'blast': tone(300, 80, .2, 'sawtooth', .14); noise(.15, .15, 1200); break;
@@ -56,7 +99,9 @@ function sfx(e) {
     case 'zap': tone(1500, 200, .15, 'square', .12); noise(.1, .15, 8000); break;
     case 'inf': tone(900, 1300, .12, 'sine', .1); break;
     case 'jump': tone(250, 400, .08, 'sine', .05); break;
-    case 'thud': case 'wall': noise(.15, .25, 400); break;
+    case 'land': noise(.035,.045,650);tone(82,48,.045,'sine',.04);break;
+    case 'thud': noise(.085,.16,700);tone(100,36,.14,'sine',.20);break;
+    case 'wall': noise(.12,.19,1100);tone(125,32,.19,'sine',.24);break;
     case 'ko': tone(400, 40, .9, 'sawtooth', .2); noise(.5, .3, 900); break;
     case 'round': tone(440, 440, .15, 'triangle', .12); break;
     case 'fight': tone(660, 880, .25, 'triangle', .16); break;
@@ -116,7 +161,7 @@ function buildSelect() {
 }
 function pickMode(m) { G.mode = m; show('select'); buildSelect(); }
 function startFight() {
-  G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); FX.parts = []; FX.banner = null; FX.impact = null; FX.bf = null;
+  G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); FX.parts = []; FX.contacts = []; FX.banner = null; FX.impact = null; FX.bf = null;
   G.S.stage=pxStageId(G.stage);
   AI_MEM[0] = {}; AI_MEM[1] = {}; FX.rings = []; FX.shake = 0; FX.flash = 0; FX.nope = [0, 0]; FX.stars = []; FX.puffs = []; FX.nums = []; FX.lines = []; FX.words = []; FX.silent = false; G.paused = false; G.running = true; G.over = false; G.acc = 0; G.remoteIn = 0; G.remoteTap = 0; G.lastSent = -1; clearInput();
   if (G.mode === 'host') netSend({ t: 'start', p: G.pick, stage: G.S.stage });

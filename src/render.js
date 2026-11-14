@@ -1,20 +1,27 @@
 'use strict';
 // Event-driven impact effects and sounds. World and HUD rasterization live in pixel-*.js.
-const FX = { parts: [], rings: [], lines: [], shake: 0, flash: 0, flashCol: '#fff', banner: null, ghosts: [], nope: [0, 0] };
+const FX = { parts: [], rings: [], lines: [], contacts: [], shake: 0, flash: 0, flashCol: '#fff', banner: null, ghosts: [], nope: [0, 0] };
+// Contact direction is presentation only. Older block events have no direction;
+// infer their defender from the contact root, including on remote clients.
+function contact(S,e,kind) {
+  const target=S.f.reduce((best,f)=>Math.abs(f.x-e.x)<Math.abs(best.x-e.x)?f:best);
+  const dir=e.b===-1||e.b===1?e.b:-target.face;
+  FX.contacts.push({x:e.x,y:e.y,dir,kind,t:0,life:kind==='break'?18:kind==='block'?12:14,heavy:kind==='break'||e.a>70});
+  if(FX.contacts.length>48)FX.contacts.shift();
+}
 function burst(x, y, n, col, sp, life) { for (let k = 0; k < n; k++) { const a = Math.random() * 7, v = sp * (.3 + Math.random()); FX.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, life: life || 22, t: 0, col, s: 3 + Math.random() * 5 }); } }
 function puff(x, y, n) { for (let k = 0; k < n; k++) FX.puffs.push({ x: x + (Math.random() - .5) * 30, y: y - Math.random() * 8, vx: (Math.random() - .5) * 3, r: 7 + Math.random() * 8, t: 0, life: 18 + Math.random() * 8 }); }
 function star(x, y, r, col, life) { FX.stars.push({ x, y, r, rot: Math.random() * 7, col, t: 0, life: life || 9 }); }
 function fxEvent(S, e) {
   switch (e.k) {
     case 'hit': {
-      const big = e.a > 70; star(e.x, e.y, 22 + e.a / 3, big ? '#ffe36b' : '#fff', big ? 12 : 8); burst(e.x, e.y, 5 + e.a / 10, '#fff2b0', 5 + e.a / 18);
+      const big = e.a > 70; contact(S,e,'hit');
       if (e.a >= 4) FX.nums.push({ x: e.x + (Math.random() - .5) * 30, y: e.y - 50, txt: Math.round(e.a), t: 0, life: 40, big });
-      if (big) for (let n = 0; n < 10; n++) { const a = Math.random() * 7; FX.lines.push({ x1: e.x + Math.cos(a) * 60, y1: e.y + Math.sin(a) * 60, x2: e.x + Math.cos(a) * 170, y2: e.y + Math.sin(a) * 170, t: 0, life: 9, col: '#fff', w: 5 }); }
       if (e.a >= 110) FX.impact = { t: 0, sil: 3, kind: 'white' };   // the heaviest blows get an impact frame
       FX.shake = Math.max(FX.shake, Math.min(16, 3 + e.a / 10)); break;
     }
-    case 'block': star(e.x, e.y, 20, '#9fd0ff', 7); burst(e.x, e.y, 4, '#cfe8ff', 3); break;
-    case 'break': star(e.x, e.y, 60, '#ffe36b', 14); burst(e.x, e.y, 24, '#ffe36b', 8); FX.shake = 12; FX.banner = { txt: 'GUARD BREAK', t: 0, life: 40, small: 1 }; break;
+    case 'block': contact(S,e,'block'); break;
+    case 'break': contact(S,e,'break'); FX.shake = 12; FX.banner = { txt: 'GUARD BREAK', t: 0, life: 40, small: 1 }; break;
     case 'inf': FX.rings.push({ x: e.x, y: e.y, r: 40, vr: 2, t: 0, life: 14, col: '#7fd6ff' }); break;
     case 'clap': star(e.x, e.y, 34, '#ffe9a0', 8); FX.rings.push({ x: e.x, y: e.y, r: 6, vr: 9, t: 0, life: 12, col: '#ffe9a0' }); break;
     case 'swap': FX.lines.push({ x1: e.x, y1: e.y, x2: e.a, y2: e.b, t: 0, life: 12, col: '#ffe9a0', w: 7 }); puff(e.x, e.y + 40, 5); puff(e.a, e.b + 40, 5); burst(e.x, e.y, 8, '#ffd866', 4); burst(e.a, e.b, 8, '#ffd866', 4); FX.flash = .15; FX.flashCol = '#ffe9a0'; break;
@@ -54,6 +61,7 @@ function fxEvent(S, e) {
   if (!FX.silent && typeof sfx === 'function') sfx(e);
 }
 function fxTick() {
+  for(const e of FX.contacts)e.t++; FX.contacts=FX.contacts.filter(e=>e.t<e.life);
   for (const p of FX.parts) { p.t++; p.x += p.vx; p.y += p.vy; p.vy += .25; p.vx *= .95; }
   FX.parts = FX.parts.filter(p => p.t < p.life); if (FX.parts.length > 400) FX.parts.splice(0, FX.parts.length - 400);
   for (const r of FX.rings) { r.t++; r.r += r.vr; } FX.rings = FX.rings.filter(r => r.t < r.life);
