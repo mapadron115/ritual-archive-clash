@@ -1,15 +1,26 @@
 'use strict';
 // All active world drawing now happens in source pixels, before one nearest-neighbor presentation.
 const PX_BACKDROPS=new Map();
+// Retain a full current-stage loop plus eight menu/recent frames, at the old
+// 24-surface backdrop budget rather than storing all 48 full-size rasters.
+const PX_BACKDROP_CACHE_LIMIT=24;
+function pxRememberBackdrop(key,s) {
+  if(PX_BACKDROPS.size>=PX_BACKDROP_CACHE_LIMIT)PX_BACKDROPS.delete(PX_BACKDROPS.keys().next().value);
+  PX_BACKDROPS.set(key,s);return s;
+}
 function pxBackdrop(frame,id='courtyard') {
-  id=pxStageId(id);frame%=8;const key=id+':'+frame;if(PX_BACKDROPS.has(key))return PX_BACKDROPS.get(key);
+  id=pxStageId(id);frame%=PX_STAGE_FRAMES;const key=id+':'+frame;
+  if(PX_BACKDROPS.has(key)) {
+    const cached=PX_BACKDROPS.get(key);PX_BACKDROPS.delete(key);PX_BACKDROPS.set(key,cached);return cached;
+  }
   if(id!=='courtyard') {
-    const s=new PixelSurface(640,360);s.data.set(pxStageVariant(id).data);pxStageMotion(s,id,frame);PX_BACKDROPS.set(key,s);return s;
+    const s=new PixelSurface(640,360);s.data.set(pxStageVariant(id).data);pxStageMotion(s,id,frame);return pxRememberBackdrop(key,s);
   }
   const bg=pxStage(),s=new PixelSurface(640,360);
-  s.blit(bg.sky,0,0);s.blit(bg.cloud,35+frame,68);s.blit(bg.cloud,344+frame*2,102);
+  const wind=Math.sin(frame*Math.PI*2/PX_STAGE_FRAMES);
+  s.blit(bg.sky,0,0);s.blit(bg.cloud,35+Math.round(wind*5),68);s.blit(bg.cloud,344+Math.round(wind*9),102);
   s.blit(bg.far,-30,0);s.blit(bg.town,-30,0);s.blit(bg.arena,-30,0);s.blit(pxStageLife(frame),0,0);
-  PX_BACKDROPS.set(key,s);return s;
+  return pxRememberBackdrop(key,s);
 }
 function pxRing(s,x,y,rx,ry,col,width=1,phase=0) {
   const n=40;let prev=null;
@@ -396,7 +407,7 @@ function pxProjectile(s,p) {
   else {poly([[-r*2.7,0],[-r,-r*.8],[r*.7,-r*.8],[r,0],[r*.7,r*.8],[-r,r*.8]]);s.ellipse(x,y,r,r,col);s.ellipse(x-r*.2,y-r*.2,r*.55,r*.55,PX_LIGHT);if(p.spin)pxRing(s,x,y,r+4,r+4,col,2,Math.floor(p.t/3));}
 }
 function pxWorldSurface(S,F=FX) {
-  const s=new PixelSurface(640,360);s.data.set(pxBackdrop(Math.floor(S.t/8)%8,S.stage).data);
+  const s=new PixelSurface(640,360);s.data.set(pxBackdrop(Math.floor(S.t/8),S.stage).data);
   pxDomain(s,S);
   const impact=F.impact&&F.impact.t<F.impact.sil?F.impact:null;
   if(impact)s.rect(0,0,640,360,impact.kind==='black'?'#111623':'#f8edce');

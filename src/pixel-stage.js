@@ -1,4 +1,6 @@
 'use strict';
+// One bounded 128-tick atmosphere loop, derived from the existing global clock.
+const PX_STAGE_FRAMES=16;
 const PX_STAGES = [
   {id:'courtyard',name:'Archive Courtyard',desc:'Dusk / copper roofs / drifting banners'},
   {id:'gallery',name:'Rainlit Gallery',desc:'Night / tall windows / quiet shelves'},
@@ -91,15 +93,16 @@ function pxStage() {
 }
 const PX_LIFE = new Map();
 function pxStageLife(frame) {
-  frame%=8;if(PX_LIFE.has(frame))return PX_LIFE.get(frame);
+  frame%=PX_STAGE_FRAMES;if(PX_LIFE.has(frame))return PX_LIFE.get(frame);
+  const angle=frame*Math.PI*2/PX_STAGE_FRAMES;
   const s=new PixelSurface(640,360);
   for(const [x,base,light] of [[77,'#365f7f','#75c9d9'],[547,'#824856','#df9a88']]) {
     for(let j=0;j<62;j++) {
-      const wave=Math.round(Math.sin(frame*Math.PI/4+j*.08)*2*j/62),w=j>50?32-Math.round((j-50)/2):32;
+      const wave=Math.round(Math.sin(angle+j*.08)*2*j/62),w=j>50?32-Math.round((j-50)/2):32;
       s.rect(x+wave,160+j,w,1,PX_INK);s.rect(x+wave+1,160+j,w-2,1,base);
       s.rect(x+wave+4,160+j,2,1,light);
     }
-    const wx=Math.round(Math.sin(frame*Math.PI/4+1.8));
+    const wx=Math.round(Math.sin(angle+1.8));
     s.poly([[x+16+wx,175],[x+23+wx,186],[x+16+wx,197],[x+9+wx,186]],light);
     s.line([x+16+wx,178],[x+16+wx,194],base);
   }
@@ -204,21 +207,25 @@ function pxStageRing(s,x,y,rx,ry,col,width) {
   let prev=[x+rx,y];for(let n=1;n<=64;n++){const a=n*Math.PI/32,p=[x+Math.cos(a)*rx,y+Math.sin(a)*ry];s.line(prev,p,col,width);prev=p;}
 }
 function pxStageMotion(s,id,frame) {
+  const angle=frame*Math.PI*2/PX_STAGE_FRAMES;
   if(id==='gallery') {
     // Rain stays outside individual window panes, never across fighter silhouettes or the floor.
     for(const [x,w]of [[97,118],[257,126],[425,118]])for(let n=0;n<20;n++) {
-      const rx=x+5+(n*29)%Math.floor(w-12),ry=113+(n*31+frame*7)%148;
+      const rx=x+5+(n*29)%Math.floor(w-12),ry=113+(n*31+Math.floor(frame*148/PX_STAGE_FRAMES))%148;
       for(let j=0;j<7;j++) {
         const px=Math.round(rx-j/3),py=ry+j,p=(py*s.w+px)*4;
+        if(py>=261)continue;
         // Keep the stone mullions and crossbars in front of the rain.
         const r=s.data[p],g=s.data[p+1],b=s.data[p+2];
         if((r===23&&g===43&&b===65)||(r===38&&g===61&&b===80)||(r===48&&g===73&&b===89)||(r===62&&g===88&&b===99)||(r===36&&g===55&&b===71)||(r===68&&g===97&&b===108))s.dot(px,py,n%3?'#526d7c':'#78909a');
       }
     }
-    for(const x of [65,574])s.rect(x-4,192,8,1,frame%3?'#e1c394':'#f2d9ac');
+    // A soft two-step pulse, not a one-frame flicker at the loop reset.
+    for(const x of [65,574])s.rect(x-4,192,8,1,Math.cos(angle)>0?'#e1c394':'#f2d9ac');
   } else {
-    for(let n=0;n<4;n++){const x=(n*173+frame*2)%700-40,y=78+n%2*23;s.rect(x,y,64,3,'#aa8c99');s.rect(x+10,y-3,39,3,'#aa8c99');}
-    const angle=frame*Math.PI/4;s.line([392,178],[392+Math.cos(angle)*51,178+Math.sin(angle)*18],'#e4cda2',2);
-    for(const x of [33,597])for(let j=0;j<46;j++) {const wave=Math.round(Math.sin(frame*Math.PI/4+j*.12)*3*j/46);s.rect(x+wave,195+j,15,1,'#3c596b');s.rect(x+wave+2,195+j,2,1,'#a5c6c1');}
+    // Small, reversible wind drift closes naturally at the last/first phase.
+    for(let n=0;n<4;n++){const x=n*173+Math.round(Math.sin(angle)*12)-40,y=78+n%2*23;s.rect(x,y,64,3,'#aa8c99');s.rect(x+10,y-3,39,3,'#aa8c99');}
+    s.line([392,178],[392+Math.cos(angle)*51,178+Math.sin(angle)*18],'#e4cda2',2);
+    for(const x of [33,597])for(let j=0;j<46;j++) {const wave=Math.round(Math.sin(angle+j*.12)*3*j/46);s.rect(x+wave,195+j,15,1,'#3c596b');s.rect(x+wave+2,195+j,2,1,'#a5c6c1');}
   }
 }

@@ -14,19 +14,19 @@ scene.blit(pxSprite(7,'guard'),435-(PX_W-1-PX_OX),306-PX_OY,1,true);
 pxText(scene,'THE ARCHIVE COURTYARD',18,17,'#f4d7a4',2);
 pxText(scene,'NATIVE PIXELS / ORIGINAL ART / GAMEPLAY GROUND UNCHANGED',18,38,'#acb5c1',1);
 globalThis.large=new PixelSurface(1280,720);large.blit(scene,0,0,2);
-console.log('PASS seven hard-alpha stage layers, floor coverage and eight-step cloth animation');
+console.log('PASS seven hard-alpha stage layers, floor coverage and sixteen-step cloth animation');
 const signatures=new Set();let total=0;
 globalThis.stages=[];
 for(const stage of PX_STAGES) {
   const hashes=new Set();
-  for(let frame=0;frame<8;frame++) {
+  for(let frame=0;frame<PX_STAGE_FRAMES;frame++) {
     const raster=pxBackdrop(frame,stage.id);assert.equal(raster,pxBackdrop(frame,stage.id));
     const hash=BufferlessHash(raster);hashes.add(hash);
     for(let p=3;p<raster.data.length;p+=4)assert.equal(raster.data[p],255,'stage not opaque');
     for(let x=0;x<640;x++)assert.equal(raster.data[(GROUND/2*640+x)*4+3],255,'ground row');
     total++;
   }
-  assert.equal(hashes.size,8,'eight distinct stage animation frames '+stage.id);
+  assert.equal(hashes.size,PX_STAGE_FRAMES,'sixteen distinct stage animation frames '+stage.id);
   const signature=BufferlessHash(pxBackdrop(0,stage.id));assert(!signatures.has(signature),'duplicate stage');signatures.add(signature);
   const S=newMatch(0,14,197);S.stage=stage.id;S.phase='fight';S.t=130;
   const before=JSON.stringify(S),frame=pxWorldSurface(S,{parts:[],puffs:[],stars:[],lines:[],rings:[],nums:[],words:[]});
