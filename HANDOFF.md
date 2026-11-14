@@ -1,24 +1,24 @@
 ﻿# Handoff: Ritual Archive: Clash
 
-## Current - version 74, script cache v=77 (2026-11-14)
+## Current - version 75, script cache v=78 (2026-11-14)
 
-All mailbox entries through 14:57 acted on/acknowledged. V73 committed by coordinator as ce9189f, not pushed. Owner direct check-in repeats independent work/mailbox/report instructions; no design change.
+All mailbox entries through 15:05 acted on/acknowledged. V74 committed by coordinator as ef66ad7, not pushed. Owner direct check-in repeats independent work/mailbox/report instructions; no design change.
 
-V74 fixes the deferred third-punch floor fault. In eleven builds, calf contours extended 1-3 source pixels below the authored soles during hook wind-up/contact/return. Hook poses now use the established bulk-aware ankle inset, keeping both boots on the floor in all fifteen builds/costumes. The shared hook-shaped art poses receive the same correction. Only calf pixels change; no pose coordinates, collision, combat, damage, timing, input, AI, sound or networking changes. Eleven script URLs v=77.
+V75 fixes ambiguous Watch identities: both fighters were tagged CPU, while results called them P1/P2. Numbered CPU1/CPU2 now follow the actors through position swaps and identify winners and scores in round/match results, including mirrors. Uses one role helper for tags and results. The compact form fits the existing opening plaques and damage exclusions; no world-renderer, combat, input, AI, sound or networking changes. Eleven script URLs v=78.
 
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel.js, tests/hook-grounding.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base ce9189f; never push. Ready for review/commit and owner assessment before publication. No design decision pending.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-hud.js, tests/opening-banner.cjs, tests/readability.cjs, tests/watch-identity.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base ef66ad7; never push. Ready for review/commit and owner assessment before publication. No design decision pending.
 
 ## Verification and limits
 
-- V74 test first failed on unchanged v73 (Bram hookw, bottom 121 versus sole 120). Current: 180 floor/sole frames, 60 actual three-press chains across all builds/slots/facings, 2,520 parallel-state ticks and 3,240 impact/cinematic/time-stop holds. Snapshot/read-only world/HUD rasters and authored sole positions pass. Baseline matrix: 180 hook frames changed only within calves (first changed row 96; sole row 120), 3,840 unrelated frames byte-identical.
-- Existing punch-chain (360 hit/block/whiff chains, 270 immediate chain transitions), art animation (90 timelines), Domain animation (30 timelines), pixel bounds/palettes (4,020 frames), airborne facing (120 contacts), damage readability (300 timelines/2,496 layouts), damage stacks (18 timelines/11,700 layouts), feel/input (eleven groups plus handlers), HUD (75) and runtime/menu/results/online regressions pass. Changed source/test syntax, eleven matching cache URLs and diff whitespace checks pass.
-- Exported 108 before and 108 after full native scenes into the codex mailbox. Inspected Greta courtyard wind-up and Gallery mirror follow-through before/after, plus Corvin Observatory mirror settlement at 1x. These are memory-raster composites with transient FX omitted, not browser screenshots, motion or play. Runtime/title/selection/attract exports also retained there.
-- V74 browser inventory retry again reports 'The browser access host is unavailable'; no native tab, layout/focus/activation or motion check obtained. No human play/listening, FPS, keyboard rollover or real WebRTC/two-computer check. Unchanged broad full-match/stage/world/other effects/audio/performance suites not repeated.
+- V75 regression fails against committed v74 (P1/P2 result roles versus numbered computer identities). Passes 18,000 parallel-state Watch ticks, 422 read-only actor/snapshot rasters across all builds/mirrors/stages/edges/airborne lanes, two actual position swaps and 90 actual KO/timeout/draw endings with complete winner names, scores and match-screen identities. Other real mode roles unchanged.
+- Opening checks now reserve the widest CPU1 tag: 210 actual timelines/30,660 parallel ticks/24,154 clear layouts. Damage readability now checks both local and Watch modes: 300 contact timelines/4,992 raster/layout checks. Damage stacks (18 timelines/11,700 layouts), results (180 endings/4,500 rasters plus 60 score histories/180 consecutive draws), HUD learning (2,115 states/90 art inputs/60 Domain uses), HUD (75), feel/input (eleven groups plus handlers) and runtime/menu/results/online regressions pass. Changed source/test syntax, eleven matching cache URLs and diff whitespace checks pass.
+- Exported nine before and nine final after 640x360 native scenes into the codex mailbox, plus runtime/title/selection/attract assets. Inspected courtyard mirrors before/after, Gallery crossed mirrors and Observatory mirror results at 1x. These are memory-raster composites with transient FX omitted, not browser screenshots, motion or play.
+- No native browser retry this run after v74's unavailable access host. No human play/listening, browser layout/focus/activation, motion/FPS, keyboard rollover or real WebRTC/two-computer check. Unchanged broad full-match/animation/pixel/stage/world/audio/performance suites not repeated.
 - Prior regression evidence and detailed previews remain in dated FROM_CODEX.md entries. Last full-match smoke: 225 ordered matchups/1,169,896 ticks. Nobody has listened to validate synthesized sound. Coordinator browser reviews covered title/selection through v37, not fights/results. Neither scripts nor screenshots count as owner play.
 
 ## Next priorities
 
-Owner first-minute offline readability/feel/listening notes take priority. Retry native browser fight/move-list/results review when the surface works; remaining broad visual refinements follow. Third-punch soles are now addressed. No speculative balance or audio retuning. Known balance question already passed to coordinator: late run/vertical jump cannot escape the locked diving Maximum, while swap escapes and guard reduces damage; leave its rule unchanged.
+Owner first-minute offline readability/feel/listening notes take priority. Retry native browser fight/move-list/results review when the surface works; remaining broad visual refinements follow. Watch identity and third-punch soles are addressed. No speculative balance or audio retuning. Known balance question already passed to coordinator: late run/vertical jump cannot escape the locked diving Maximum, while swap escapes and guard reduces damage; leave its rule unchanged.
 
 ## Code and run
 

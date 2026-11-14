@@ -7,6 +7,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Modes
 - 1 Player vs Computer, 2 Players on one keyboard, Watch (computer vs computer)
+- Watch identifies the fighters as CPU1 and CPU2 above their heads and in round and match results. These numbers follow each fighter through position swaps, including mirror matches.
 - Online: one player hosts and gets a 4-letter room code, the other joins with it. The host's game runs the fight.
 - The title keeps a silent computer exhibition running behind the bitmap wordmark and four described mode choices. Its label identifies the current fighters and arena. Tab browses the buttons; Enter or Space chooses a mode.
 - Choose Archive Courtyard, Rainlit Gallery or Dawn Observatory on the fighter selection screen. Online, the host chooses; rounds and rematches keep that stage. Stages have the same fighting bounds and no hazards.

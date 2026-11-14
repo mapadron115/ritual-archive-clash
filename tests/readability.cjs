@@ -29,6 +29,9 @@ function encounter(ch,owner,face,kind,stage='gallery',edge=false,airAt=0,giant=f
 }
 let timelines=0,checks=0,values=0;
 function clearValues(S) {
+  for(const mode of ['local','watch']){G.mode=mode;checkValues(S);}
+}
+function checkValues(S) {
   const before=JSON.stringify(S),effects=JSON.stringify(FX),layout=pxDamageLayout(S,FX.nums,FX);
   assert.equal(layout.length,FX.nums.length,'a damage value was hidden');
   assert.deepEqual(layout,pxDamageLayout(JSON.parse(before),JSON.parse(effects).nums,JSON.parse(effects)),'snapshot layout changed');

@@ -25,6 +25,7 @@ function pxPanel(s,x,y,w,h,base='#263346',edge='#68768a') {
   s.rect(x-2,y-2,w+4,h+4,PX_INK);s.rect(x,y,w,h,base);s.rect(x,y,w,1,edge);s.rect(x,y,1,h,edge);
 }
 function pxResultRole(labels,i) {
+  if(!labels[0]&&!labels[1]&&labels.other==='Computer')return 'CPU'+(i+1);
   if(!labels[0]&&!labels[1]||labels[0]&&labels[1])return 'P'+(i+1);
   return labels[i]?'YOU':labels.other==='Computer'?'CPU':'FOE';
 }
@@ -85,7 +86,7 @@ function pxHUDSurface(S,labels,F=FX) {
     if(f.st!=='ko')pxGuardHUD(s,f,x+121);
     // Actor tags stay tied to simulation coordinates; hitboxes are untouched.
     if(f.st!=='ko') {
-      const tag=lab?(labels[0]&&labels[1]?'P'+(i+1):'YOU'):(labels.other==='Computer'?'CPU':'FOE');
+      const tag=pxResultRole(labels,i);
       const {x:tx,y:ty}=pxActorAnchor(f),tw=pxTextWidth(tag);
       s.rect(tx-tw/2-3,ty-2,tw+6,11,PX_INK);pxText(s,tag,tx-tw/2,ty,left?'#8ecddf':'#efa394');s.poly([[tx-3,ty+9],[tx+3,ty+9],[tx,ty+12]],left?'#8ecddf':'#efa394');
     }

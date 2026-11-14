@@ -18,7 +18,7 @@ function check(S,raster=false) {
     const p=pxBannerLayout(b);assert.equal(p.size,3,'opening type shrank');
     for(const f of S.f) {
       assert(!overlap(p,pxBodyBounds(S,f)),'opening banner covers fighter '+f.ch+' / '+f.i+' at '+S.t);
-      const a=pxActorAnchor(f),w=pxTextWidth('YOU'); // Widest tag in any mode.
+      const a=pxActorAnchor(f),w=pxTextWidth('CPU1'); // Widest tag in any mode.
       assert(!overlap(p,{x:a.x-w/2-3,y:a.y-2,w:w+6,h:14}),'opening banner covers actor tag '+f.ch+' / '+f.i+' at '+S.t+' '+JSON.stringify(a));
     }
     layouts++;
