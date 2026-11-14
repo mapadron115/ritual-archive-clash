@@ -189,7 +189,6 @@ function pxObservatory(s) {
   s.line([383,255],[383,205],'#384958',9);s.line([383,255],[383,205],'#b69d7e',5);
   s.line([383,229],[352,207],'#384958',7);s.line([383,229],[352,207],'#b69d7e',3);
   pxStageRing(s,392,178,67,65,'#394858',6);pxStageRing(s,392,178,67,65,'#c6aa83',3);
-  pxStageRing(s,392,178,67,24,'#394858',6);pxStageRing(s,392,178,67,24,'#a58f77',3);
   s.line([352,126],[432,230],'#394858',6);s.line([352,126],[432,230],'#d5b98e',3);
   s.ellipse(392,178,9,9,'#394858');s.ellipse(392,178,6,6,'#d9bf96');
   // Back rail and broad, level stone fighting platform at exactly GROUND/2.
@@ -205,6 +204,20 @@ function pxObservatory(s) {
 }
 function pxStageRing(s,x,y,rx,ry,col,width) {
   let prev=[x+rx,y];for(let n=1;n<=64;n++){const a=n*Math.PI/32,p=[x+Math.cos(a)*rx,y+Math.sin(a)*ry];s.line(prev,p,col,width);prev=p;}
+}
+function pxObservatoryHoop(s,frame) {
+  // An unmarked hoop repeats after half a turn. Sixteen projections ease from
+  // broad to edge-on and back, with no reset jump or extra clock/cache.
+  const spread=Math.cos(frame*Math.PI/PX_STAGE_FRAMES)*58,points=[];
+  for(let n=0;n<=64;n++) {
+    const a=n*Math.PI/32,u=Math.cos(a)*spread,v=Math.sin(a)*53;
+    points.push([392+u*.94-v*.342,178+u*.342+v*.94]);
+  }
+  for(let n=1;n<points.length;n++)s.line(points[n-1],points[n],'#394858',7);
+  // Shaded upper brass and a broad lit lower rim read at native play size.
+  for(let n=1;n<points.length;n++)s.line(points[n-1],points[n],n<=32?'#edd1a0':'#9e8268',4);
+  // The fixed axle stays in front as the moving hoop crosses it.
+  s.line([352,126],[432,230],'#394858',6);s.line([352,126],[432,230],'#d5b98e',3);
 }
 function pxStageMotion(s,id,frame) {
   const angle=frame*Math.PI*2/PX_STAGE_FRAMES;
@@ -225,6 +238,8 @@ function pxStageMotion(s,id,frame) {
   } else {
     // Small, reversible wind drift closes naturally at the last/first phase.
     for(let n=0;n<4;n++){const x=n*173+Math.round(Math.sin(angle)*12)-40,y=78+n%2*23;s.rect(x,y,64,3,'#aa8c99');s.rect(x+10,y-3,39,3,'#aa8c99');}
+    pxObservatoryHoop(s,frame);
+    s.ellipse(392,178,9,9,'#394858');s.ellipse(392,178,6,6,'#d9bf96');
     s.line([392,178],[392+Math.cos(angle)*51,178+Math.sin(angle)*18],'#e4cda2',2);
     for(const x of [33,597])for(let j=0;j<46;j++) {const wave=Math.round(Math.sin(angle+j*.12)*3*j/46);s.rect(x+wave,195+j,15,1,'#3c596b');s.rect(x+wave+2,195+j,2,1,'#a5c6c1');}
   }
