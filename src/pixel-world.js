@@ -71,6 +71,54 @@ function pxOutlinedText(s,text,x,y,col,scale=1) {
   for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]])pxText(s,text,Math.round(x)+dx,Math.round(y)+dy,PX_INK,scale);
   pxText(s,text,Math.round(x),Math.round(y),col,scale);
 }
+function pxActorAnchor(f) {
+  const tall=(-PX_IDLES[f.ch].h[1]+18)*(PX_KITS[f.ch].height||1)*(f.big>0?1.3:1);
+  return {x:Math.round(f.x/2),y:Math.max(90,Math.round(f.y/2-tall-10))};
+}
+function pxBannerLayout(b) {
+  if(!b)return null;
+  const size=Math.min(b.small?2:3,Math.max(1,Math.floor(550/Math.max(1,pxTextWidth(b.txt)))));
+  const w=pxTextWidth(b.txt,size),y=b.small?105:150;
+  return {size,textX:320-w/2,textY:y,x:b.small?320-w/2-10:0,y:y-9,w:b.small?w+20:640,h:size*7+18};
+}
+const PX_BODY_BOUNDS=new WeakMap();
+function pxBodyBounds(S,f) {
+  const {sprite,ox,oy}=pxFighterFrame(f.ch,pxPose(S,f),f.i===1&&S.f[0].ch===f.ch);
+  if(!PX_BODY_BOUNDS.has(sprite)) {
+    let l=sprite.w,r=0,t=sprite.h,b=0;
+    for(let y=0;y<sprite.h;y++)for(let x=0;x<sprite.w;x++)if(sprite.data[(y*sprite.w+x)*4+3]){l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y);}
+    PX_BODY_BOUNDS.set(sprite,{l,r,t,b});
+  }
+  const {l,r,t,b}=PX_BODY_BOUNDS.get(sprite),scale=f.big>0?1.3:1,x=Math.round(f.x/2),y=Math.round(f.y/2);
+  return {x:Math.floor(x+(f.face<0?ox-r:l-ox)*scale)-2,y:Math.floor(y+(t-oy)*scale)-2,w:Math.ceil((r-l+1)*scale)+4,h:Math.ceil((b-t+1)*scale)+4};
+}
+// Keep damage values near their contact, but out of bodies, actor tags and banners.
+// All placement is presentation-only and repeatable from the same state/effect snapshot.
+function pxDamageLayout(S,nums,F={}) {
+  if(!nums.length)return [];
+  const blocked=S.f.map(f=>pxBodyBounds(S,f));
+  // The world can shake by five pixels while the HUD stays still.
+  for(const f of S.f)if(f.st!=='ko') {const p=pxActorAnchor(f);blocked.push({x:p.x-20,y:p.y-8,w:40,h:28});}
+  const banner=pxBannerLayout(F.banner);if(banner)blocked.push({x:banner.x-6,y:banner.y-6,w:banner.w+12,h:banner.h+12+(F.banner.sub?10:0)});
+  const overlap=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));
+  const out=[];
+  for(const n of nums.slice().reverse()) {
+    const size=n.bf?3:n.big?2:1,w=pxTextWidth(n.txt,size)+2,h=7*size+2,dir=n.dir<0?-1:1;
+    const x=Math.round(n.x/2+dir*26-w/2),y=Math.round(n.y/2-h);
+    let best=null,score=Infinity;
+    // Nearest free lane first. The outline is inside the reserved rectangle.
+    search: for(let radius=0;radius<=32;radius++) {
+      for(let dx=-radius;dx<=radius;dx++)for(const dy of radius===Math.abs(dx)?[0]:[-(radius-Math.abs(dx)),radius-Math.abs(dx)]) {
+        const box={x:clamp(x+dir*dx*(w+4),4,636-w),y:clamp(y+dy*(h+4),96,302-h),w,h};
+        const area=blocked.reduce((sum,b)=>sum+overlap(box,b),0);
+        if(area<score){score=area;best=box;}
+        if(score===0)break search;
+      }
+    }
+    blocked.push(best);out.push({...best,n,size});
+  }
+  return out.reverse();
+}
 const PX_DUST=new Map();
 function pxDust(s,e) {
   const key=e.kind+':'+e.t;
@@ -275,11 +323,11 @@ function pxWorldSurface(S,F=FX) {
   for(const p of F.parts||[]) {const r=Math.max(1,p.s/2*(1-p.t/p.life));s.rect(p.x/2-r,p.y/2-r,r*2,r*2,p.col);}
   for(const e of F.stars||[])pxBurst(s,e.x/2,e.y/2,e.r/2*(1-e.t/e.life*.7),e.col,e.t);
   for(const e of F.contacts||[])pxContact(s,e);
-  for(const n of F.nums||[]) {const size=n.bf?3:n.big?2:1;pxOutlinedText(s,n.txt,n.x/2-pxTextWidth(n.txt,size)/2,n.y/2,n.bf?'#ed5266':n.big?'#eed49b':PX_LIGHT,size);}
   for(const w of F.words||[]) {const size=w.txt.length>16?1:2;pxOutlinedText(s,w.txt,w.x/2-pxTextWidth(w.txt,size)/2,w.y/2-w.t/4,'#edcf9d',size);}
   if(F.bf) {const b=F.bf,x=b.x/2,y=b.y/2;pxBurst(s,x,y,Math.max(5,65-b.t*2),'#ed5266',b.t);for(let n=0;n<6;n++){const a=n*Math.PI/3+Math.floor(b.t/3)*.2;pxBolt(s,[x,y],[x+Math.cos(a)*105,y+Math.sin(a)*75],n+Math.floor(b.t/3));}}
   if(S.stop&&S.stop.t>0) {s.rect(0,0,640,2,'#e5cc8f');s.rect(0,358,640,2,'#e5cc8f');s.rect(0,0,2,360,'#e5cc8f');s.rect(638,0,2,360,'#e5cc8f');}
   if(F.flash>.2&&!impact)for(let y=0;y<360;y+=4)for(let x=(y%8?0:2);x<640;x+=8)s.dot(x,y,F.flashCol||PX_LIGHT);
+  for(const p of pxDamageLayout(S,F.nums||[],F))pxOutlinedText(s,p.n.txt,p.x+1,p.y+1,p.n.bf?'#ed5266':p.n.big?'#eed49b':PX_LIGHT,p.size);
   return s;
 }
 let PX_SCREEN=null,PX_SCREEN_IMAGE=null;

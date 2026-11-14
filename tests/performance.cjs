@@ -22,4 +22,16 @@ for(let ch=0;ch<15;ch++) {
   times.sort((a,b)=>a-b);
   console.log(JSON.stringify({kind:'Node CPU Domain raster only',domain:CH[ch].dom.kind,frames:24,preRoundBuildMs:+buildMs.toFixed(2),medianMs:+times[12].toFixed(2),p95Ms:+times[22].toFixed(2)}));
 }
+// Contact-loaded raster samples include the damage layout and simultaneous values.
+for(const count of [1,8,24]) {
+  const C=newMatch(0,14,1000);C.phase='fight';C.t=130;C.stage='gallery';C.f[0].x=580;C.f[1].x=650;
+  for(const key of ['parts','rings','lines','contacts','dust','stars','puffs','nums','words'])FX[key]=[];
+  FX.banner=FX.bf=FX.impact=null;FX.flash=0;FX.silent=true;
+  for(let n=0;n<count;n++){C.ev=[];hit(C,0,C.f[1],C.f[0].x,{dmg:24,kb:0});for(const e of C.ev)fxEvent(C,e);}
+  for(let n=0;n<24;n++){pxWorldSurface(C);pxHUDSurface(C,labs);}
+  const times=[];
+  for(let n=0;n<120;n++){const begin=performance.now();pxWorldSurface(C);pxHUDSurface(C,labs);times.push(performance.now()-begin);}
+  times.sort((a,b)=>a-b);
+  console.log(JSON.stringify({kind:'Node CPU contact raster only',damageValues:FX.nums.length,frames:120,medianMs:+times[60].toFixed(2),p95Ms:+times[114].toFixed(2)}));
+}
 `)(performance);

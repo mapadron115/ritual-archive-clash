@@ -44,8 +44,7 @@ function pxHUDSurface(S,labels,F=FX) {
     // The actor tags and guard meter stay tied to simulation coordinates; hitboxes are untouched.
     if(f.st!=='ko') {
       const tag=lab?(labels[0]&&labels[1]?'P'+(i+1):'YOU'):(labels.other==='Computer'?'CPU':'FOE');
-      const tall=(-PX_IDLES[f.ch].h[1]+18)*(kit.height||1)*(f.big>0?1.3:1);
-      const tx=Math.round(f.x/2),ty=Math.max(90,Math.round(f.y/2-tall-10)),tw=pxTextWidth(tag);
+      const {x:tx,y:ty}=pxActorAnchor(f),tw=pxTextWidth(tag);
       s.rect(tx-tw/2-3,ty-2,tw+6,11,PX_INK);pxText(s,tag,tx-tw/2,ty,left?'#8ecddf':'#efa394');s.poly([[tx-3,ty+9],[tx+3,ty+9],[tx,ty+12]],left?'#8ecddf':'#efa394');
     }
     if(f.guardHp<99){const gx=f.x/2-15,gy=f.y/2+8;pxPanel(s,gx,gy,30,3,'#263346');s.rect(gx,gy,30*clamp(f.guardHp/100,0,1),3,f.guardHp<35?'#e99588':'#9bb8d0');}
@@ -68,11 +67,11 @@ function pxHUDSurface(S,labels,F=FX) {
   const round='ROUND '+S.round;pxText(s,round,320-pxTextWidth(round)/2,53,PX_LIGHT);
   if(S.dom&&!S.freeze){const name=CH[S.f[S.dom.o].ch].dom.name;pxOutlinedText(s,name,320-pxTextWidth(name)/2,76,PX_KITS[S.f[S.dom.o].ch].accent);}
   const b=F.banner;
-  if(b){const size=Math.min(b.small?2:3,Math.max(1,Math.floor(550/Math.max(1,pxTextWidth(b.txt))))),w=pxTextWidth(b.txt,size),y=b.small?105:150;
-    s.rect(b.small?320-w/2-10:0,y-9,b.small?w+20:640,size*7+18,PX_INK);
-    s.rect(b.small?320-w/2-10:0,y-9,b.small?w+20:640,2,b.col||'#ecd3a0');
-    pxText(s,b.txt,320-w/2,y,b.col||PX_LIGHT,size);
-    if(b.sub)pxText(s,b.sub,320-pxTextWidth(b.sub)/2,y+size*7+4,'#a7b3bf');
+  if(b){const p=pxBannerLayout(b);
+    s.rect(p.x,p.y,p.w,p.h,PX_INK);
+    s.rect(p.x,p.y,p.w,2,b.col||'#ecd3a0');
+    pxText(s,b.txt,p.textX,p.textY,b.col||PX_LIGHT,p.size);
+    if(b.sub)pxText(s,b.sub,320-pxTextWidth(b.sub)/2,p.textY+p.size*7+4,'#a7b3bf');
   }
   return s;
 }

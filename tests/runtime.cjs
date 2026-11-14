@@ -29,6 +29,7 @@ const document={visibilityState:'visible',getElementById(id){if(!nodes.has(id))n
 const context=vm.createContext({console,assert,document,window:{},setTimeout(){},requestAnimationFrame(){},addEventListener(name,fn){events[name]=fn;}});
 context.events=events;
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
 assert.equal(scripts.length,11);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
@@ -114,7 +115,7 @@ for(const [from,code,to] of [[0,'ArrowLeft',14],[0,'ArrowUp',12],[14,'ArrowRight
 choices[14].focus();choices[14].onclick();assert.equal(document.activeElement,choices[14]);assert.equal(G.pick[0],14);
 // Both selected costumes, for every build: compare actual menu canvases to their source pixels.
 globalThis.selectionAssets=new PixelSurface(1280,1040);selectionAssets.rect(0,0,1280,1040,PX_INK);
-pxText(selectionAssets,'V35 / ACTUAL MENU CANVASES / MAIN RIGHT + MIRROR LEFT',16,12,PX_LIGHT,2);
+pxText(selectionAssets,previewTag.toUpperCase()+' / ACTUAL MENU CANVASES / MAIN RIGHT + MIRROR LEFT',16,12,PX_LIGHT,2);
 for(let ch=0;ch<CH.length;ch++) {
   G.pick=[ch,ch];refreshSelection();
   const x=(ch%5)*256,y=42+Math.floor(ch/5)*324;
@@ -161,7 +162,7 @@ console.log('PASS real script order, title, fighter/stage selection, start, inpu
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
 if(process.argv[2]) {
-  writePNG(path.join(process.argv[2],'v35-selection-assets.png'),context.selectionAssets);
-  writePNG(path.join(process.argv[2],'v35-title-mark.png'),context.titleLogo);
-  writePNG(path.join(process.argv[2],'v35-attract-frame.png'),context.attractFrame);
+  writePNG(path.join(process.argv[2],previewTag+'-selection-assets.png'),context.selectionAssets);
+  writePNG(path.join(process.argv[2],previewTag+'-title-mark.png'),context.titleLogo);
+  writePNG(path.join(process.argv[2],previewTag+'-attract-frame.png'),context.attractFrame);
 }
