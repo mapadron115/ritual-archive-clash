@@ -304,12 +304,92 @@ function pxProjectileTrail(s,p) {
     }
   }
 }
+// Original body families, separate from the existing velocity-aligned wakes.
+// Rasterize facing right, then mirror the completed cell about its center pixel.
+// Only projectile age selects a phase; freezes and transported snapshots hold it.
+const PX_PROJECTILE_BODIES=new Map();
+function pxProjectileBody(p) {
+  if(!['red','flame','orb','pellet','gum','knife','nail'].includes(p.k))return null;
+  const r=Math.max(3,(p.r||9)/2),col=pxProjectileColor(p),phase=Math.floor(Math.max(0,p.t||0)/4)%4;
+  const moving=p.k==='red'||p.k==='flame'||p.k==='gum'||p.k==='orb';
+  const frame=moving?phase:0,key=[p.k,r,col,!!p.spin,frame].join(':');
+  if(PX_PROJECTILE_BODIES.has(key))return PX_PROJECTILE_BODIES.get(key);
+  const ox=Math.ceil(Math.max(32,r*3+6)),oy=Math.ceil(Math.max(24,r*1.6+6)),sprite=new PixelSurface(ox*2+1,oy*2+1);
+  const poly=(pts,c=col,outline=PX_INK)=>sprite.poly(pts.map(([a,b])=>[ox+a,oy+b]),c,outline);
+  const line=(a,b,c,w=1)=>sprite.line([ox+a[0],oy+a[1]],[ox+b[0],oy+b[1]],c,w);
+  const ellipse=(x,y,rx,ry,c)=>sprite.ellipse(ox+x,oy+y,rx,ry,c);
+  const mix=(a,b,t)=>'#'+pxRGB(a).slice(0,3).map((v,i)=>Math.round(v*(1-t)+pxRGB(b)[i]*t).toString(16).padStart(2,'0')).join('');
+  const shade=mix(col,PX_INK,.55),light=mix(col,PX_LIGHT,.65);
+  if(p.k==='flame') {
+    // Three curling tongues feed a compact hot front; no round ball with a tail.
+    const flick=[0,2,-1,1][phase],u=r/11;
+    const flame=pts=>pts.map(([a,b])=>[a*u,b*u]);
+    poly(flame([[-29,-8-flick],[-17,-5],[-21,-13],[-7,-8],[1,-10],[9,-6],[11,0],[8,7],[0,10],[-11,7],[-24,11+flick],[-19,3],[-30,2],[-19,-1]]),shade);
+    poly(flame([[-22,-7-flick],[-9,-3],[-14,-9],[-4,-6],[3,-7],[8,-3],[9,2],[4,7],[-4,7],[-17,8+flick],[-12,2],[-23,1],[-9,-1]]),col,false);
+    poly(flame([[-11,-2],[-3,-4],[4,-4],[7,0],[3,4],[-3,5],[-7,2],[-15,3]]),light,false);
+    poly(flame([[-2,-2],[3,-2],[5,0],[2,2],[-2,2]]),PX_LIGHT,false);
+  } else if(p.k==='red') {
+    // A pressure lens: thick broken outer bands and a shaded, compressed core.
+    const q=[0,1,0,-1][phase];
+    ellipse(0,0,r,r*.78,PX_INK);ellipse(0,0,r-1,r*.78-1,shade);
+    ellipse(-1,-1,r*.67,r*.55,col);ellipse(-3,-3,r*.35,r*.28,light);
+    for(const dir of [-1,1]) {
+      const pts=[[-r*.7,dir*(r*.8+q)],[-r*.1,dir*(r+2+q)],[r*.7,dir*(r*.8+q)],[r+2,dir*r*.3]];
+      for(let i=1;i<pts.length;i++){line(pts[i-1],pts[i],PX_INK,4);line(pts[i-1],pts[i],col,2);}
+    }
+    line([-r*.4,0],[r*.45,0],PX_LIGHT,2);
+  } else if(p.k==='orb'&&p.spin) {
+    // Six hooked, shaded vanes rotate around a hollow hub, retaining the red hue.
+    const a=phase*Math.PI/12,turn=([x,y],angle)=>[Math.cos(angle)*x-Math.sin(angle)*y,Math.sin(angle)*x+Math.cos(angle)*y];
+    for(let n=0;n<6;n++) {
+      const angle=a+n*Math.PI/3;
+      poly([[r*.3,-r*.1],[r*.72,-r*.58],[r*1.18,-r*.35],[r*.92,r*.2],[r*.6,0]].map(pt=>turn(pt,angle)),n%2?shade:col);
+      line(turn([r*.58,-r*.2],angle),turn([r*.88,-r*.35],angle),light);
+    }
+    ellipse(0,0,r*.48,r*.48,PX_INK);ellipse(0,0,r*.3,r*.3,col);ellipse(0,0,r*.14,r*.14,PX_INK);
+  } else if(p.k==='orb') {
+    // Broad folded planes with a leading point; an open fan, not a second wheel.
+    const q=[0,1,0,-1][phase];
+    poly([[-r*1.45,-r*.9-q],[-r*.2,-r*.65],[r,0],[-r*.2,r*.65],[-r*1.45,r*.9+q],[-r*.9,0]],col);
+    poly([[-r*1.2,-r*.72],[-r*.2,-r*.5],[r*.7,0],[-r*.8,-r*.1]],light,false);
+    poly([[-r*.8,r*.1],[r*.7,0],[-r*.2,r*.5],[-r*1.2,r*.72]],shade,false);
+    line([-r*.85,0],[r*.6,0],PX_LIGHT);
+  } else if(p.k==='gum') {
+    // A sticky knot with an elastic rear loop; its beads remain in the wake.
+    const q=[0,1,0,-1][phase];
+    ellipse(-r*1.2,0,r*.85,r*.58+q,PX_INK);ellipse(-r*1.2,0,r*.6,r*.32+q,shade);
+    ellipse(-r*1.2,0,r*.36,Math.max(1,r*.16+q),PX_INK);
+    poly([[-r*.8,-r*.42],[-r*.15,-r*.8],[r*.65,-r*.65],[r,0],[r*.5,r*.65],[-r*.2,r*.72],[-r*.8,r*.32]],col);
+    poly([[-r*.55,r*.15],[r*.7,0],[r*.4,r*.5],[-r*.15,r*.55]],shade,false);
+    line([-r*.3,-r*.4],[r*.35,-r*.35],light,2);
+  } else if(p.k==='pellet') {
+    // Small solid shot: bevelled brass facets, with no comet-sized rear body.
+    poly([[-r,-r*.4],[-r*.4,-r*.8],[r*.5,-r*.65],[r,0],[r*.5,r*.65],[-r*.4,r*.8],[-r,r*.4]],col);
+    poly([[-r*.65,r*.15],[r*.7,0],[r*.35,r*.5],[-r*.3,r*.6]],shade,false);
+    line([-r*.5,-r*.35],[r*.25,-r*.4],light);
+  } else if(p.k==='knife') {
+    poly([[-5,-3],[4,-4],[14,0],[3,3],[-5,2]],col);
+    poly([[-3,-2],[4,-3],[10,0],[-3,0]],light,false);
+    line([-12,0],[-6,0],PX_INK,4);line([-11,0],[-6,0],shade,2);
+    line([-5,-4],[-5,4],PX_INK,3);line([-5,-3],[-5,3],col);
+  } else {
+    // Nail: flat square head and a long plain steel shank, without a knife guard.
+    poly([[-9,-1],[10,-1],[14,0],[10,1],[-9,1]],shade);
+    line([-8,-1],[8,-1],light);
+    poly([[-12,-4],[-9,-4],[-9,4],[-12,4]],col);line([-11,-3],[-11,2],light);
+  }
+  const cell={sprite,ox,oy};
+  // Snapshot colors/radii are normally finite; keep unexpected inputs bounded too.
+  if(PX_PROJECTILE_BODIES.size>=256)PX_PROJECTILE_BODIES.delete(PX_PROJECTILE_BODIES.keys().next().value);
+  PX_PROJECTILE_BODIES.set(key,cell);return cell;
+}
 function pxProjectile(s,p) {
   pxProjectileTrail(s,p);
   const x=p.x/2,y=p.y/2,f=p.vx<0?-1:1,r=Math.max(3,(p.r||9)/2),col=pxProjectileColor(p);
+  const body=pxProjectileBody(p);
+  if(body){s.blit(body.sprite,Math.round(x)-body.ox,Math.round(y)-body.oy,1,f<0);return;}
   const poly=(pts,c=col)=>s.poly(pts.map(([a,b])=>[x+a*f,y+b]),c,PX_INK);
   if(p.k==='cut') {poly([[-24,-3],[6,-10],[18,-8],[8,-2],[-4,9],[-20,11],[-8,1]]);s.line([x-15*f,y+7],[x+12*f,y-7],PX_LIGHT);}
-  else if(p.k==='knife'||p.k==='nail') {poly([[-10,-2],[8,-2],[14,0],[8,2],[-10,2]]);s.line([x-9*f,y-4],[x-9*f,y+4],col,2);}
   else if(p.k==='wave') {poly([[-20,12],[-15,-3],[-10,-19],[1,-28],[9,-28],[2,-15],[5,-5],[0,12]]);s.line([x-12*f,y-2],[x+3*f,y-23],PX_LIGHT,2);}
   else if(p.k==='stone') {poly([[-r,-2],[-r/2,-r],[r/2,-r],[r,2],[r/2,r],[-r/2,r]],'#96998f');s.line([x-r/2,y-r+1],[x+r/2,y-r+1],'#d0ccad');}
   else if(p.k==='shell') {poly([[-13,-6],[6,-6],[14,0],[6,6],[-13,6]],'#566978');s.rect(x-7,y-4,5,8,col);s.rect(x-20*f,y-2,6,4,'#d39060');}

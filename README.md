@@ -15,6 +15,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - The title tray uses one compact row on desktop, with its keyboard hint by the logo. Selection cards use smaller portraits and padding at <=900px to give the arena row more room.
 - Damage values rise above the struck fighter, with clear space around both fighters, actor tags and banners. Simultaneous values use separate nearby lanes. Hit effects, damage and timing stay the same.
 - Round results distinguish K.O., time up and draws, identify the winner and score, and say which round comes next. They remain visible until the round changes. The match screen shows the final score, keeps rematch context clear and tells online guests to wait for the host. Tab, Enter and Space reach the result buttons.
+- Projectile bodies have distinct pixel shapes: pressure bands, curling flame, a hooked wheel, folded fan, brass shot, elastic knot, knife and nail. Active projectile age animates the energy shapes; impact pauses and time stops hold their frames.
 
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
@@ -27,6 +28,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/projectiles.cjs` checks eight distinct body silhouettes, exact facing mirrors, bounds/materials, phase selection, real art inputs from both slots, snapshots, impact/global/time-stop holds, contact/expiry and identical simulation outcomes. Add an output directory and optional version prefix for body, silhouette and composited scene previews. These are exact renderer output, not browser motion or play evidence.
 
 `node tests/round-results.cjs` checks 180 actual knockout/timeout/draw timelines and 4,500 all-mode result rasters/snapshots across the roster, result boundaries, score progression, freezes and unchanged outcomes. Also checks 60 actual prior-round score histories followed by 180 consecutive draws: neither side earns a win, and the next round continues even at 1–1. Covers unequal-max-health timeouts and result/damage clearance. Optional output directory and filename save six round/match composites, including a first-round 0–0 draw and a round-three 1–1 draw; `--preview-only` exports the audit without assertions for comparison against earlier code. `tests/runtime.cjs` additionally checks ten actual match endings, guest snapshot updates during the result delay, keyboard-event routing, focus, rematch resets, navigation and stale timer isolation. Native browser focus/activation, layout and human play still need review.
 
