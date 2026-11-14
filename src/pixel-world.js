@@ -36,6 +36,55 @@ function pxBolt(s,a,b,seed,col='#ed5266',width=2) {
   let prev=a;
   for(let i=1;i<=7;i++) {const t=i/7,off=i===7?0:Math.sin(seed*13+i*9)*9,pt=[a[0]+(b[0]-a[0])*t+off,a[1]+(b[1]-a[1])*t-off*.5];s.line(prev,pt,PX_INK,width+3);s.line(prev,pt,col,width);prev=pt;}
 }
+// A torn black/red rupture opens into irregular forks, then detaches into
+// short shards. The existing 36-tick FX age is the only clock. Kept below
+// both bodies so the impact silhouettes and the striking fist stay legible.
+const PX_BLACK_FLASH=new Map();
+function pxBlackFlash(s,b) {
+  const t=Math.max(0,Math.floor(b.t));if(t>=36)return;
+  if(!PX_BLACK_FLASH.has(t)) {
+    const cell=new PixelSurface(256,224),x=128,y=112;
+    const forks=[[[8,-5],[23,-19],[33,-16],[48,-41],[61,-38],[78,-69],[89,-66]],
+      [[12,4],[33,9],[43,3],[69,19],[76,13],[110,28]],
+      [[6,8],[19,28],[14,36],[34,57],[30,67],[47,85]],
+      [[-8,8],[-24,23],[-36,18],[-54,40],[-68,35],[-99,58]],
+      [[-9,-5],[-29,-13],[-37,-30],[-59,-25],[-73,-47],[-111,-53]]];
+    const twigs=[[[33,-16],[48,-9],[59,-19]],[[43,3],[49,-12],[65,-17]],
+      [[14,36],[2,49],[12,67]],[[-36,18],[-44,4],[-61,6]],[[-37,-30],[-29,-46],[-43,-63]]];
+    const reach=t<5?.68+t*.065:t<14?1:1+Math.min(10,t-14)*.006;
+    const point=([a,c])=>[x+a*reach,y+c*reach];
+    const width=t<5?7:t<14?5:Math.max(1,4-Math.floor((t-14)/6));
+    // After expansion, remove the inner path and then alternate outer bends.
+    // The last six ages retain only tiny separated tips, never full spokes.
+    const segments=[];
+    for(const [n,path] of forks.concat(twigs).entries())for(let k=1;k<path.length;k++) {
+      if(t>=14&&(k<2+Math.floor((t-14)/6)||(k+n)%2===0))continue;
+      let a=point(path[k-1]),c=point(path[k]);
+      if(t>=24){const keep=(36-t)/16;a=[c[0]+(a[0]-c[0])*keep,c[1]+(a[1]-c[1])*keep];}
+      const taper=(n<5?1:.6)*width*.5;
+      const wa=taper*(1-(k-1)/path.length*.7),wc=k===path.length-1?0:taper*(1-k/path.length*.7);
+      segments.push({a,c,wa,wc});
+    }
+    const shard=({a,c,wa,wc},pad,col)=>{
+      const dx=c[0]-a[0],dy=c[1]-a[1],len=Math.max(1,Math.hypot(dx,dy)),nx=-dy/len,ny=dx/len;
+      cell.poly([[a[0]+nx*(wa+pad),a[1]+ny*(wa+pad)],[c[0]+nx*(wc+pad),c[1]+ny*(wc+pad)],
+        [c[0]-nx*(wc+pad),c[1]-ny*(wc+pad)],[a[0]-nx*(wa+pad),a[1]-ny*(wa+pad)]],col);
+    };
+    for(const seg of segments)shard(seg,1.5,'#100f1b');
+    for(const seg of segments){shard(seg,0,t<24?'#e6435b':'#a9445b');if(t<14)cell.line(seg.a,seg.c,'#ff8790');}
+    if(t<14) {
+      const r=t<5?1+t*.06:1.24-(t-5)*.075;
+      const poly=(pts,col)=>cell.poly(pts.map(([a,c])=>[x+a*r,y+c*r]),col);
+      // An off-axis split with a dark heart differs from the ivory hit star.
+      poly([[-44,-14],[-15,-11],[-23,-31],[-3,-16],[12,-29],[10,-9],[43,-16],[23,0],[40,16],[12,10],[20,31],[-2,17],[-21,26],[-15,8],[-45,11],[-25,-1]],'#100f1b');
+      poly([[-37,-11],[-11,-8],[-17,-23],[-2,-11],[8,-22],[6,-6],[34,-12],[17,0],[31,12],[9,6],[14,24],[-1,11],[-17,20],[-10,5],[-36,8],[-19,-1]],'#e6435b');
+      poly([[-24,-5],[-5,-3],[-9,-14],[2,-5],[17,-8],[11,0],[23,7],[5,4],[8,15],[-3,7],[-17,11],[-10,2],[-27,3],[-14,-1]],'#100f1b');
+      poly([[-5,-2],[0,-7],[3,-1],[10,1],[2,3],[-1,8],[-3,2],[-9,0]],'#ffe4cf');
+    }
+    PX_BLACK_FLASH.set(t,cell);
+  }
+  s.blit(PX_BLACK_FLASH.get(t),Math.round(b.x/2)-128,Math.round(b.y/2)-112);
+}
 // Three authored phases: bright contact, directional expansion, separated fragments.
 // Geometry is mirrored around the exact contact pixel; no random frame-to-frame flicker.
 const PX_CONTACTS=new Map();
@@ -1043,6 +1092,7 @@ function pxWorldSurface(S,F=FX) {
   pxOvationRhythm(s,S);
   pxGumTether(s,S);
   if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2)){pxStraightPunchWake(s,f);pxKickSweep(s,f);pxHookSweep(s,f);}
+  if(F.bf)pxBlackFlash(s,F.bf);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
   for(const p of S.proj)pxProjectile(s,p);
@@ -1052,7 +1102,6 @@ function pxWorldSurface(S,F=FX) {
   for(const e of F.stars||[])pxBurst(s,e.x/2,e.y/2,e.r/2*(1-e.t/e.life*.7),e.col,e.t);
   for(const e of F.contacts||[])pxContact(s,e);
   for(const w of F.words||[]) {const size=w.txt.length>16?1:2;pxOutlinedText(s,w.txt,w.x/2-pxTextWidth(w.txt,size)/2,w.y/2-w.t/4,'#edcf9d',size);}
-  if(F.bf) {const b=F.bf,x=b.x/2,y=b.y/2;pxBurst(s,x,y,Math.max(5,65-b.t*2),'#ed5266',b.t);for(let n=0;n<6;n++){const a=n*Math.PI/3+Math.floor(b.t/3)*.2;pxBolt(s,[x,y],[x+Math.cos(a)*105,y+Math.sin(a)*75],n+Math.floor(b.t/3));}}
   if(S.stop&&S.stop.t>0) {s.rect(0,0,640,2,'#e5cc8f');s.rect(0,358,640,2,'#e5cc8f');s.rect(0,0,2,360,'#e5cc8f');s.rect(638,0,2,360,'#e5cc8f');}
   if(F.flash>.2&&!impact)for(let y=0;y<360;y+=4)for(let x=(y%8?0:2);x<640;x+=8)s.dot(x,y,F.flashCol||PX_LIGHT);
   for(const p of pxDamageLayout(S,F.nums||[],F))pxDamageText(s,p);
