@@ -159,16 +159,73 @@ function pxDust(s,e) {
   }
   s.blit(PX_DUST.get(key),Math.round(e.x/2)-96,Math.round(e.y/2)-80);
 }
+// Status identity uses existing active countdowns (or the owner's Domain age).
+// A small local raster keeps both facings and fractional/offscreen roots exact.
+function pxStatusEffect(s,S,f,kind) {
+  const remaining=kind==='infinity'?f.inf:kind==='counter'?f.counter:kind==='absolute'?f.abs:f.zone;
+  if(!(remaining>0))return;
+  const cell=new PixelSurface(128,128),x=64,y=120;
+  const age=kind==='infinity'?108-remaining:kind==='counter'?26-remaining:kind==='zone'?BF_ZONE_TICKS-remaining:
+    S.dom&&S.dom.o===f.i&&S.dom.k==='absolute'?S.dom.t:0;
+  const phase=Math.floor(Math.max(0,age)/4);
+  if(kind==='infinity') {
+    // Eight open shell segments leave the fighter's center unobscured.
+    for(let n=0;n<8;n++) {
+      const a=n*Math.PI/4,pts=[];
+      for(let i=0;i<=4;i++){const b=a-.27+i*.135;pts.push([x+Math.cos(b)*39,y-51+Math.sin(b)*51]);}
+      for(let i=4;i>=0;i--){const b=a-.27+i*.135;pts.push([x+Math.cos(b)*36,y-51+Math.sin(b)*48]);}
+      cell.poly(pts,'#3869a9',PX_INK);
+      const bright=(n+phase)%8<2;
+      for(let i=0;i<4;i++) {
+        const b=a-.22+i*.11,c=b+.11;
+        cell.line([x+Math.cos(b)*37.5,y-51+Math.sin(b)*49.5],[x+Math.cos(c)*37.5,y-51+Math.sin(c)*49.5],bright?'#dbf4ed':'#8ed9e1');
+      }
+    }
+  } else if(kind==='counter') {
+    // Paired outward vanes suggest a returned blow rather than a solid wall.
+    for(let n=0;n<2;n++) {
+      const fx=x+20+n*11,cy=y-50;
+      cell.poly([[fx-4,cy-25],[fx+11,cy],[fx-4,cy+25],[fx-1,cy],[fx-4,cy-25]],'#39765f',PX_INK);
+      cell.poly([[fx-2,cy-19],[fx+8,cy],[fx-1,cy+12],[fx+2,cy]],'#79c9a5');
+      cell.line([fx-2,cy-19],[fx+8,cy],phase%2===n?'#e0f1cf':'#9bd7ae');
+    }
+  } else if(kind==='absolute') {
+    // A round jade buckler echoes the sanctuary, distinct from the brief counter.
+    const fx=x+27,cy=y-50,ready=f.st!=='hit'&&f.st!=='stun';
+    if(ready) {
+      cell.ellipse(fx,cy,16,27,PX_INK);cell.ellipse(fx,cy,14,25,'#39765f');
+      cell.ellipse(fx-1,cy-1,12,22,'#9bd7ae');cell.ellipse(fx+1,cy+2,11,21,'#39765f');
+      cell.ellipse(fx,cy,9,19,'#79c9a5');
+      cell.poly([[fx,cy-12],[fx+6,cy],[fx,cy+12],[fx-6,cy]],'#39765f',PX_INK);
+      cell.poly([[fx,cy-10],[fx,cy+1],[fx-4,cy]],'#e0f1cf');
+      const py=cy-17+(phase%6)*6;
+      cell.line([fx-10,py],[fx-7,py-2],'#e0f1cf');
+    } else {
+      // The timer can survive hit/stun while reflection is suspended by the rules.
+      for(const dir of [-1,1])cell.poly([[fx+dir*5,cy-24],[fx+dir*14,cy-12],[fx+dir*14,cy+13],[fx+dir*5,cy+24],[fx+dir*10,cy]],'#39765f',PX_INK);
+    }
+  } else {
+    // Broken red/black currents rise along the flanks, behind the silhouette.
+    for(let n=0;n<4;n++) {
+      const u=(Math.max(0,age)*2+n*23)%92,fx=x+(n%2?1:-1)*(27+n%3*4),cy=y-12-u;
+      const pts=[[fx,cy+9],[fx-3,cy+2],[fx+2,cy-4],[fx-1,cy-11]];
+      for(let i=1;i<pts.length;i++){cell.line(pts[i-1],pts[i],PX_INK,5);cell.line(pts[i-1],pts[i],'#9c2948',3);cell.line(pts[i-1],pts[i],'#ed5266');}
+      cell.line([fx+2,cy-4],[fx-1,cy-11],'#ff9aab');
+    }
+  }
+  s.blit(cell,Math.round(f.x/2)-(f.face<0?63:64),Math.round(f.y/2)-120,1,f.face<0);
+}
 function pxPaintFighter(s,S,f,impact) {
   const x=Math.round(f.x/2),y=Math.round(f.y/2),scale=f.big>0?1.3:1,alt=f.i===1&&S.f[0].ch===f.ch;
   if(!impact)s.ellipse(x,307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
   if(f.inv>0 && S.t%4<2)return;
-  if(f.zone>0&&!impact)for(let n=0;n<6;n++) {const u=(S.t*2+n*23)%90,fx=x-18+n*7;s.poly([[fx-4,y-u],[fx+2,y-u-12],[fx+5,y-u+5]],'#ed5266');s.poly([[fx-2,y-u],[fx+1,y-u-8],[fx+3,y-u+3]],PX_INK);}
+  if(f.zone>0&&!impact)pxStatusEffect(s,S,f,'zone');
   const flash=impact ? impact.kind==='black' ? f.i===impact.a?'#f8edce':'#ed5266' : PX_INK : S.t-f.hurtT<4 ? PX_LIGHT : '';
   const {sprite,ox,oy}=pxFighterFrame(f.ch,pxPose(S,f),alt,flash);
   s.blit(sprite,x-(f.face<0?sprite.w-1-ox:ox)*scale,y-oy*scale,scale,f.face<0);
-  if(f.inf>0){pxRing(s,x,y-44,30,47,'#8ed9e1',1,Math.floor(S.t/4));s.rect(x+24,y-51,3,8,PX_LIGHT);}
-  if(f.counter>0||f.abs>0){const fx=x+f.face*21;s.poly([[fx,y-74],[fx+f.face*12,y-51],[fx,y-23],[fx-f.face*3,y-51]],'#79c9a5',PX_INK);}
+  if(f.inf>0)pxStatusEffect(s,S,f,'infinity');
+  if(f.abs>0)pxStatusEffect(s,S,f,'absolute');
+  else if(f.counter>0)pxStatusEffect(s,S,f,'counter');
   if(f.st==='stun')for(let n=0;n<3;n++){const a=S.t*.12+n*2.1;pxBurst(s,x+Math.cos(a)*14,y-97+Math.sin(a)*3,3,'#eed790');}
   if(f.nails>0)for(let n=0;n<f.nails;n++)s.line([x-5+n*6,y-43+n%2*5],[x-2+n*6,y-50+n%2*5],'#e8d7bc',2);
   if(f.chg>0){pxRing(s,x+f.face*14,y-45,9+Math.floor(f.chg/25)*3,9,'#d8ecb0',2,Math.floor(S.t/4));}
