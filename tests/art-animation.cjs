@@ -16,7 +16,7 @@ for(let ch=0;ch<15;ch++)for(const family of families) {
 for(let ch=0;ch<15;ch++)for(let slot=0;slot<3;slot++)for(let owner=0;owner<2;owner++) {
   const S=newMatch(ch,ch,331);S.phase='fight';S.f[0].x=140;S.f[1].x=1140;
   const f=S.f[owner];f.face=owner?-1:1;startMove(f,'a'+slot);
-  const m=moveDef(f),family=m.pose==='slashw'?'slash':m.pose,seq=PX_ATTACKS[family]||PX_ATTACKS.cast1;
+  const m=moveDef(f),family=pxArtPose(m),seq=PX_ATTACKS[family]||PX_ATTACKS.cast1;
   // Check the boundaries against the existing definition, including very short recoveries.
   const at=t=>{f.mt=t;return pxPose(S,f);},contact=Math.min(3,Math.ceil(m.re/3)),settle=Math.ceil(m.re*.65);
   assert.equal(at(0),seq[0]);assert.equal(at(m.su-1),seq[1]);

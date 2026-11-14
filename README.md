@@ -22,6 +22,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Script checks
 
+`node tests/cast-animation.cjs` checks palm-cast and spoken-art silhouettes, actual release events and projectile origins, immediate dash transitions, frozen/time-stopped frames, snapshots and unchanged simulation. Add an output directory for phase, silhouette and in-stage previews.
+
 `node tests/art-animation.cjs` checks all 45 arts for both owners, exact startup/contact/recovery boundaries, six distinct art-family silhouettes across all builds, release-hand alignment, frozen/snapshotted frames and unchanged deterministic outcomes. Add an output directory for color/silhouette sheets and actual firing-tick scenes.
 
 `node tests/summons.cjs` checks original hound bounds/bites, Nue wing strokes and dive/bank angles, Toad extension/recoil, three-tone palettes, directional cells, actual summon timelines, freeze/time-stop clocks, snapshot stability and unchanged simulation. Add an output directory and optional version prefix for phase and scene previews.

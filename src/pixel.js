@@ -73,7 +73,7 @@ const PX_POSES = {
   jkick: {h:[-13,-82],s:[-14,-65],hip:[-2,-38],a:[[3,-51],[14,-65]],b:[[-29,-58],[-28,-72]],l:[[23,-40],[49,-42]],r:[[-18,-23],[-34,-28]]},
   hit: {h:[-17,-74],s:[-15,-59],hip:[-2,-32],a:[[1,-44],[15,-52]],b:[[-31,-45],[-37,-57]],l:[[20,-16],[29,0]],r:[[-17,-18],[-26,0]]},
   stun: {h:[6,-69],s:[0,-57],hip:[-5,-31],a:[[15,-42],[11,-26]],b:[[-19,-43],[-23,-28]],l:[[13,-15],[24,0]],r:[[-21,-15],[-29,0]]},
-  cast1: {h:[2,-79],s:[0,-64],hip:[-4,-35],a:[[19,-54],[37,-65]],b:[[-17,-50],[-7,-60]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
+  cast1: {h:[10,-79],s:[6,-63],hip:[-3,-35],a:[[18,-48],[28,-39]],b:[[-16,-49],[-9,-59]],l:[[20,-18],[30,0]],r:[[-24,-19],[-33,0]],palm:true},
   clap: {h:[11,-77],s:[7,-61],hip:[-2,-33],a:[[24,-42],[33,-42]],b:[[20,-51],[33,-42]],l:[[22,-17],[31,0]],r:[[-21,-19],[-30,0]]},
   sign: {h:[2,-79],s:[0,-64],hip:[-4,-35],a:[[16,-51],[11,-66]],b:[[-4,-50],[11,-66]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
   throw: {h:[14,-77],s:[11,-62],hip:[0,-34],a:[[20,-49],[33,-40]],b:[[-8,-52],[-23,-71]],l:[[22,-17],[31,0]],r:[[-22,-19],[-33,0]]},
@@ -95,8 +95,17 @@ const PX_POSES = {
   kickplant: {h:[-4,-79],s:[-5,-63],hip:[-3,-35],a:[[13,-48],[23,-61]],b:[[-21,-49],[-18,-61]],l:[[19,-20],[26,-2]],r:[[-18,-19],[-25,0]]},
   jpunchre: {h:[7,-81],s:[4,-65],hip:[-2,-37],a:[[22,-56],[32,-62]],b:[[-15,-50],[-3,-60]],l:[[19,-35],[14,-14]],r:[[-17,-27],[-30,-37]]},
   jkickre: {h:[-8,-82],s:[-9,-66],hip:[-2,-38],a:[[9,-53],[20,-66]],b:[[-24,-56],[-25,-70]],l:[[20,-42],[26,-22]],r:[[-18,-24],[-32,-29]]},
-  castw: {h:[-5,-79],s:[-7,-63],hip:[-5,-35],a:[[7,-48],[4,-58]],b:[[-21,-49],[-11,-60]],l:[[10,-18],[20,0]],r:[[-23,-19],[-31,0]]},
-  castre: {h:[5,-78],s:[2,-63],hip:[-3,-35],a:[[23,-49],[29,-57]],b:[[-15,-48],[-5,-58]],l:[[15,-18],[25,0]],r:[[-21,-19],[-29,0]]},
+  castw: {h:[-8,-78],s:[-10,-62],hip:[-6,-34],a:[[5,-47],[2,-58]],b:[[-23,-48],[-13,-59]],l:[[12,-17],[23,0]],r:[[-24,-18],[-33,0]]},
+  castload: {h:[-14,-76],s:[-16,-60],hip:[-10,-32],a:[[-6,-45],[-8,-52]],b:[[-29,-46],[-18,-59]],l:[[12,-16],[24,0]],r:[[-28,-17],[-36,0]],palm:true},
+  castre: {h:[-5,-79],s:[-8,-63],hip:[-7,-34],a:[[14,-40],[23,-28]],b:[[-24,-48],[-17,-59]],l:[[17,-17],[28,0]],r:[[-27,-18],[-36,0]],palm:true},
+  castsettle: {h:[0,-79],s:[-3,-64],hip:[-5,-35],a:[[17,-46],[24,-51]],b:[[-19,-49],[-7,-60]],l:[[14,-18],[24,0]],r:[[-22,-19],[-30,0]]},
+  // Speech comes from the head and chest, with a throat brace after the word.
+  // Art IDs select this visual family without altering their cast1 combat definitions.
+  speechw: {h:[-7,-81],tilt:-.18,s:[-9,-64],hip:[-5,-34],a:[[10,-51],[3,-68]],b:[[-22,-46],[-24,-32]],l:[[12,-18],[23,0]],r:[[-22,-18],[-31,0]]},
+  speechload: {h:[-13,-83],tilt:-.3,s:[-13,-65],hip:[-7,-34],a:[[7,-55],[0,-72]],b:[[-28,-43],[-31,-27]],l:[[13,-17],[25,0]],r:[[-25,-18],[-34,0]]},
+  speech: {h:[17,-75],tilt:.15,s:[9,-61],hip:[-2,-33],a:[[24,-46],[36,-55]],b:[[-18,-39],[-28,-29]],l:[[22,-17],[32,0]],r:[[-22,-19],[-32,0]],voice:true},
+  speechre: {h:[4,-69],tilt:.25,s:[0,-57],hip:[-5,-31],a:[[20,-45],[9,-57]],b:[[-19,-41],[-23,-28]],l:[[16,-16],[26,0]],r:[[-23,-17],[-31,0]]},
+  speechsettle: {h:[-2,-77],s:[-5,-62],hip:[-5,-34],a:[[14,-48],[6,-65]],b:[[-19,-45],[-17,-34]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
   clapw: {h:[-2,-79],s:[-4,-64],hip:[-4,-35],a:[[23,-55],[32,-65]],b:[[-21,-55],[-29,-65]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
   signw: {h:[-2,-80],s:[-3,-65],hip:[-4,-35],a:[[12,-49],[8,-56]],b:[[-12,-49],[-1,-57]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
   throww: {h:[-10,-79],s:[-12,-63],hip:[-6,-35],a:[[-22,-53],[-29,-74]],b:[[7,-50],[21,-60]],l:[[10,-18],[20,0]],r:[[-25,-19],[-34,0]]},
@@ -280,6 +289,7 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   poly([[head[0]+1,head[1]-5],[head[0]+7,head[1]-4],[head[0]+7,head[1]+2],[head[0]+10,head[1]+4],[head[0]+5,head[1]+6],[head[0]+2,head[1]+5]],skin[2],null);
   rect(head[0]+3,head[1]-1,5,1,PX_INK); rect(head[0]+4,head[1],4,2,PX_LIGHT); rect(head[0]+6,head[1],2,2,ac); rect(head[0]+7,head[1],1,2,PX_INK);
   rect(head[0]+5,head[1]+7,3,1,skin[0]);
+  if(p.voice) {rect(head[0]+6,head[1]+5,5,4,PX_INK);rect(head[0]+6,head[1]+5,4,1,PX_LIGHT);}
   const hx=head[0],hy=head[1];
   const shapes={
     sweep:[[-9,1],[-10,-8],[-5,-12],[5,-12],[11,-8],[6,-5],[-2,-4],[-5,8]],
@@ -314,6 +324,11 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   if(kit.wraps || kit.brace) for(let n=0;n<3;n++) line([hand[0]-7+n*2,hand[1]+1],[hand[0]-5+n*2,hand[1]+4],kit.wraps?kit.inner:ac);
   if(kit.limbDetail)heavyHand(p.a[0],hand,false);
   if(kit.gauntlet) {poly([[hand[0]-8,hand[1]-5],[hand[0]+2,hand[1]-6],[hand[0]+5,hand[1]],[hand[0]+1,hand[1]+6],[hand[0]-8,hand[1]+5]],top[2]);rect(hand[0]-6,hand[1]-3,6,2,ac);line([hand[0]-6,hand[1]+3],[hand[0],hand[1]+3],top[0]);}
+  if(p.palm) {
+    poly([[hand[0]-3,hand[1]+4],[hand[0]-4,hand[1]-3],[hand[0]-2,hand[1]-10],[hand[0]+1,hand[1]-11],[hand[0]+3,hand[1]-5],[hand[0]+6,hand[1]-3],[hand[0]+3,hand[1]+4]],skin[1]);
+    line([hand[0]-1,hand[1]-8],[hand[0],hand[1]-2],skin[2],2);
+    line([hand[0]+2,hand[1]-4],[hand[0]+2,hand[1]],skin[0]);
+  }
   if(kit.hammer) {line([hand[0]+1,hand[1]+8],[hand[0]+1,hand[1]-14],PX_INK,4);line([hand[0]+1,hand[1]+7],[hand[0]+1,hand[1]-12],kit.inner,2);rect(hand[0]-5,hand[1]-18,14,7,PX_INK);rect(hand[0]-4,hand[1]-17,12,4,hair[0]);rect(hand[0]-4,hand[1]-17,12,1,hair[2]);}
   if (flash) {
     const color=pxRGB(flash);
@@ -370,7 +385,7 @@ function pxPose(S,f) {
   if(f.st === 'atk') {
     const m=moveDef(f);
     if(!m)return f.y<GROUND?'jump':'ready';
-    const pose=m.pose==='slashw'?'slash':m.pose;
+    const pose=pxArtPose(m);
     const sequence=PX_ATTACKS[pose] || PX_ATTACKS.cast1;
     if(f.mt<m.su)return sequence[f.mt<Math.ceil(m.su/2)?0:1];
     // Arts fire at startup; only basics have a separate active window. Never imply idle during recovery.
@@ -391,12 +406,17 @@ function pxPose(S,f) {
 }
 // Velocity is an existing active-physics clock: these poses hold during hit-stop and Domains.
 function pxAirHitPose(f) { return f.vy < -7 ? 'launch' : f.vy < -2 ? 'airarch' : f.vy < 3 ? 'aircrest' : f.vy < 9 ? 'fall' : 'fallbrace'; }
+function pxArtPose(m) {
+  if(m.id==='dontmove' || m.id==='blastaway' || m.id==='crushed')return 'speech';
+  return m.pose==='slashw'?'slash':m.pose;
+}
 // Startup pair, recoil, settle. All selection uses existing active simulation clocks.
 const PX_ATTACKS = {
   punch:['wind','punchload','punchre','ready'],punch2:['wind','punchload','punch2re','ready'],
   hook:['hookw','hookload','hookre','ready'],kick:['kickw','kickload','kickre','kickplant'],
   jpunch:['jump','punchload','jpunchre','jump'],jkick:['kickw','kickload','jkickre','jump'],
-  cast1:['castw','signw','castre','ready'],clap:['clapw','clapload','clapre','clapseparate'],
+  cast1:['castw','castload','castre','castsettle'],speech:['speechw','speechload','speechre','speechsettle'],
+  clap:['clapw','clapload','clapre','clapseparate'],
   sign:['signw','sign','signre','signsettle'],throw:['throww','wind','throwre','throwsettle'],
   bow:['boww','bowdraw','bowre','bowsettle'],guard:['guard','guard','guard','guard'],
   slash:['slashw','slashload','slashre','slashsettle'],cannon:['cannonw','cannonload','cannonre','cannonsettle'],
