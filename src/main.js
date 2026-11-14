@@ -225,6 +225,8 @@ function buildSelect() {
 }
 function pickMode(m) { G.mode = m; show('select'); buildSelect(); }
 function startFight() {
+  // Unsent host effects belong to the previous fight, never its replacement.
+  G.netEv = [];
   G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); FX.parts = []; FX.contacts = []; FX.dust = []; FX.banner = null; FX.impact = null; FX.bf = null;
   G.S.stage=pxStageId(G.stage);
   // Prepare both spaces before the round, so a first Domain never builds its scenery mid-fight.

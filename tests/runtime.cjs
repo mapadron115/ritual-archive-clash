@@ -290,6 +290,35 @@ stale.fn();assert.equal($('over').style.display,'none');current.fn();assert.equa
 toSelect();assert.equal($('select').style.display,'flex');assert.equal(G.running,false);
 toMenu();assert.equal($('title').style.display,'flex');
 console.log('PASS ten actual match endings in five modes, score/role/guest guidance, delayed focus, rematch reset, snapshot restart, navigation and stale timer isolation');
+// A hit on an odd host tick waits for the next snapshot. Starting another
+// fight before that snapshot must not deliver the old hit with the new state.
+let eventResetChecks=0;
+for(const route of ['rematch','select','rehost']){
+  G.mode='host';G.pick=[0,1];startFight();G.S.phase='fight';G.S.t=200;
+  G.S.f[0].x=500;G.S.f[1].x=575;G.S.seed=12345;
+  startMove(G.S.f[0],'p1');G.S.f[0].mt=BASIC.p1.su-1;
+  G.acc=0;G.last=2000;G.netEv=[];sent.length=0;frame(2017);
+  assert.equal(G.S.t,201);assert(G.netEv.some(e=>e.k==='hit'),'fixture must retain a real unsent hit');
+  assert.equal(sent.filter(m=>m.t==='s').length,0,'odd tick unexpectedly sent snapshot');
+  const oldEvents=JSON.parse(JSON.stringify(G.netEv));
+  if(route==='rematch')rematch();
+  else if(route==='select'){toSelect();startFight();}
+  else {toMenu();netWire(conn,'host');wire.open();startFight();}
+  assert.equal(G.netEv.length,0,'previous fight events survived '+route);
+  const startAt=sent.length;G.acc=0;G.last=3000;frame(3034);
+  const snapshot=sent.slice(startAt).find(m=>m.t==='s');assert(snapshot,'new fight snapshot missing');
+  assert.equal(snapshot.s.t,2);assert.equal(snapshot.s.phase,'intro');
+  assert.equal(snapshot.e.some(e=>oldEvents.some(old=>JSON.stringify(old)===JSON.stringify(e))),false,'old hit delivered in new fight');
+  assert.equal(snapshot.e.some(e=>e.k==='hit'),false);
+  // Resetting the queue must leave normal current-fight batching intact.
+  G.S.phase='fight';G.S.t=202;G.S.f[0].x=500;G.S.f[1].x=575;G.S.seed=12345;
+  startMove(G.S.f[0],'p1');G.S.f[0].mt=BASIC.p1.su-1;
+  const activeAt=sent.length;frame(3051);assert(G.netEv.some(e=>e.k==='hit'));
+  frame(3068);const activeSnapshot=sent.slice(activeAt).find(m=>m.t==='s');
+  assert(activeSnapshot&&activeSnapshot.e.some(e=>e.k==='hit'),'current fight hit lost');
+  assert.equal(G.netEv.length,0,'sent events were not drained');eventResetChecks++;
+}
+console.log('PASS',eventResetChecks,'host rematch/change-fighters/rehost routes discard real unsent hit events before new-match snapshots');
 G.stage='observatory';G.mode='local';startFight();
 G.S.phase='fight';G.S.t=130;G.S.f[0].ch=0;G.S.f[1].ch=14;G.S.f[0].x=400;G.S.f[1].x=880;
 frame(119);assert.equal(G.S.f[0].hp,1000);
