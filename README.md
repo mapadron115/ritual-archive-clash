@@ -19,6 +19,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Stage atmosphere uses sixteen discrete phases over 128 ticks: clouds ease through a wind loop, rain continues forward across the reset, and the observatory pointer turns in smaller steps. Stonework and the fighting floor remain still. Stage scenery retains its existing global clock during impact/cinematic pauses.
 - Beam attacks have distinct pixel forms: shaded cannon pressure with moving ribs, three blood ribbons, and a fine compressed-air core with paired fins. Existing beam age controls their detail; attack timing and damage remain the same.
 - Lingering attraction has inward streams and a faceted dark core that disperses at the burst. Delayed cuts use contracting corner marks followed by crossed blades; the warning leaves the defender's center clear. Existing active ages select these phases.
+- The diving Maximum's landing warning has fixed outer posts, closing inner arrows and a descending center tip. It marks the locked destination through the existing countdown and clears on impact.
 
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
@@ -31,6 +32,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/landing-warning.cjs` checks all 26 landing-warning ages, six countdown stages, fixed outer posts, symmetry, hard alpha, materials, clear upper-body space, 180 fractional/edge crops, snapshots and expiry. Ten real Maximum timelines cover standing, running after lock, guarding, vertical jumping and swapping in both slots, with 60 freeze holds, exact tick-46 impact and identical simulation outcomes. Existing late run/jump contacts and successful swap escape remain unchanged; this is not a balance judgment. An output directory and prefix save phases and actual-input composites. `--baseline --rules-only` checks committed combat behavior; `--baseline --preview-only` exports the prior warning; `--preview-only --timing` samples world-only CPU cost. No human play or browser motion claim.
 
 `node tests/status-effects.cjs` checks 1,828 hard-alpha status frames, four distinct silhouettes/materials, exact facing mirrors, clear Infinity centers, floor bounds, 800 fractional/edge crops, active clocks, snapshots and expiry. Fourteen actual input/contact timelines cover immunity, counter reflection, Infinity cancellation, Black Flash Zone, freeze holds and unchanged outcomes; shock probes check suspended/resumed Maximum reflection. An output directory and optional prefix save phase, actual-input scene and shock-bypass sheets. `--baseline --preview-only` audits HEAD; `--preview-only --timing` samples world-only CPU raster cost. Script/raster evidence is not human play or browser motion.
 

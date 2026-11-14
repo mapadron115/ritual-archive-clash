@@ -333,6 +333,38 @@ function pxCutMark(s,z) {
     }
   }
 }
+function pxLandingWarning(s,z) {
+  if(z.t>=z.dur)return;
+  // Lock the outer width. Only the inner fuse closes; the destination never tracks
+  // the defender after the simulation creates this zone. Age is snapshot-owned.
+  const r=Math.round(z.r/2),ox=r+4,oy=38,cell=new PixelSurface(ox*2+1,51);
+  const age=Math.max(0,z.t||0),u=clamp(age/z.dur,0,1),phase=Math.min(5,Math.floor(u*6));
+  const shade='#945c43',col='#df985f',light='#f0d19b';
+  const line=(a,b,c,w=1)=>cell.line([ox+a[0],oy+a[1]],[ox+b[0],oy+b[1]],c,w);
+  // Broken ground ellipse stays visible beneath boots, with solid landing posts.
+  for(const side of [-1,1]) {
+    const pts=[[side*10,-8],[side*(r-15),-6],[side*r,0],[side*(r-15),6],[side*10,8]];
+    for(const [c,w]of [[PX_INK,4],[shade,2]])for(let n=1;n<pts.length;n++)line(pts[n-1],pts[n],c,w);
+    line([side*(r-14),-5],[side*(r-3),-1],col);
+    line([side*(r-13),5],[side*(r-3),1],light);
+    line([side*r,-5],[side*r,5],PX_INK,5);line([side*r,-4],[side*r,4],col,3);
+    line([side*r,-2],[side*r,2],light);
+    // Paired inward teeth close in six legible steps, separate from the boundary.
+    const a=15+(5-phase)*8;
+    const teeth=[[side*(a+5),-4],[side*a,0],[side*(a+5),4]];
+    for(const [c,w]of [[PX_INK,4],[light,2]])for(let n=1;n<teeth.length;n++)line(teeth[n-1],teeth[n],c,w);
+  }
+  // A descending tip marks the landing center without covering the upper body.
+  const h=-30+phase*4;
+  cell.poly([[ox-5,oy+h],[ox,oy+h+5],[ox+5,oy+h],[ox,oy+h+9]],col,PX_INK);
+  line([-2,h+1],[0,h+3],light);line([-4,0],[4,0],PX_INK,4);line([-3,0],[3,0],light,2);
+  // Reflect the finished left half so polygon scan rounding cannot bias the cue.
+  for(let y=0;y<cell.h;y++)for(let x=0;x<ox;x++) {
+    const p=(y*cell.w+x)*4,q=(y*cell.w+2*ox-x)*4;
+    for(let c=0;c<4;c++)cell.data[q+c]=cell.data[p+c];
+  }
+  s.blit(cell,Math.round(z.x/2)-ox,Math.round(z.y/2)-oy);
+}
 function pxZone(s,S,z) {
   const x=z.x/2,y=z.y/2,t=z.t;
   if(z.k==='blue')pxLingeringZone(s,z,pxAttraction);
@@ -341,7 +373,7 @@ function pxZone(s,S,z) {
   if(z.k==='tongue')pxToad(s,z);
   if(z.k==='mark')pxLingeringZone(s,z,pxCutMark);
   if(z.k==='trap') {s.line([x,306],[x+3,293],PX_INK,3);s.line([x,306],[x+3,293],'#c1c1b0');s.rect(x,291,6,3,'#d8ad78');}
-  if(z.k==='target') {pxRing(s,x,306,z.r/2,8,t%6<3?'#df985f':'#f0d19b',2);s.line([x-6,306],[x+6,306],PX_LIGHT);}
+  if(z.k==='target')pxLandingWarning(s,z);
 }
 // Finite authored cells, mirrored after rasterization. Active clocks and velocity
 // come from the existing snapshot; rendering never adds animation state to it.
