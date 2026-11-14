@@ -365,6 +365,20 @@ function pxFighterShadow(s,f) {
   const scale=f.big>0?1.3:1;
   s.ellipse(Math.round(f.x/2),307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
 }
+// The two opening punches travel straight through the arm lane. Their short
+// tapered wakes end beneath the fist and share the existing three active ticks.
+function pxStraightPunchWake(s,f) {
+  if(f.st!=='atk'||(f.move!=='p1'&&f.move!=='p2'))return;
+  const move=BASIC[f.move];if(f.mt<move.su||f.mt>=move.su+move.ac)return;
+  const age=f.mt-move.su,h=PX_KITS[f.ch].height||1,scale=f.big>0?1.3:1;
+  const cell=new PixelSurface(144,128),x=64,y=120,tail=age*6,cross=f.move==='p2';
+  const poly=(pts,col)=>cell.poly(pts.map(([a,b])=>[x+a,y+(b+(cross?(a-53)*.16:0))*h]),col);
+  poly([[-31+tail,-55],[-7+tail*.4,-69],[36,-76],[54,-70],[58,-63],[52,-54],[24,-46],[-20+tail,-44],[2+tail*.5,-57]],PX_INK);
+  poly([[-25+tail,-55],[-5+tail*.4,-66],[36,-73],[52,-68],[55,-63],[50,-57],[24,-49],[-12+tail,-47],[8+tail*.5,-58]],'#a7aaa5');
+  poly([[-14+tail,-57],[4+tail*.4,-64],[37,-71],[50,-67],[45,-65],[17,-61]],'#f1e5cd');
+  poly([[-6+tail,-49],[25,-51],[48,-58],[51,-61],[46,-56],[24,-48]],'#f1e5cd');
+  s.blit(cell,Math.round(f.x/2)-(f.face<0?79:64)*scale,Math.round(f.y/2)-120*scale,scale,f.face<0);
+}
 // A brief boot wake connects the kick's low load to its high extension. It is
 // tucked behind the body, follows the existing active clock, and adds no FX state.
 function pxKickSweep(s,f) {
@@ -1025,7 +1039,7 @@ function pxWorldSurface(S,F=FX) {
   pxJceRhythm(s,S);
   pxOvationRhythm(s,S);
   pxGumTether(s,S);
-  if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2)){pxKickSweep(s,f);pxHookSweep(s,f);}
+  if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2)){pxStraightPunchWake(s,f);pxKickSweep(s,f);pxHookSweep(s,f);}
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
   for(const p of S.proj)pxProjectile(s,p);
