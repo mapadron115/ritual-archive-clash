@@ -157,6 +157,56 @@ assert.equal(G.stage,'gallery');assert($('stageChoices').children.every(b=>b.dis
 wire.data(hostStart);assert.equal(G.S.stage,'observatory');newRound(G.S);assert.equal(G.S.stage,'observatory');
 wire.data({t:'start',p:[0,1]});assert.equal(G.S.stage,'courtyard','old host message defaults safely');
 wire.data({t:'stage',stage:'missing-stage'});assert.equal(G.stage,'courtyard');
+// Remote selection changes must update the existing controls: replacing the
+// rosters would detach the focused local button in a real browser.
+let remoteSelectionChecks=0;
+for(const mode of ['host','guest']){
+  G.running=false;netWire(conn,mode);wire.open();
+  const own=mode==='host'?0:1,other=1-own;
+  const controls=[$('col0').children.slice(),$('col1').children.slice()];
+  const arenas=$('stageChoices').children.slice();
+  controls[own][7].focus();
+  for(let ch=0;ch<CH.length;ch++){
+    const localPick=G.pick[own],packets=sent.length;
+    wire.data({t:'pick',ch});
+    assert.equal(G.pick[other],ch);assert.equal(G.pick[own],localPick);
+    assert.equal(document.activeElement,controls[own][7]);
+    for(let slot=0;slot<2;slot++){
+      assert.equal($('col'+slot).children[7],controls[slot][7],'remote pick replaced roster control');
+      assert.equal(controls[slot].every(b=>b.disabled),slot===other);
+      assert.equal(controls[slot][G.pick[slot]].attributes['aria-pressed'],'true');
+      assert($('preview'+slot).innerHTML.includes(CH[G.pick[slot]].name));
+      for(const a of [...CH[G.pick[slot]].arts,CH[G.pick[slot]].dom])assert($('detail').innerHTML.includes(a.name));
+    }
+    assert.equal($('stageChoices').children[0],arenas[0]);
+    assert.equal(sent.length,packets,'remote refresh echoed a selection packet');
+    remoteSelectionChecks++;
+  }
+  // The very same local button remains actionable after every opponent pick.
+  controls[own][7].onclick();assert.equal(G.pick[own],7);assert.equal(sent.at(-1).ch,7);
+  if(mode==='guest'){
+    for(const stage of [...PX_STAGES.map(s=>s.id),'missing-stage']){
+      const packets=sent.length;wire.data({t:'stage',stage});
+      assert.equal(G.stage,pxStageId(stage));assert.equal(document.activeElement,controls[own][7]);
+      assert.equal($('col'+own).children[7],controls[own][7],'host stage change replaced local roster');
+      for(let n=0;n<arenas.length;n++){
+        assert.equal($('stageChoices').children[n],arenas[n]);assert.equal(arenas[n].disabled,true);
+        assert.equal(arenas[n].attributes['aria-pressed'],String(PX_STAGES[n].id===G.stage));
+      }
+      assert($('selNote').textContent.includes('host chooses'));assert.equal(sent.length,packets);
+      remoteSelectionChecks++;
+    }
+  }else{
+    arenas[1].focus();wire.data({t:'pick',ch:4});
+    assert.equal(document.activeElement,arenas[1]);assert.equal($('stageChoices').children[1],arenas[1]);
+    arenas[1].onclick();assert.equal(G.stage,'gallery');assert.equal(sent.at(-1).stage,'gallery');
+    remoteSelectionChecks++;
+  }
+  startFight();
+  const inFight=$('preview'+other).innerHTML;wire.data({t:'pick',ch:12});
+  assert.equal($('preview'+other).innerHTML,inFight,'in-fight pick refreshed hidden selection');
+}
+console.log('PASS',remoteSelectionChecks,'remote pick/stage updates retain local roster/arena controls, focus, permissions, previews, lists and outbound actions');
 G.stage='observatory';G.mode='local';startFight();
 // Opening the real move list yields native keyboard navigation and no combat
 // input, including guest held controls. Offline freezes; online keeps its

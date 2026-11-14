@@ -263,9 +263,11 @@ function netWire(conn, mode) {
   NET.conn = conn;
   conn.on('open', () => { G.mode = mode; G.pick = [0, 1]; netSend({ t: 'pick', ch: G.pick[mode === 'guest' ? 1 : 0] }); if(mode==='host')netSend({t:'stage',stage:G.stage});show('select'); buildSelect(); });
   conn.on('data', m => {
-    if (m.t === 'pick') { G.pick[mode === 'guest' ? 0 : 1] = m.ch; if (!G.running) buildSelect(); }
+    // Keep the local player's focused roster/arena button attached while the
+    // other player chooses. The connection already built these controls.
+    if (m.t === 'pick') { G.pick[mode === 'guest' ? 0 : 1] = m.ch; if (!G.running) refreshSelection(); }
     else if (m.t === 'in') { G.remoteIn = m.b & INPUT_MASK; G.remoteTap |= m.b >>> INPUT_SHIFT; }
-    else if (m.t === 'stage' && mode==='guest') { G.stage=pxStageId(m.stage);if(!G.running)buildSelect(); }
+    else if (m.t === 'stage' && mode==='guest') { G.stage=pxStageId(m.stage);if(!G.running)refreshSelection(); }
     else if (m.t === 'start' && mode==='guest') { G.pick = m.p; G.stage=pxStageId(m.stage);startFight(); }
     else if (m.t === 'select') toSelect();
     else if (m.t === 's' && G.mode === 'guest') { G.S = m.s; for (const e of m.e) fxEvent(G.S, e); if (G.S.phase === 'over' && !G.over) endMatch(); if (G.S.phase !== 'over' && G.over) { G.over = false; show('none'); } }
