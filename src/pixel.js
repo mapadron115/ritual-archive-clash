@@ -132,6 +132,9 @@ const PX_POSES = {
   hookw: {h:[-14,-68],s:[-17,-51],hip:[-12,-28],a:[[-16,-35],[-24,-26]],b:[[3,-44],[15,-56]],l:[[13,-13],[29,0]],r:[[-29,-14],[-37,0]]},
   hookload: {h:[-18,-67],s:[-20,-50],hip:[-14,-27],a:[[-23,-33],[-31,-25]],b:[[1,-44],[14,-55]],l:[[13,-12],[28,0]],r:[[-29,-14],[-38,0]]},
   hookre: {h:[9,-78],s:[5,-63],hip:[-2,-35],a:[[25,-61],[28,-74]],b:[[-10,-48],[4,-56]],l:[[20,-18],[29,0]],r:[[-21,-20],[-30,0]]},
+  // Third-punch recovery: carry the rising fist through, lower it, then rebuild a compact guard.
+  hookfollow: {h:[17,-78],s:[13,-62],hip:[3,-34],a:[[33,-69],[39,-96]],b:[[0,-44],[14,-53]],l:[[26,-19],[35,0]],r:[[-18,-20],[-29,0]]},
+  hooksettle: {h:[1,-77],s:[-3,-62],hip:[-5,-34],a:[[22,-49],[17,-68]],b:[[-17,-48],[-1,-59]],l:[[16,-18],[26,0]],r:[[-22,-19],[-30,0]]},
   kickload: {h:[-12,-82],s:[-13,-66],hip:[-5,-38],a:[[5,-52],[17,-65]],b:[[-28,-53],[-29,-66]],l:[[23,-51],[19,-30]],r:[[-12,-19],[-16,0]]},
   kickre: {h:[-14,-81],s:[-15,-65],hip:[-4,-37],a:[[4,-52],[17,-63]],b:[[-30,-52],[-27,-66]],l:[[23,-38],[34,-25]],r:[[-13,-19],[-18,0]]},
   kickplant: {h:[-4,-79],s:[-5,-63],hip:[-3,-35],a:[[13,-48],[23,-61]],b:[[-21,-49],[-18,-61]],l:[[19,-20],[26,-2]],r:[[-18,-19],[-25,0]]},
@@ -447,6 +450,8 @@ function pxPose(S,f) {
     // Arts fire at startup; only basics have a separate active window. Never imply idle during recovery.
     const contact=m.ac || Math.min(3,Math.ceil(m.re/3)),elapsed=f.mt-m.su;
     if(elapsed<contact)return pose in PX_POSES?pose:'cast1';
+    // Only the third basic punch gets this three-part return; hook-shaped arts retain their sequence.
+    if(f.move==='p3')return elapsed<contact+4?'hookfollow':elapsed<contact+9?'hookre':'hooksettle';
     const settle=m.ac ? m.ac+Math.ceil(m.re/2) : Math.ceil(m.re*.65);
     return sequence[elapsed<settle?2:3];
   }
