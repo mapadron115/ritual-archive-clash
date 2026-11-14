@@ -25,8 +25,9 @@ function readRemote() { const b = G.remoteIn | (G.remoteTap << INPUT_SHIFT); G.r
 addEventListener('keydown', e => {
   if (e.code === 'Escape' && G.running) { if (!e.repeat) togglePause(); return; }
   if (e.code === 'KeyM') { if (!e.repeat) setMute(!AUDIO.mute); return; }
-  // Let native Tab/Enter/Space reach the result buttons after the fight ends.
-  if (G.over) return;
+  // Native menu navigation/scrolling must not become held combat input.
+  // Online matches keep advancing while this player's move list is open.
+  if (G.over || G.paused) return;
   if (!e.repeat && !G.keys[e.code] && G.running && !G.paused) G.taps[e.code] = true;
   G.keys[e.code] = true; if (G.running && !e.ctrlKey && !e.metaKey && e.code !== 'F5' && e.code !== 'F12') e.preventDefault();
   initAudio();
@@ -236,7 +237,13 @@ function togglePause() {
   if (G.over) return;
   G.paused = !G.paused;
   clearInput();
-  if (G.paused) { const lab = labels(); $('pauseList').innerHTML = (G.mode === 'local' ? '' : basics(BIND.solo.lab)) + moveList(G.S.f[0].ch, lab[0]) + moveList(G.S.f[1].ch, lab[1]) + (G.mode === 'local' ? '<b>Player 1</b>' + basics(BIND.p1.lab) + '<b>Player 2</b>' + basics(BIND.p2.lab) : ''); show('pause'); }
+  if (G.paused) {
+    const lab = labels(),online=G.mode==='host'||G.mode==='guest';
+    $('pauseTitle').textContent=online?'Move list':'Paused: move list';
+    $('pauseNote').textContent=online?'Online match continues. Your fighter receives no controls while this list is open.':'Match paused. Take your time with the move list.';
+    $('pauseList').innerHTML = (G.mode === 'local' ? '' : basics(BIND.solo.lab)) + moveList(G.S.f[0].ch, lab[0]) + moveList(G.S.f[1].ch, lab[1]) + (G.mode === 'local' ? '<b>Player 1</b>' + basics(BIND.p1.lab) + '<b>Player 2</b>' + basics(BIND.p2.lab) : '');
+    show('pause');$('resumeBtn').focus();
+  }
   else show('none');
 }
 function toMenu(fromNet) { G.running = false; G.paused = false; clearInput(); if (!fromNet && (G.mode === 'host' || G.mode === 'guest')) netClose(); show('title'); }

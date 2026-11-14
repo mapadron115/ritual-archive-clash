@@ -33,6 +33,7 @@
   #title .titleHint { margin-top: .7em; font-size: .75em; }
   .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   #select, #online { background: rgba(27, 20, 36, .82); } #select, #pause { justify-content: flex-start; }
+  #pause .row { flex-wrap: wrap; justify-content: center; flex-shrink: 0; }
   #over h1 { font-size: clamp(18px, 3.5vw, 42px); max-width: 100%; overflow-wrap: anywhere; text-align: center; }
   #over p { max-width: 42em; text-align: center; line-height: 1.4; }
   #overScore { color: #ecd3a0; font-weight: 700; }
@@ -176,10 +177,12 @@
     <button class="small" onclick="netClose();show('title')">Back</button>
   </div>
 
-  <div class="screen" id="pause">
-    <h2>Paused: move list</h2>
+  <div class="screen" id="pause" role="region" aria-labelledby="pauseTitle" aria-describedby="pauseNote">
+    <h2 id="pauseTitle">Paused: move list</h2>
+    <p id="pauseNote"></p>
+    <div class="row"><button id="resumeBtn" class="small go" onclick="togglePause()">Resume (Esc)</button><button class="small" onclick="toSelect()">Change fighters</button><button class="small" onclick="toMenu()">Main menu</button></div>
+    <p>Tab chooses a button. Enter or Space activates it. Arrow keys scroll the list.</p>
     <div class="panel" id="pauseList"></div>
-    <div class="row"><button class="small go" onclick="togglePause()">Resume (Esc)</button><button class="small" onclick="toSelect()">Change fighters</button><button class="small" onclick="toMenu()">Main menu</button></div>
   </div>
 
   <div class="screen" id="over" style="background:rgba(7,6,12,.82)" role="region" aria-labelledby="overTitle">
@@ -191,16 +194,16 @@
     <div class="row" id="overBtns"><button id="rematchBtn" class="small go" onclick="rematch()">Rematch</button><button class="small" onclick="toSelect()">Change fighters</button><button class="small" onclick="toMenu()">Main menu</button></div>
   </div>
 </div></div>
-<script src="src/sim.js?v=66"></script>
-<script src="src/fighters.js?v=66"></script>
-<script src="src/fighters2.js?v=66"></script>
-<script src="src/pixel.js?v=66"></script>
-<script src="src/pixel-stage.js?v=66"></script>
-<script src="src/pixel-domain.js?v=66"></script>
-<script src="src/pixel-world.js?v=66"></script>
-<script src="src/pixel-hud.js?v=66"></script>
-<script src="src/ai.js?v=66"></script>
-<script src="src/render.js?v=66"></script>
-<script src="src/main.js?v=66"></script>
+<script src="src/sim.js?v=67"></script>
+<script src="src/fighters.js?v=67"></script>
+<script src="src/fighters2.js?v=67"></script>
+<script src="src/pixel.js?v=67"></script>
+<script src="src/pixel-stage.js?v=67"></script>
+<script src="src/pixel-domain.js?v=67"></script>
+<script src="src/pixel-world.js?v=67"></script>
+<script src="src/pixel-hud.js?v=67"></script>
+<script src="src/ai.js?v=67"></script>
+<script src="src/render.js?v=67"></script>
+<script src="src/main.js?v=67"></script>
 </body>
 </html>

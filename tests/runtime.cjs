@@ -31,6 +31,7 @@ const context=vm.createContext({console,assert,document,window:{},setTimeout(fn,
 context.timeouts=timeouts;
 context.events=events;
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
 assert.equal(scripts.length,11);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
@@ -157,6 +158,60 @@ wire.data(hostStart);assert.equal(G.S.stage,'observatory');newRound(G.S);assert.
 wire.data({t:'start',p:[0,1]});assert.equal(G.S.stage,'courtyard','old host message defaults safely');
 wire.data({t:'stage',stage:'missing-stage'});assert.equal(G.stage,'courtyard');
 G.stage='observatory';G.mode='local';startFight();
+// Opening the real move list yields native keyboard navigation and no combat
+// input, including guest held controls. Offline freezes; online keeps its
+// existing advancement/snapshot rules. This shell does not emulate a browser's
+// default Tab, scroll or button activation: those need native-browser review.
+let pauseChecks=0;
+for(const mode of ['ai','local','watch','host','guest']){
+  G.mode=mode;startFight();G.S.phase='fight';G.S.hitstop=0;G.last=500;G.acc=0;
+  G.keys.KeyJ=true;G.taps.KeyJ=true;
+  events.keydown(key('Escape'));
+  assert.equal(G.paused,true);assert.equal($('pause').style.display,'flex');
+  assert.equal(document.activeElement,$('resumeBtn'));
+  const online=mode==='host'||mode==='guest';
+  assert.equal($('pauseTitle').textContent,online?'Move list':'Paused: move list');
+  assert($('pauseNote').textContent.includes(online?'Online match continues':'Match paused'));
+  for(const code of ['Tab','Enter','Space','ArrowDown','ArrowUp','PageDown','PageUp','Home','End','KeyJ','KeyK','KeyW','KeyS','KeyU','KeyI','KeyO','KeyL','Comma','Period','Slash']){
+    for(const repeat of [false,true]){
+      let prevented=false;events.keydown({code,repeat,preventDefault(){prevented=true;}});
+      assert.equal(prevented,false,'move-list key swallowed: '+mode+'/'+code);
+      assert.equal(readKeys(BIND.solo),0,'paused solo control leaked');
+      assert.equal(readKeys(BIND.p1),0,'paused P1 control leaked');
+      assert.equal(readKeys(BIND.p2),0,'paused P2 control leaked');pauseChecks++;
+    }
+  }
+  events.keydown({...key('Escape'),repeat:true});assert.equal(G.paused,true,'held Escape closed list');
+  const mute=AUDIO.mute;events.keydown(key('KeyM'));assert.equal(AUDIO.mute,!mute);
+  events.keydown({...key('KeyM'),repeat:true});assert.equal(AUDIO.mute,!mute);setMute(mute);
+  const before=JSON.stringify(G.S),sentAt=sent.length;
+  if(mode==='guest')G.lastSent=BTN.P;
+  if(mode==='host')G.remoteIn=BTN.R;
+  frame(517);
+  if(!online)assert.equal(JSON.stringify(G.S),before,'offline pause advanced');
+  else if(mode==='guest'){
+    assert.equal(JSON.stringify(G.S),before,'guest locally simulated');
+    assert(sent.slice(sentAt).some(m=>m.t==='in'&&m.b===0),'guest did not send neutral controls');
+    const snap=JSON.parse(before);snap.t+=2;wire.data({t:'s',s:snap,e:[]});assert.equal(G.S,snap,'paused guest lost live snapshots');
+  }else{
+    const expected=JSON.parse(before);step(expected,[0,BTN.R]);expected.ev=[];
+    assert.equal(JSON.stringify(G.S),JSON.stringify(expected),'paused host changed existing neutral-local/remote-input behavior');
+  }
+  events.keydown(key('Escape'));assert.equal(G.paused,false);assert.equal($('pause').style.display,'none');
+  assert.equal(readKeys(BIND.solo),0,'menu input survived resume');assert.equal(readKeys(BIND.p2),0);
+  events.keydown(key(mode==='local'?'KeyF':'KeyJ'));
+  assert.equal(readKeys(mode==='local'?BIND.p1:BIND.solo),BTN.P|(BTN.P<<INPUT_SHIFT),'fresh press after resume lost');
+  events.keyup(key(mode==='local'?'KeyF':'KeyJ'));clearInput();
+}
+assert(html.includes('id="resumeBtn"')&&html.includes('aria-labelledby="pauseTitle"'));
+const pauseHTML=html.slice(html.indexOf('id="pause"'),html.indexOf('id="over"'));
+assert(pauseHTML.indexOf('id="resumeBtn"')<pauseHTML.indexOf('id="pauseList"'),'pause actions must precede long move lists');
+for(const action of ['togglePause()','toSelect()','toMenu()']){
+  G.mode='local';startFight();togglePause();assert(pauseHTML.includes('onclick="'+action+'"'));eval(action);
+  assert.equal(G.paused,false);assert.equal($('pause').style.display,'none');
+  assert.equal($('stage').attributes['data-screen'],action==='togglePause()'?'none':action==='toSelect()'?'select':'title');
+}
+console.log('PASS',pauseChecks,'move-list key events in five modes, Resume focus, all three HTML actions, neutral guest controls, existing host/guest continuation, offline freeze and fresh resume input');
 // End-screen role, score, focus, navigation and guest snapshot handoff.
 for(const mode of ['ai','local','watch','host','guest'])for(const winner of [0,1]){
   G.mode=mode;startFight();G.S.phase='fight';G.S.wins[winner]=1;G.S.f[1-winner].hp=1;G.S.timer=1;
