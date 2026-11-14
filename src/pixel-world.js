@@ -886,6 +886,30 @@ function pxProjectile(s,p) {
   else if(p.k==='shell') {poly([[-13,-6],[6,-6],[14,0],[6,6],[-13,6]],'#566978');s.rect(x-7,y-4,5,8,col);s.rect(x-20*f,y-2,6,4,'#d39060');}
   else {poly([[-r*2.7,0],[-r,-r*.8],[r*.7,-r*.8],[r,0],[r*.7,r*.8],[-r,r*.8]]);s.ellipse(x,y,r,r,col);s.ellipse(x-r*.2,y-r*.2,r*.55,r*.55,PX_LIGHT);if(p.spin)pxRing(s,x,y,r+4,r+4,col,2,Math.floor(p.t/3));}
 }
+// Attached gum follows the two current roots, not an event or global clock.
+// Draw behind the sprites so a strand cannot cut across a face or action pose.
+function pxGumTether(s,S) {
+  for(const f of S.f)if(f.gum>0) {
+    const o=S.f[1-f.i],distance=Math.abs(f.x-o.x)/2;
+    const inset=Math.min(16,Math.floor(distance/4)),pull=o.sling>0;
+    const a=[Math.round(o.x/2),Math.round(o.y/2)-40];
+    const b=[Math.round(f.x/2),Math.round(f.y/2)-40];
+    // A slack bow straightens during the existing Slingshot. This describes
+    // elastic material, not a range boundary or a new tension mechanic.
+    const sag=pull?2:Math.max(5,Math.round(29-distance*.055));
+    const at=t=>[Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t+4*t*(1-t)*sag)];
+    const points=Array.from({length:9},(_,n)=>at(n/8));
+    for(const [width,col,dy] of [[8,PX_INK,0],[6,'#87466f',0],[4,pull?'#ffd4e9':'#dc8fb8',-1],[1,'#fff0ed',-2]])
+      for(let n=1;n<points.length;n++)s.line([points[n-1][0],points[n-1][1]+dy],[points[n][0],points[n][1]+dy],col,width);
+    // Broad folded ends share the projectile's rose material and navy edge.
+    for(const [x,y] of [at(inset/Math.max(1,distance)),at(1-inset/Math.max(1,distance))]) {
+      s.poly([[x-7,y-4],[x-2,y-8],[x+5,y-6],[x+7,y+2],[x+2,y+7],[x-5,y+5]],'#87466f',PX_INK);
+      s.poly([[x-5,y-3],[x-1,y-6],[x+3,y-4],[x+5,y+1],[x+1,y+5],[x-3,y+3]],'#dc8fb8');
+      s.line([x-3,y-3],[x+1,y-4],'#fff0ed',2);
+      s.line([x-1,y+2],[x+3,y],'#87466f',2);
+    }
+  }
+}
 function pxWorldSurface(S,F=FX) {
   const s=new PixelSurface(640,360);s.data.set(pxBackdrop(Math.floor(S.t/8),S.stage).data);
   pxDomain(s,S);
@@ -900,8 +924,8 @@ function pxWorldSurface(S,F=FX) {
   pxShrineRhythm(s,S);
   pxJceRhythm(s,S);
   pxOvationRhythm(s,S);
+  pxGumTether(s,S);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
-  for(const f of S.f)if(f.gum>0){const o=S.f[1-f.i];s.line([o.x/2,o.y/2-40],[(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],'#d78bb7',2);s.line([(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],[f.x/2,f.y/2-40],'#d78bb7',2);}
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
   for(const p of S.proj)pxProjectile(s,p);
   for(const l of F.lines||[]) {s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],PX_INK,Math.max(3,l.w/2+2));s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],l.col,Math.max(1,l.w/2));}
