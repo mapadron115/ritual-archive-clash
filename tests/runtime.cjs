@@ -32,8 +32,42 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
 assert.equal(scripts.length,11);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
+// Execute the four actual HTML button routes, rather than a duplicate menu mapping.
+const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
+const modeActions=[...titleHTML.matchAll(/<button[^>]*onclick="([^"]+)"/g)].map(m=>m[1]);
+assert.equal(modeActions.length,4);
+context.modeActions=modeActions;
 vm.runInContext(`
 assert.equal($('title').style.display,'flex');
+assert.equal($('stage').attributes['data-screen'],'title');
+const logo=$('titleLogo').children[0];assert.equal(logo.width,216);assert.equal(logo.height,76);
+const logoPixels=logo.pixels(),logoColors=new Set();let ink=0;
+for(let p=0;p<logoPixels.length;p+=4) {
+  assert(logoPixels[p+3]===0||logoPixels[p+3]===255,'soft logo alpha');
+  if(logoPixels[p+3]){ink++;logoColors.add(Array.from(logoPixels.slice(p,p+3)).join(','));}
+}
+assert(ink>4000);assert(logoColors.size<=6);
+globalThis.titleLogo={w:logo.width,h:logo.height,data:new Uint8ClampedArray(logoPixels)};
+// The attract match advances while the title stays open; its labels name the actual actors/stage.
+frame(17);assert(G.demo.t>0);assert.equal(G.running,false);
+assert.equal($('attractNames').textContent,G.demo.f.map(f=>CH[f.ch].name).join(' vs '));
+assert.equal($('attractStage').textContent,'Archive Courtyard');
+const firstDemo=G.demo;G.stage='gallery';frame(34);
+assert.equal(G.demo,firstDemo);assert.equal($('attractStage').textContent,'Rainlit Gallery');
+assert.equal($('title').style.display,'flex');assert.equal(FX.silent,false);
+// New exhibitions refresh both names, even when the old one ended behind another menu.
+G.demo.phase='over';frame(51);assert.notEqual(G.demo,firstDemo);
+assert.notEqual(G.demo.f[0].ch,G.demo.f[1].ch);
+assert.equal($('attractNames').textContent,G.demo.f.map(f=>CH[f.ch].name).join(' vs '));
+globalThis.attractFrame={w:cv.width,h:cv.height,data:new Uint8ClampedArray(cv.pixels())};
+for(let i=0;i<modeActions.length;i++) {
+  eval(modeActions[i]);
+  assert.equal($('stage').attributes['data-screen'],i===2?'online':'select');
+  assert.equal($(i===2?'online':'select').style.display,'flex');
+  if(i!==2)assert.equal(G.mode,['ai','local',null,'watch'][i]);
+  toMenu();assert.equal($('stage').attributes['data-screen'],'title');assert.equal(G.running,false);
+}
+console.log('PASS actual four title routes, hard-alpha bitmap mark, advancing silent attract match, live actor/stage labels and title returns');
 pickMode('ai');assert.equal($('col0').children.length,15);assert.equal($('col1').children.length,15);
 assert.equal($('stageChoices').children.length,3);
 $('stageChoices').children[1].onclick();assert.equal(G.stage,'gallery');assert.equal($('stageChoices').children[1].attributes['aria-pressed'],'true');
@@ -80,7 +114,7 @@ for(const [from,code,to] of [[0,'ArrowLeft',14],[0,'ArrowUp',12],[14,'ArrowRight
 choices[14].focus();choices[14].onclick();assert.equal(document.activeElement,choices[14]);assert.equal(G.pick[0],14);
 // Both selected costumes, for every build: compare actual menu canvases to their source pixels.
 globalThis.selectionAssets=new PixelSurface(1280,1040);selectionAssets.rect(0,0,1280,1040,PX_INK);
-pxText(selectionAssets,'V34 / ACTUAL MENU CANVASES / MAIN RIGHT + MIRROR LEFT',16,12,PX_LIGHT,2);
+pxText(selectionAssets,'V35 / ACTUAL MENU CANVASES / MAIN RIGHT + MIRROR LEFT',16,12,PX_LIGHT,2);
 for(let ch=0;ch<CH.length;ch++) {
   G.pick=[ch,ch];refreshSelection();
   const x=(ch%5)*256,y=42+Math.floor(ch/5)*324;
@@ -96,13 +130,14 @@ for(let ch=0;ch<CH.length;ch++) {
 console.log('PASS',selected,'fighter selections across five modes; full move lists, permissions, stable focus, six grid-navigation boundaries and 30 exact costume previews');
 G.pick=[0,1];G.stage='gallery';G.mode='ai';buildSelect();
 startFight();
+assert.equal($('stage').attributes['data-screen'],'none','fight canvas must return to its native aspect');
 for(const f of G.S.f){assert(PX_DOMAIN_BACKDROPS.has(CH[f.ch].dom.kind),'selected Domain was not prewarmed');assert.equal(f.domUsed,0);}
 assert.equal(G.S.dom,null);
 for(let n=0;n<101;n++){step(G.S,[0,0]);G.S.ev.length=0;}
 assert.equal(G.S.stage,'gallery');
-frame(17);frame(34);
+frame(68);frame(85);
 const key=code=>({code,repeat:false,preventDefault(){}});
-events.keydown(key('KeyJ'));events.keyup(key('KeyJ'));frame(51);
+events.keydown(key('KeyJ'));events.keyup(key('KeyJ'));frame(102);
 assert.equal(G.S.f[0].move,'p1');
 togglePause();assert.equal($('pause').style.display,'flex');togglePause();
 FX.rings.push({x:10,y:10,r:20,vr:2,t:0,life:20,col:'#fff'});FX.contacts.push({x:10,y:10,dir:1,kind:'hit',t:0,life:14});groundDust({k:'thud',x:600});FX.shake=12;startFight();assert.equal(G.S.stage,'gallery');
@@ -120,9 +155,13 @@ wire.data({t:'start',p:[0,1]});assert.equal(G.S.stage,'courtyard','old host mess
 wire.data({t:'stage',stage:'missing-stage'});assert.equal(G.stage,'courtyard');
 G.stage='observatory';G.mode='local';startFight();
 G.S.phase='fight';G.S.t=130;G.S.f[0].ch=0;G.S.f[1].ch=14;G.S.f[0].x=400;G.S.f[1].x=880;
-frame(68);assert.equal(G.S.f[0].hp,1000);
+frame(119);assert.equal(G.S.f[0].hp,1000);
 console.log('PASS real script order, title, fighter/stage selection, start, input-to-frame, pause/resume, rematch, host/guest stage messages and composite canvas presentation');
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
-if(process.argv[2])writePNG(path.join(process.argv[2],'v34-selection-assets.png'),context.selectionAssets);
+if(process.argv[2]) {
+  writePNG(path.join(process.argv[2],'v35-selection-assets.png'),context.selectionAssets);
+  writePNG(path.join(process.argv[2],'v35-title-mark.png'),context.titleLogo);
+  writePNG(path.join(process.argv[2],'v35-attract-frame.png'),context.attractFrame);
+}

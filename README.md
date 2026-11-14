@@ -8,8 +8,10 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 ## Modes
 - 1 Player vs Computer, 2 Players on one keyboard, Watch (computer vs computer)
 - Online: one player hosts and gets a 4-letter room code, the other joins with it. The host's game runs the fight.
+- The title keeps a silent computer exhibition running behind the bitmap wordmark and four described mode choices. Its label identifies the current fighters and arena. Tab browses the buttons; Enter or Space chooses a mode.
 - Choose Archive Courtyard, Rainlit Gallery or Dawn Observatory on the fighter selection screen. Online, the host chooses; rounds and rematches keep that stage. Stages have the same fighting bounds and no hazards.
 - Fighter selection shows portraits and two full-body previews, including the second costume in mirror matches. Use Tab to reach a choice, arrow keys to browse its roster, then Enter or Space to select. The Fight button stays below the scrolling choices; full move lists and rules expand beneath the arena choices. Quick controls follow the selected mode.
+- Technique labels use the full card width, wrap at spaces and start below a consistent name/portrait row. On narrow screens, title and selection use the viewport height; fights keep their 16:9 canvas. This remains a keyboard game.
 
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
@@ -23,7 +25,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Script checks
 
-`node tests/runtime.cjs` checks the real script order and menu-to-match flow, including 150 fighter selections across all five modes, full move lists, host/guest restrictions, stable keyboard focus, arrow/Home/End navigation and 30 exact main/mirror preview canvases. An optional output directory saves `v34-selection-assets.png` and a gameplay frame. These verify canvas contents and scripted behavior, not browser CSS layout or human play.
+`node tests/runtime.cjs` checks the real script order, all four HTML mode routes, title returns, advancing attract match and its fighter/stage labels, then the menu-to-match flow: 150 fighter selections across all five modes, full move lists, host/guest restrictions, stable keyboard focus, arrow/Home/End navigation and 30 exact main/mirror preview canvases. An optional output directory saves `v35-title-mark.png`, `v35-attract-frame.png`, `v35-selection-assets.png` and a gameplay frame. These verify canvas contents and scripted behavior, not browser CSS layout or human play. The isolated input/HUD suites omit the DOM boot, which this integration suite executes in full.
 
 `node tests/jab-animation.cjs` checks actual first-punch whiffs/hits/blocks in both slots/facings, distinct withdraw/fold/guard silhouettes, fixed grounded return soles, all eight recovery ticks and immediate second-press chaining from each tick, freezes, hit/KO interruptions, snapshots and unchanged outcomes. Add an output directory for labeled phase, silhouette and actual-input scene previews.
 

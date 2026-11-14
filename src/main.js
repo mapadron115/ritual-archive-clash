@@ -116,7 +116,24 @@ function sfx(e) {
 }
 
 // ---------- menus
-function show(id) { for (const s of document.querySelectorAll('.screen')) s.style.display = s.id === id ? 'flex' : 'none'; }
+function show(id) {
+  for (const s of document.querySelectorAll('.screen')) s.style.display = s.id === id ? 'flex' : 'none';
+  $('stage').setAttribute('data-screen',id);
+}
+function titleMark() {
+  const s=new PixelSurface(216,76);
+  s.rect(0,0,4,14,'#a7c8da');s.rect(8,0,4,14,'#536577');
+  pxText(s,'RITUAL ARCHIVE',20,0,'#d4dee7',2);
+  pxText(s,'CLASH',4,26,'#070f1c',7);
+  pxText(s,'CLASH',0,22,'#f1e5cd',7);
+  s.rect(0,73,200,2,'#a7c8da');s.rect(202,73,14,2,'#d5a567');
+  return s;
+}
+function refreshAttractLabel() {
+  const pair=G.demo.f.map(f=>CH[f.ch].name).join(' vs '),stage=PX_STAGES.find(s=>s.id===G.demo.stage).name;
+  if($('attractNames').textContent!==pair)$('attractNames').textContent=pair;
+  if($('attractStage').textContent!==stage)$('attractStage').textContent=stage;
+}
 function moveList(ch, lab) {
   const c = CH[ch], k = n => lab ? `<kbd>${lab[n]}</kbd>` : '';
   let h = `<h3 style="color:${c.look.accent}">${c.tech} <span>${c.name} · ${c.tag}${c.ip ? ' · from ' + c.ip : ''}</span></h3>${c.passive ? '<p>' + c.passive + '.</p>' : ''}<table>`;
@@ -281,7 +298,7 @@ function frame(now) {
   if (!FX.lite && document.visibilityState === 'visible') { if (dt > 22 && dt < 70) { if (++G.slow > 180) FX.lite = true; } else if (dt <= 18) G.slow = Math.max(0, (G.slow || 0) - 2); }
   if (!G.running || !G.S) {   // a computer match plays behind the menus
     if (!G.demo || G.demo.phase === 'over') { const a = Math.random() * CH.length | 0; G.demo = newMatch(a, (a + 1 + (Math.random() * (CH.length - 1) | 0)) % CH.length, (Math.random() * 1e9) | 0); AI_MEM[0] = {}; AI_MEM[1] = {}; }
-    G.demo.stage=G.stage;FX.silent = true; G.acc += dt; let n = 0;
+    G.demo.stage=G.stage;refreshAttractLabel();FX.silent = true; G.acc += dt; let n = 0;
     while (G.acc >= 1000 / TPS && n++ < 3) { G.acc -= 1000 / TPS; step(G.demo, [aiInput(G.demo, 0), aiInput(G.demo, 1)]); for (const e of G.demo.ev) fxEvent(G.demo, e); G.demo.ev.length = 0; fxTick(); }
     if (n > 3) G.acc = 0;
     FX.banner = null; drawWorld(ctx, G.demo); FX.silent = false;
@@ -307,4 +324,6 @@ function frame(now) {
   drawWorld(ctx, G.S); drawHUD(ctx, G.S, labels());
 }
 function rematch() { startFight(); }
+// ---------- boot
+$('titleLogo').appendChild(menuCanvas(titleMark()));
 show('title'); requestAnimationFrame(frame);

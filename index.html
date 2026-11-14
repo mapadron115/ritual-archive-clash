@@ -11,7 +11,28 @@
   canvas { image-rendering: pixelated; width: 100%; height: 100%; display: block; background: #111; }
   .screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.2vh; background: rgba(7, 6, 12, .9); padding: 2vh 3vw; box-sizing: border-box; overflow: auto; font-size: clamp(11px, 1.25vw, 16px); }
   h1 { font: 900 3.1em Consolas, "Courier New", monospace; margin: 0; letter-spacing: .01em; -webkit-text-stroke: .09em #1b1424; paint-order: stroke fill; text-shadow: 4px 4px 0 #111623; transform: none; }
-  #title { background: rgba(27, 20, 36, .45); } #title p { color: #fff; font-weight: 700; text-shadow: 0 2px 0 #1b1424; }
+  #title { background: transparent; justify-content: space-between; align-items: stretch; padding: 3%; gap: 1em; }
+  .titleHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 2em; }
+  .titleBrand { padding: .8em 1em; background: #101927ed; border-left: 4px solid #ecd3a0; }
+  .titleBrand h1 { font-size: 1em; line-height: 0; }
+  #titleLogo canvas { width: 22em; height: auto; max-width: 100%; background: transparent; }
+  #title p { color: #d4dee7; font-weight: 400; line-height: 1.5; }
+  .titleBrand p { margin-top: .65em; font-size: .8em; }
+  .titleActions { margin-top: auto; }
+  .titleModes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .65em; padding: .8em; background: #101927f5; border: 2px solid #536577; }
+  .titleModes h2 { grid-column: 1 / -1; color: #ecd3a0; margin: 0; }
+  #title .modeChoice { width: 100%; min-width: 0; display: grid; grid-template-columns: 2em 1fr; column-gap: .6em; text-align: left; margin-top: .5em; padding: .65em; border: 2px solid #536577; box-shadow: none; background: #202e42; }
+  #title .modeChoice:hover { background: #34495f; border-color: #a7c8da; }
+  #title .modeChoice.go { background: #793b37; border-color: #d98d70; }
+  #title .modeChoice.go:hover { background: #98483e; }
+  .modeChoice .modeNumber { grid-row: 1 / 3; align-self: center; color: #ecd3a0; font-size: 1.2em; }
+  .modeChoice b { color: #f1e5cd; font-size: 1em; }
+  .modeChoice small { margin-top: .25em; color: #c1cbd7; font-size: .8em; font-weight: 400; line-height: 1.4; }
+  .attractLabel { max-width: 40%; background: #101927ed; border-left: 3px solid #a7c8da; padding: .65em 1em; }
+  .attractLabel strong { color: #a7c8da; font-size: .75em; letter-spacing: .08em; }
+  #title .attractLabel p { font-size: .8em; }
+  #title .titleHint { padding: .6em; background: #101927ed; font-size: .75em; text-align: right; }
+  .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   #select, #online { background: rgba(27, 20, 36, .82); } #select, #pause { justify-content: flex-start; }
   h1 span { color: #ffe36b; }
   h2 { margin: 0 0 .4em; font-size: 1.1em; text-transform: uppercase; letter-spacing: .1em; color: #bbb; }
@@ -55,10 +76,10 @@
   .selectedFighter strong { display: block; font-size: .85em; color: #ecd3a0; margin-bottom: .4em; }
   #select .col { gap: .4em; align-content: start; min-width: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   #select .col h2 { margin: .2em 0; color: #a7c8da; }
-  #select .fighter { width: 100%; padding: .35em; display: grid; grid-template-columns: 36px 1fr; align-items: center; gap: .4em; border-width: 2px; box-shadow: none; font-size: .85em; min-height: 4.1em; background: #202e42; }
-  #select .fighter canvas { width: 36px; height: 36px; grid-row: 1 / 3; }
-  #select .fighter b { grid-column: 2; font-size: 1em; color: #e2e9ee; line-height: 1.15; overflow-wrap: anywhere; }
-  #select .fighter span { grid-column: 2; min-width: 0; overflow-wrap: anywhere; font-size: .9em; color: var(--ac); line-height: 1.15; }
+  #select .fighter { width: 100%; padding: .35em; display: grid; grid-template-columns: 36px minmax(0, 1fr); grid-template-rows: max(36px, 2.3em) auto; align-items: start; gap: .35em .4em; border-width: 2px; box-shadow: none; font-size: .85em; background: #202e42; }
+  #select .fighter canvas { width: 36px; height: 36px; grid-column: 1; grid-row: 1; }
+  #select .fighter b { grid-column: 2; grid-row: 1; min-height: 2.3em; align-self: center; font-size: 1em; color: #e2e9ee; line-height: 1.15; overflow-wrap: anywhere; }
+  #select .fighter span { grid-column: 1 / -1; grid-row: 2; min-width: 0; min-height: 2.3em; overflow-wrap: normal; word-break: normal; hyphens: none; font-size: .9em; color: var(--ac); line-height: 1.15; }
   #select .fighter.on { background: #34495f; border-color: var(--ac); box-shadow: inset 0 -3px var(--ac); }
   #select .fighter:hover:not(:disabled) { background: #34495f; }
   #select .fighter:disabled { opacity: 1; }
@@ -79,21 +100,30 @@
   #select .selectFooter button { min-width: 8em; padding: .6em 1em; }
   #select .selectFooter .go { min-width: 14em; background: #bd453f; }
   @media (max-width: 900px) {
-    #select .fighter { grid-template-columns: 24px 1fr; }
+    #select .fighter { grid-template-columns: 24px 1fr; grid-template-rows: max(24px, 2.3em) auto; }
     #select .fighter canvas { width: 24px; height: 24px; }
     #select .stageChoice canvas { width: 56px; height: 32px; }
     #select .stageChoice span { display: none; }
   }
   @media (max-width: 640px) {
+    /* Menus can use portrait height without stretching the 16:9 fight canvas. */
+    #stage[data-screen="title"], #stage[data-screen="select"] { width: 100%; height: 100%; aspect-ratio: auto; }
+    #stage[data-screen="title"] > #cv, #stage[data-screen="select"] > #cv { position: absolute; top: 50%; height: auto; aspect-ratio: 16 / 9; transform: translateY(-50%); }
+    #title { padding: 1.2em; }
+    .titleHeader { display: block; }
+    .titleBrand { margin-bottom: 1.2em; }
+    #titleLogo canvas { width: 20em; }
+    .titleModes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .attractLabel { max-width: none; }
+    #title .titleHint { text-align: left; }
+    #select { font-size: 11px; }
     .roster { grid-template-columns: 1fr; }
     .selectedFighter { display: none; }
-    .matchup { gap: .8em; }
-    #select .fighter { grid-template-columns: 1fr; min-height: 5em; }
-    #select .fighter canvas { display: none; }
-    #select .fighter b, #select .fighter span { grid-column: 1; }
+    .matchup { grid-template-columns: 1fr; gap: .8em; }
     .selectHeading span { display: none; }
     #select .stageChoice { flex-direction: column; text-align: center; }
     #select .selectFooter .go { min-width: 9em; }
+    #select .selectFooter p { font-size: .85em; }
   }
 </style>
 </head>
@@ -101,13 +131,24 @@
 <div id="wrap"><div id="stage">
   <canvas id="cv" width="1280" height="720"></canvas>
 
-  <div class="screen" id="title">
-    <h1>RITUAL ARCHIVE: <span>CLASH</span></h1>
-    <p>Fifteen original fighters. Three pixel arenas. Techniques from the Ritual Archive.</p><br>
-    <button class="go" onclick="pickMode('ai')">1 Player vs Computer</button>
-    <button onclick="pickMode('local')">2 Players, one keyboard</button>
-    <button onclick="show('online')">Online: play a friend</button>
-    <button onclick="pickMode('watch')">Watch: computer vs computer</button>
+  <div class="screen" id="title" aria-labelledby="gameTitle">
+    <div class="titleHeader">
+      <div class="titleBrand">
+        <h1 id="gameTitle"><span class="srOnly">Ritual Archive: Clash</span><span id="titleLogo" aria-hidden="true"></span></h1>
+        <p>15 original fighters / 3 pixel arenas<br>Techniques from the Ritual Archive</p>
+      </div>
+      <div class="attractLabel"><strong>EXHIBITION / SILENT</strong><p id="attractNames"></p><p id="attractStage"></p></div>
+    </div>
+    <div class="titleActions">
+      <nav class="titleModes" aria-label="Game modes">
+        <h2>Choose your match</h2>
+        <button class="modeChoice go" id="modeAI" onclick="pickMode('ai')"><span class="modeNumber" aria-hidden="true">01</span><b>1 Player</b><small>You vs computer / choose your opponent</small></button>
+        <button class="modeChoice" onclick="pickMode('local')"><span class="modeNumber" aria-hidden="true">02</span><b>2 Players</b><small>Share one keyboard / two sets of controls</small></button>
+        <button class="modeChoice" onclick="show('online')"><span class="modeNumber" aria-hidden="true">03</span><b>Online</b><small>Play a friend / host or join with a room code</small></button>
+        <button class="modeChoice" onclick="pickMode('watch')"><span class="modeNumber" aria-hidden="true">04</span><b>Watch</b><small>Computer exhibition / choose both fighters</small></button>
+      </nav>
+      <p class="titleHint">Keyboard play<br>Tab to browse / Enter or Space to choose</p>
+    </div>
   </div>
 
   <div class="screen" id="select">
@@ -145,16 +186,16 @@
     <div class="row" id="overBtns"><button class="small go" onclick="rematch()">Rematch</button><button class="small" onclick="toSelect()">Change fighters</button><button class="small" onclick="toMenu()">Main menu</button></div>
   </div>
 </div></div>
-<script src="src/sim.js?v=38"></script>
-<script src="src/fighters.js?v=38"></script>
-<script src="src/fighters2.js?v=38"></script>
-<script src="src/pixel.js?v=38"></script>
-<script src="src/pixel-stage.js?v=38"></script>
-<script src="src/pixel-domain.js?v=38"></script>
-<script src="src/pixel-world.js?v=38"></script>
-<script src="src/pixel-hud.js?v=38"></script>
-<script src="src/ai.js?v=38"></script>
-<script src="src/render.js?v=38"></script>
-<script src="src/main.js?v=38"></script>
+<script src="src/sim.js?v=39"></script>
+<script src="src/fighters.js?v=39"></script>
+<script src="src/fighters2.js?v=39"></script>
+<script src="src/pixel.js?v=39"></script>
+<script src="src/pixel-stage.js?v=39"></script>
+<script src="src/pixel-domain.js?v=39"></script>
+<script src="src/pixel-world.js?v=39"></script>
+<script src="src/pixel-hud.js?v=39"></script>
+<script src="src/ai.js?v=39"></script>
+<script src="src/render.js?v=39"></script>
+<script src="src/main.js?v=39"></script>
 </body>
 </html>

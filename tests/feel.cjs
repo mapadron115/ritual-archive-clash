@@ -100,7 +100,8 @@ const events = {};
 const uiContext = vm.createContext({ console, assert, setTimeout, requestAnimationFrame() {},
   window: {}, document: { getElementById() { return { getContext() { return {}; } }; }, querySelectorAll() { return []; } },
   addEventListener(name, fn) { events[name] = fn; } });
-vm.runInContext(load('sim') + '\n' + load('main'), uiContext);
+// Runtime integration covers the canvas/menu boot; this shell isolates input handlers.
+vm.runInContext(load('sim') + '\n' + load('main').split('// ---------- boot')[0], uiContext);
 uiContext.events = events;
 vm.runInContext(`
 G.running = true;
