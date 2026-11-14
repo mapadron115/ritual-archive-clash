@@ -144,7 +144,7 @@ function moveList(ch, lab) {
   h += `<tr><td>${k('DOM')}</td><td><b>${c.dom.name}</b></td><td>${c.dom.maximum ? 'Maximum' : 'Domain'}</td><td>${c.dom.desc}. Once a round, when the gauge is full or you are under 30% health</td></tr></table>`;
   return h;
 }
-function basics(lab) { return `<p class="basics">Move <kbd>${lab.move}</kbd> Jump <kbd>${lab.U}</kbd> Guard <kbd>${lab.G}</kbd> (hold; faces the foe) Punch <kbd>${lab.P}</kbd> (press 3 times for a combo) Kick <kbd>${lab.K}</kbd> (wears a guard down) · Pause <kbd>Esc</kbd> · Mute <kbd>M</kbd><br><b style="color:#ff3348">Black Flash</b>: any punch or kick that lands has a small chance (6%) to strike for 2.2 times the damage, launch the foe and give 25 CE. It puts you in the Zone for 8 seconds, where the chance is 20%.</p>`; }
+function basics(lab) { return `<p class="basics">Move <kbd>${lab.move}</kbd> Jump <kbd>${lab.U}</kbd> Guard <kbd>${lab.G}</kbd> (hold; faces the foe) Punch <kbd>${lab.P}</kbd> (press 3 times for a combo) Kick <kbd>${lab.K}</kbd> (wears a guard down) · Move list <kbd>Esc</kbd> (${G.mode === 'host' || G.mode === 'guest' ? 'online match continues' : 'pauses match'}) · Mute <kbd>M</kbd><br><b style="color:#ff3348">Black Flash</b>: any punch or kick that lands has a small chance (6%) to strike for 2.2 times the damage, launch the foe and give 25 CE. It puts you in the Zone for 8 seconds, where the chance is 20%.</p>`; }
 function labels() {
   if (G.mode === 'local') return [BIND.p1.lab, BIND.p2.lab];
   if (G.mode === 'watch') { const l = [null, null]; l.other = 'Computer'; return l; }
@@ -242,6 +242,7 @@ function togglePause() {
   if (G.paused) {
     const lab = labels(),online=G.mode==='host'||G.mode==='guest';
     $('pauseTitle').textContent=online?'Move list':'Paused: move list';
+    $('resumeBtn').textContent=online?'Close list (Esc)':'Resume (Esc)';
     $('pauseNote').textContent=online?'Online match continues. Your fighter receives no controls while this list is open.':'Match paused. Take your time with the move list.';
     $('pauseList').innerHTML = (G.mode === 'local' ? '' : basics(BIND.solo.lab)) + moveList(G.S.f[0].ch, lab[0]) + moveList(G.S.f[1].ch, lab[1]) + (G.mode === 'local' ? '<b>Player 1</b>' + basics(BIND.p1.lab) + '<b>Player 2</b>' + basics(BIND.p2.lab) : '');
     show('pause');$('resumeBtn').focus();

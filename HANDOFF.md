@@ -1,19 +1,19 @@
-﻿# Handoff: Ritual Archive: Clash
+# Handoff: Ritual Archive: Clash
 
-## Current - version 76, script cache v=79 (2026-11-14)
+## Current - version 77, script cache v=80 (2026-11-14)
 
-All mailbox entries through 15:15 acted on/acknowledged. V75 committed by coordinator as a73c7d4, not pushed. Owner direct check-in repeats independent work/mailbox/report instructions; no design change.
+All mailbox entries through 15:19 acted on/acknowledged. V76 committed by coordinator as e7c2d79, not pushed. Owner direct check-in repeats independent work/mailbox/report instructions; no design change.
 
-V76 fixes a remaining identity mismatch: time-stop notices called the owner P1/P2 while actor tags used YOU/CPU, CPU1/CPU2 or YOU/FOE. Notices now use the same role helper as tags/results. The longest label, CPU1 TIME STOP, fits the existing plaque at the same font size. Local P1/P2 wording is retained. No world-renderer, combat, input, AI, sound or networking changes. Eleven script URLs v=79.
+V77 corrects contradictory Escape guidance: selection's controls reference and the in-match help called it Pause even online, where the fight continues. Both now say Move list, with mode-specific pauses match / online match continues guidance. Online's button says Close list (Esc); offline retains Resume (Esc), refreshed on each opening after mode changes. No input, pause behavior, combat, AI, rendering, audio or network changes. Eleven script URLs v=80.
 
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-hud.js, tests/time-stop.cjs. No add/commit attempt per 01:34/03:00; HEAD/base a73c7d4; never push. Ready for review/commit and owner assessment before publication. No design decision pending.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/main.js. No add/commit attempt per 01:34/03:00; HEAD/base e7c2d79; never push. Ready for review/commit and owner assessment before publication. No design decision pending.
 
 ## Verification and limits
 
-- V76 regression fails on v75 at actual P1 TIME STOP versus expected YOU TIME STOP. Passes 30 actual cast/mode/owner identity combinations, literal glyph/width checks, snapshots and all three stage compositions. Existing stop suite passes ten real lifecycles, 1,800 parallel-state ticks/rasters, 24 freeze holds and 52 composites, retaining expiry, KO/reset, Rewind exclusion and 75% stopped-time punch damage.
-- Watch identity (18,000 parallel-state ticks/422 rasters/two swaps/90 endings), opening (210 timelines/30,660 ticks), damage readability (300 contacts/4,992 layouts), results (180 endings/4,500 rasters plus 60 score histories/180 consecutive draws), guard HUD/recovery, HUD (75), feel/input (eleven groups plus handlers) and runtime/menu/results/online regressions pass. Changed source/test syntax, eleven matching cache URLs and diff whitespace checks pass.
-- Exported 102 before and 102 after 640x360 native scenes and 18 lifecycle sheets per version into the codex mailbox, plus runtime/title/selection/attract assets. Inspected Watch Courtyard before/after, AI Gallery CPU and guest Observatory YOU notices at 1x, all with crossed mirror actors and stacked status lanes. These are memory-raster composites with transient FX omitted in identity scenes, not browser screenshots, motion or play.
-- No native browser retry this run after v74's unavailable access host. No human play/listening, browser layout/focus/activation, motion/FPS, keyboard rollover or real WebRTC/two-computer check. Unchanged broad full-match/animation/pixel/stage/world/audio/performance suites not repeated.
+- One-off baseline check reproduced the false online Pause promise before editing. Actual-script runtime passes its menus, selection, 200 move-list key events in five modes, offline freeze, neutral guest controls/live snapshots, host continuation, fresh resume input, results and online callback regressions. Eight added in-memory selection/open/close/mode-switch checks pass the actual generated reference/help/button labels across all five modes. No new test file for this text-only change.
+- Feel/input (eleven simulation groups plus handlers), HUD learning (2,115 layout/alpha/snapshot states, 90 actual art inputs and 60 Domain uses/resets), source syntax, eleven matching cache URLs and diff whitespace checks pass.
+- Exported v77-controls-guidance.html in the codex mailbox: actual generated selection references and open-list content for all five modes, using current CSS. It is a review artifact, not a screenshot. Runtime/title/selection/attract rasters also exported; inspected v77-runtime-frame.png, whose fight rendering is unchanged.
+- Retried CUA inventory: browser access host unavailable; no browser surface. Changed DOM wording/layout has not been visually checked. No human play/listening, native focus/activation, motion/FPS, keyboard rollover or real WebRTC/two-computer check. Unchanged broad combat/art/audio/performance suites not repeated.
 - Prior regression evidence and detailed previews remain in dated FROM_CODEX.md entries. Last full-match smoke: 225 ordered matchups/1,169,896 ticks. Nobody has listened to validate synthesized sound. Coordinator browser reviews covered title/selection through v37, not fights/results. Neither scripts nor screenshots count as owner play.
 
 ## Next priorities
