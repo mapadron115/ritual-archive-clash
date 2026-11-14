@@ -1,24 +1,24 @@
 # Handoff: Ritual Archive: Clash
 
-## Current - version 78, script cache v=81 (2026-11-14)
+## Current - version 79, script cache v=82 (2026-11-14)
 
-All mailbox entries through 15:23 acted on/acknowledged. V77 committed by coordinator as ad32119, not pushed. Owner direct check-in repeats independent work/mailbox/report instructions; no design change.
+All mailbox entries through 15:30 acted on/acknowledged. V78 committed by coordinator as 25e008c, not pushed. Owner direct check-in repeats independent work/mailbox/report instructions; no design change.
 
-V78 fixes close-range shadow layering: each actor's shadow previously drew with its body, so slot 2's shadow erased parts of slot 1's soles during movement/crossings and under downed bodies. Both shadows now draw in one ground pass before floor effects and both bodies. Their shape, color and height response remain the same, including hidden recovery bodies and impact-frame suppression. No combat, animation, AI, input, audio or network changes. Eleven script URLs v=81.
+V79 makes first contact legible: the old first two effect ages used the same tiny spark for hits, blocks and breaks (68 visible pixels in the reproduced native jab scene). The first four ages now show a broad ivory hit burst, cyan guard crescent or separating amber plates. Heavy hits retain their damage-based size distinction. Expansion from age 4, fragments, lifetimes, event clocks, damage, hit-stop, shake, sound and all simulation/input/AI/network behavior remain unchanged. Eleven script URLs v=82.
 
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-world.js, tests/gum-tether.cjs, tests/shadow-layering.cjs (new). The tether composite fixture now includes the separate ground pass; its full suite passes. No add/commit attempt per 01:34/03:00; HEAD/base ad32119; never push. Ready for review/commit and owner assessment before publication. No design decision pending.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-world.js, tests/contact-readability.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base 25e008c; never push. Ready for review/commit and owner feel/motion assessment before publication. No design decision pending.
 
 ## Verification and limits
 
-- New shadow-layering regression fails on committed v77: 24,627 body-pixel overpaints across 1,488 frames. V78 passes with zero across the same 166,848 samples, 1,380 parallel-state movement/contact ticks, actual jump crossings/launch/knockdown/KO, all builds/mirrors/stages, enlarged bodies, recovery blink, snapshots and freeze-held poses.
-- Footwork, airborne/dust, hook grounding, contacts, world, status effects, gum tether, round results, damage readability/stacks, feel/input and actual-script runtime/menu/selection/results/online regressions pass. Source syntax, eleven matching cache URLs and diff whitespace checks pass.
-- Exported 28 before/28 after full native 640x360 scenes in the codex mailbox. Inspected before/after observatory close-walk and downed-Greta compositions at 1x: the nearby shadow no longer cuts the soles. Runtime/title/selection/attract rasters also exported; runtime frame is byte-identical to v77 (matching SHA256). These are memory-raster composites, not browser screenshots or motion.
+- New contact-readability regression fails on committed v78's first jab. V79 passes 240 actual jab/kick/block/break timelines, all builds/mirrors/slots/directions, 5,040 parallel-state ticks and 3,480 native scene/snapshot checks. Minimum 552 visible pixels in the first three displayed ages; immediately distinct initial silhouettes/materials, read-only state/effects and expiry checked.
+- Contacts (88 hard-alpha/mirrored frames), world (308), damage readability (300 timelines/4,992 layouts), damage stacks (18 timelines/11,700 layouts), guard animation (90 timelines), feel/input and actual-script runtime/menu/selection/results/online regressions pass. Source syntax, eleven matching cache URLs and diff whitespace checks pass.
+- Exported 72 before/72 after full native 640x360 scenes in the codex mailbox: jab, kick, block and break at ages 1/3/5 across all stages and both directions. Inspected full 1x hit, guard and break comparisons, plus heavy kick; the initial contact shapes are clearly larger and distinct. All 24 age-5 pairs match SHA256, retaining the existing expansion. Runtime/title/selection/attract rasters exported; runtime frame matches v78 SHA256. These are memory-raster composites, not browser screenshots or motion.
 - No browser retry after v77's unavailable access host. No human play/listening, native layout/focus/activation, motion/FPS, keyboard rollover or real WebRTC/two-computer check. Unchanged broad full-match/art/audio/performance suites not repeated.
 - Prior regression evidence and detailed previews remain in dated FROM_CODEX.md entries. Last full-match smoke: 225 ordered matchups/1,169,896 ticks. Nobody has listened to validate synthesized sound. Coordinator browser reviews covered title/selection through v37, not fights/results. Neither scripts nor screenshots count as owner play.
 
 ## Next priorities
 
-Owner first-minute offline readability/feel/listening notes take priority. Retry native browser fight/move-list/results review when the surface works; remaining visible arena/motion faults follow. Close-range shadow layering, Watch identity and third-punch soles are addressed. No speculative balance or audio retuning. Known balance question already passed to coordinator: late run/vertical jump cannot escape the locked diving Maximum, while swap escapes and guard reduces damage; leave its rule unchanged.
+Owner first-minute offline readability/feel/listening notes take priority. Per 15:30, choose only arena/move/hit improvements demonstrably visible in full scenes at 1x; subtle pixel and wording fixes wait. First contact now reads distinctly. Retry native browser fight/move-list/results review when the surface works. No speculative balance or audio retuning. Known balance question already passed to coordinator: late run/vertical jump cannot escape the locked diving Maximum, while swap escapes and guard reduces damage; leave its rule unchanged.
 
 ## Code and run
 

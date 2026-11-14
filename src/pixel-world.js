@@ -36,7 +36,7 @@ function pxBolt(s,a,b,seed,col='#ed5266',width=2) {
   let prev=a;
   for(let i=1;i<=7;i++) {const t=i/7,off=i===7?0:Math.sin(seed*13+i*9)*9,pt=[a[0]+(b[0]-a[0])*t+off,a[1]+(b[1]-a[1])*t-off*.5];s.line(prev,pt,PX_INK,width+3);s.line(prev,pt,col,width);prev=pt;}
 }
-// Three authored phases: compressed contact, directional expansion, separated fragments.
+// Three authored phases: bright contact, directional expansion, separated fragments.
 // Geometry is mirrored around the exact contact pixel; no random frame-to-frame flicker.
 const PX_CONTACTS=new Map();
 function pxContact(s,e) {
@@ -51,9 +51,30 @@ function pxContactShape(s,e) {
   const col=block?'#8ed9e1':broken?'#edaa67':'#eed49b',light=block?'#dbf4ed':PX_LIGHT;
   const poly=(pts,c)=>s.poly(pts.map(([a,b])=>[x+a*e.dir,y+b]),c);
   const line=(a,b,c,w=1)=>s.line([x+a[0]*e.dir,y+a[1]],[x+b[0]*e.dir,y+b[1]],c,w);
-  if(t<2) {
-    poly([[-7,-3],[-3,-8],[2,-4],[8,-1],[5,4],[-2,8],[-4,3]],PX_INK);
-    poly([[-5,-2],[-2,-6],[2,-2],[6,0],[2,3],[-2,6],[-2,2]],light);
+  if(t<4) {
+    // The first displayed age is 1 (events precede fxTick). Give that frame a
+    // broad, outlined flash that reads over a hurt-flashing body at native size.
+    // Guard absorbs into a crescent; a broken guard throws two plates apart.
+    if(block) {
+      const r=23+t*2;
+      poly([[5,-r],[-9,-r+7],[-17,-8],[-18,6],[-10,r-5],[5,r],[0,r-11],[-6,6],[-5,-7],[0,-r+11]],PX_INK);
+      poly([[3,-r+3],[-7,-r+9],[-14,-7],[-15,5],[-8,r-7],[2,r-3],[-3,r-11],[-9,6],[-8,-8],[-2,-r+10]],col);
+      line([-10,-12],[-13,4],light,4);line([-13,4],[-6,16],light,4);
+      poly([[-3,-5],[7,0],[-3,5],[-7,0]],light);
+    } else if(broken) {
+      const a=4+t*2;
+      for(const side of [-1,1]) {
+        poly([[side*a,-5],[side*(a+5),-27],[side*(a+17),-16],[side*(a+12),-2],[side*(a+23),12],[side*(a+8),26],[side*(a+2),11]],PX_INK);
+        poly([[side*(a+3),-5],[side*(a+7),-22],[side*(a+13),-15],[side*(a+8),-1],[side*(a+18),12],[side*(a+10),21],[side*(a+5),9]],col);
+        line([side*(a+6),-14],[side*(a+4),-4],light,4);line([side*(a+9),9],[side*(a+12),15],light,3);
+      }
+      poly([[-4,-11],[2,-5],[7,-7],[4,1],[7,8],[0,5],[-6,11],[-4,2],[-8,-3],[-2,-3]],light);
+    } else {
+      const r=(e.heavy?35:26)+Math.floor(t/2)*2;
+      poly([[-r*.8,-r*.55],[-8,-8],[-3,-r],[6,-10],[r*.65,-r*.65],[12,-3],[r,2],[10,9],[r*.4,r*.85],[0,12],[-r*.65,r*.7],[-10,3],[-r,-2],[-12,-6]],PX_INK);
+      poly([[-r*.6,-r*.4],[-6,-5],[-2,-r+5],[4,-7],[r*.5,-r*.5],[8,-1],[r-5,2],[7,6],[r*.3,r*.65],[0,8],[-r*.45,r*.5],[-7,1],[-r+6,-2],[-9,-4]],col);
+      poly([[-14,-8],[-5,-4],[-2,-17],[3,-5],[13,-10],[7,0],[18,3],[5,5],[5,16],[-1,8],[-12,13],[-6,2],[-17,-1],[-6,-2]],light);
+    }
     return;
   }
   if(block && t<7) {
