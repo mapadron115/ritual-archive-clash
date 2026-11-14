@@ -78,6 +78,10 @@ const PX_POSES = {
   kickw: {h:[-8,-81],s:[-9,-65],hip:[-6,-36],a:[[9,-51],[18,-63]],b:[[-24,-50],[-29,-62]],l:[[15,-48],[1,-24]],r:[[-12,-18],[-15,0]]},
   kick: {h:[-18,-79],s:[-19,-63],hip:[-5,-37],a:[[-2,-48],[11,-59]],b:[[-35,-55],[-30,-69]],l:[[22,-43],[52,-48]],r:[[-13,-18],[-19,0]]},
   jump: {h:[3,-82],s:[0,-66],hip:[-2,-37],a:[[18,-58],[25,-72]],b:[[-20,-57],[-26,-70]],l:[[18,-35],[12,-14]],r:[[-17,-27],[-30,-38]]},
+  // Voluntary jumps unfold toward the floor; these never replace attacks or air hits.
+  jumpcrest: {h:[8,-73],tilt:.15,s:[1,-58],hip:[-6,-30],a:[[24,-51],[35,-62]],b:[[-24,-50],[-35,-59]],l:[[24,-49],[32,-27]],r:[[-5,-44],[-18,-26]]},
+  jumpfall: {h:[-3,-80],s:[-6,-64],hip:[-3,-35],a:[[16,-49],[25,-39]],b:[[-26,-49],[-33,-37]],l:[[14,-20],[20,-2]],r:[[-21,-29],[-32,-19]]},
+  jumpbrace: {h:[12,-65],tilt:.18,s:[4,-50],hip:[-5,-26],a:[[25,-34],[34,-20]],b:[[-21,-33],[-27,-20]],l:[[22,-12],[30,-1]],r:[[-27,-17],[-36,-5]]},
   jpunch: {h:[13,-80],s:[11,-64],hip:[1,-36],a:[[32,-61],[50,-61]],b:[[-4,-47],[7,-53]],l:[[20,-34],[17,-14]],r:[[-14,-25],[-30,-36]]},
   jkick: {h:[-13,-82],s:[-14,-65],hip:[-2,-38],a:[[3,-51],[14,-65]],b:[[-29,-58],[-28,-72]],l:[[23,-40],[49,-42]],r:[[-18,-23],[-34,-28]]},
   hit: {h:[-17,-74],s:[-15,-59],hip:[-2,-32],a:[[1,-44],[15,-52]],b:[[-31,-45],[-37,-57]],l:[[20,-16],[29,0]],r:[[-17,-18],[-26,0]]},
@@ -88,6 +92,11 @@ const PX_POSES = {
   throw: {h:[14,-77],s:[11,-62],hip:[0,-34],a:[[20,-49],[33,-40]],b:[[-8,-52],[-23,-71]],l:[[22,-17],[31,0]],r:[[-22,-19],[-33,0]]},
   bow: {h:[6,-79],s:[3,-64],hip:[-3,-35],a:[[21,-48],[32,-39]],b:[[-15,-59],[-28,-62]],l:[[16,-18],[27,0]],r:[[-24,-19],[-34,0]]},
   win: {h:[0,-82],s:[-2,-66],hip:[-3,-35],a:[[14,-81],[9,-94]],b:[[-20,-50],[-7,-38]],l:[[6,-18],[13,0]],r:[[-14,-19],[-21,0]]},
+  // Round winner lowers the guard, lifts a fist, then relaxes from the peak.
+  // The original phaseT clock starts only after the KO impact pause.
+  winready: {h:[8,-71],tilt:.15,s:[1,-56],hip:[-5,-30],a:[[19,-40],[10,-31]],b:[[-21,-39],[-27,-24]],l:[[14,-15],[23,0]],r:[[-22,-16],[-30,0]]},
+  winraise: {h:[-5,-79],tilt:-.12,s:[-5,-63],hip:[-5,-34],a:[[23,-65],[25,-83]],b:[[-23,-47],[-15,-33]],l:[[10,-18],[18,0]],r:[[-19,-19],[-26,0]]},
+  winsettle: {h:[4,-79],s:[0,-63],hip:[-2,-34],a:[[21,-65],[18,-79]],b:[[-21,-45],[-25,-29]],l:[[10,-18],[17,0]],r:[[-17,-19],[-24,0]]},
   // Eight steps: the supporting sole stays at the floor as the other knee lifts.
   // Three ticks per cell reduces planted-foot drift; retreats keep the hands up.
   walk0: {h:[6,-79],s:[3,-63],hip:[-2,-34],a:[[15,-47],[24,-57]],b:[[-17,-49],[-12,-63]],l:[[16,-17],[24,0]],r:[[-18,-19],[-8,-2]]},
@@ -284,7 +293,7 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   const hip=p.hip, shoulder=p.s, head=p.h;
   // Far limbs are darker; near limbs get one narrow upper-left highlight cluster.
   // Keep the thick calf contour inside the boot instead of below the walking sole.
-  const ankle=foot=>[foot[0],foot[1]-(/^(walk|back)[0-7]$/.test(pose)?Math.ceil((9*(kit.bulk||1)+2)/2):4)];
+  const ankle=foot=>[foot[0],foot[1]-(/^(walk|back)[0-7]$/.test(pose)||pose.startsWith('win')?Math.ceil((9*(kit.bulk||1)+2)/2):4)];
   limb([hip[0]-4,hip[1]],p.r[0],12,pant,true); limb(p.r[0],ankle(p.r[1]),9,kit.shorts?skin:pant,true); shoe(p.r[1],true);
   if(kit.limbDetail)kneeDetail(p.r[0],true);
   limb([shoulder[0]-w*.65,shoulder[1]+2],p.b[0],9,kit.sl?top:skin,true); limb(p.b[0],p.b[1],7,kit.sl===2?top:skin,true);
@@ -432,13 +441,19 @@ function pxPose(S,f) {
     return sequence[elapsed<settle?2:3];
   }
   if(f.st === 'walk') return (f.vx*f.face<0?'back':'walk')+(Math.floor(f.walkT/3)%8);
+  if(f.st === 'jump') return f.vy<-6?'jump':f.vy<4?'jumpcrest':f.y>GROUND-70?'jumpbrace':'jumpfall';
   if(f.st === 'block') return f.stT>7?'blockhit':f.stT>3?'blockre':'blocksettle';
   if(f.st === 'stun') return f.stT>45?'breakopen':f.stT>32?'breakfold':f.stT>18?'stun':f.stT>8?'stunbrace':'stunrise';
   if(f.st === 'down') return f.stT>28?'collapse':f.stT>12?'down':f.stT>6?'rise1':'rise2';
   if(f.st === 'ko') return f.y<GROUND ? pxAirHitPose(f) : 'down';
   if(f.st === 'hit') return f.y<GROUND ? pxAirHitPose(f) : f.stT>8?'hit':'hitrecover';
   if(f.st === 'cast') return pxDomainPose(S,f);
-  if(f.st === 'idle' && S.phase === 'over' && S.wins[f.i] >= 2) return 'win';
+  if(f.st === 'idle' && f.y>=GROUND && f.hp>0 && S.winner===f.i && (S.phase==='ko' || S.phase==='over')) {
+    if(S.phase==='over' || S.phaseT>=64)return 'winsettle';
+    if(S.phaseT>=42)return 'win';
+    if(S.phaseT>=30)return 'winraise';
+    if(S.phaseT>=18)return 'winready';
+  }
   if(f.st === 'idle') return Math.floor(S.t/22)%2 ? 'breathe' : 'idle';
   return PX_POSES[f.st] ? f.st : 'idle';
 }

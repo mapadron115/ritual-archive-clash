@@ -5,7 +5,7 @@ Owner choice passed on by coordinator 2026-11-14: pixel art for the whole game.
 - Source canvas: 640 × 360 for the completed arena/HUD, enlarged with nearest-neighbor sampling. A source pixel represents two simulation units. Final page uses `image-rendering: pixelated`.
 - Fighter cells: 144 × 128 source pixels, grounded root (64, 120); standing heights span roughly 85–115 source pixels depending on stance and build. All assets use integer rasterization with fully opaque color clusters and transparent background, never a reduction of the cartoon renderer.
 - Silhouettes: dark navy one-pixel outline, thicker by overlap in occluded joints; shadowed far limbs; three colors per fabric/skin/hair, one clear technique accent. Lighting comes from the upper left. Avoid scattered lone highlight pixels, gradients, blur and smoothing.
-- Animation: discrete authored anticipation, contact and recovery poses, four walking poses, two idle poses, guard/block, airborne attacks, hit/stun, cast and victory. Gameplay timing chooses the frame; no joint springs or interpolated sprite edges. Feet use the simulation ground, not a new animation collider.
+- Animation: discrete authored anticipation, contact and recovery poses, eight advance and eight guarded retreat poses, two idle poses, guard/block, airborne attacks, hit/stun, cast and victory. Gameplay timing chooses the frame; no joint springs or interpolated sprite edges. Feet use the simulation ground, not a new animation collider.
 - First fighter: Isolde Varn. Original asymmetrical silver side-sweep, warm face, split navy travel coat, inset ivory shirt, offset cyan clasp, narrow cyan scarf tail and low boots. Her exposed face and angular travel clothes define her own identity.
 - Mirror costume: warm pearl coat with mauve shadows, violet trousers and rose accent; silhouette stays the same. Keep P1/P2 overhead tags.
 - Roster pass: distinct head shapes, body widths, coat/robe/apron/vest silhouettes, hair, equipment and accents. Shared anatomy is allowed; a palette swap alone does not complete a fighter.
@@ -14,6 +14,10 @@ Owner choice passed on by coordinator 2026-11-14: pixel art for the whole game.
 - HUD/menu pass: angular panels, source-pixel borders, bitmap text, consistent native sizing and readable meters.
 
 No existing game's sprites, poses, palettes or stages are used as references or copied assets.
+
+Victory (v26): the round winner lowers the guard, lifts a fist, reaches the original raised peak and relaxes into a settled hold. Three new cells bring each build/costume to 112. Existing KO phaseT selects the sequence after the impact pause; only a living, grounded idle winner may celebrate. Attacks, casts, recovery and airborne motion finish first, then join the current round phase. Ties never celebrate; a new round replaces the pose. Match-over holds the settled drawing. Soles meet the floor exactly, including heavy builds. No simulation field, clock, input lock or rule changes.
+
+Voluntary jumps (v27): the existing lifted-knee ascent folds into a tucked crest, unfolds a leg during descent and reaches toward the floor on approach. Three new cells bring each build/costume to 115. Current vertical velocity and floor distance alone select the pose, including slowed jumps and frozen snapshots. Air attacks, airborne hit reactions and Maximum casts retain their own drawing priority. Takeoff, trajectory, air control, attack timing and landing control stay unchanged; do not insert a preparation squat or a landing delay.
 
 Domain distinction (v24): Absolute Counter uses round jade bucklers with thick shaded rims, convex faces and raised diamond bosses on low plinths. Its circular masses distinguish it from Everything I Have's angular emerald cavern. Preserve both established palettes, the sanctuary/cavern ideas, motes and stage floor.
 
