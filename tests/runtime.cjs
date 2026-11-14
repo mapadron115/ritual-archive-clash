@@ -26,7 +26,9 @@ const element=id=>({id,style:{setProperty(){}},children:[],_html:'',set innerHTM
 const cv=new Canvas(1280,720);nodes.set('cv',cv);
 for(const id of ['title','select','online','pause','over'])nodes.set(id,element(id));
 const document={visibilityState:'visible',getElementById(id){if(!nodes.has(id))nodes.set(id,element(id));return nodes.get(id);},querySelectorAll(){return ['title','select','online','pause','over'].map(id=>nodes.get(id));},createElement(tag){return tag==='canvas'?new Canvas():element(tag);},head:element('head')};
-const context=vm.createContext({console,assert,document,window:{},setTimeout(){},requestAnimationFrame(){},addEventListener(name,fn){events[name]=fn;}});
+const timeouts=[];
+const context=vm.createContext({console,assert,document,window:{},setTimeout(fn,ms){timeouts.push({fn,ms});},requestAnimationFrame(){},addEventListener(name,fn){events[name]=fn;}});
+context.timeouts=timeouts;
 context.events=events;
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
@@ -154,6 +156,35 @@ assert.equal(G.stage,'gallery');assert($('stageChoices').children.every(b=>b.dis
 wire.data(hostStart);assert.equal(G.S.stage,'observatory');newRound(G.S);assert.equal(G.S.stage,'observatory');
 wire.data({t:'start',p:[0,1]});assert.equal(G.S.stage,'courtyard','old host message defaults safely');
 wire.data({t:'stage',stage:'missing-stage'});assert.equal(G.stage,'courtyard');
+G.stage='observatory';G.mode='local';startFight();
+// End-screen role, score, focus, navigation and guest snapshot handoff.
+for(const mode of ['ai','local','watch','host','guest'])for(const winner of [0,1]){
+  G.mode=mode;startFight();G.S.phase='fight';G.S.wins[winner]=1;G.S.f[1-winner].hp=1;G.S.timer=1;
+  step(G.S,[0,0]);while(G.S.phase==='ko')step(G.S,[0,0]);assert.equal(G.S.phase,'over');
+  if(mode==='guest')wire.data({t:'s',s:JSON.parse(JSON.stringify(G.S)),e:[]});else endMatch();
+  assert.equal($('overTitle').textContent,pxResultRole(labels(),winner)+' / '+CH[G.S.f[winner].ch].name+' wins');
+  assert($('overScore').textContent.includes(G.S.wins[0]+' - '+G.S.wins[1]));
+  assert.equal($('overFighters').textContent,CH[G.S.f[0].ch].name+' vs '+CH[G.S.f[1].ch].name);
+  assert.equal($('overBtns').style.display,mode==='guest'?'none':'');
+  assert($('overNote').textContent.includes(mode==='guest'?'Waiting for the host':'Dawn Observatory'));
+  if(mode==='guest'){const snap=JSON.parse(JSON.stringify(G.S));wire.data({t:'s',s:snap,e:[]});assert.equal(G.S,snap,'guest receives a new object while result timer waits');}
+  const timer=timeouts.pop();assert.equal(timer.ms,1400);timer.fn();assert.equal($('over').style.display,'flex');
+  assert.equal(document.activeElement,$(mode==='guest'?'overTitle':'rematchBtn'));
+  for(const code of ['Tab','Enter','Space']){let prevented=false;events.keydown({code,repeat:false,preventDefault(){prevented=true;}});assert.equal(prevented,false,'result menu key swallowed: '+code);assert.equal(G.taps[code],undefined);}
+  if(mode==='guest'){
+    wire.data({t:'start',p:[0,1],stage:'gallery'});assert.equal(G.over,false);assert.equal($('over').style.display,'none');
+  }else{
+    const choices=G.pick.slice();rematch();assert.equal(G.S.stage,'observatory');assert.deepEqual(G.pick,choices);assert.deepEqual(G.S.wins,[0,0]);
+    assert.equal(G.over,false);assert.equal(G.S.phase,'intro');assert.equal(FX.banner,null);
+  }
+}
+// A delayed result must never open over a later match, even if that match ends too.
+G.mode='local';G.stage='observatory';startFight();G.S.wins=[2,0];G.S.phase='over';endMatch();const stale=timeouts.pop();
+startFight();G.S.wins=[0,2];G.S.phase='over';endMatch();const current=timeouts.pop();
+stale.fn();assert.equal($('over').style.display,'none');current.fn();assert.equal($('over').style.display,'flex');
+toSelect();assert.equal($('select').style.display,'flex');assert.equal(G.running,false);
+toMenu();assert.equal($('title').style.display,'flex');
+console.log('PASS ten actual match endings in five modes, score/role/guest guidance, delayed focus, rematch reset, snapshot restart, navigation and stale timer isolation');
 G.stage='observatory';G.mode='local';startFight();
 G.S.phase='fight';G.S.t=130;G.S.f[0].ch=0;G.S.f[1].ch=14;G.S.f[0].x=400;G.S.f[1].x=880;
 frame(119);assert.equal(G.S.f[0].hp,1000);

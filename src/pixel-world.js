@@ -84,6 +84,12 @@ function pxBannerLayout(b) {
   const w=pxTextWidth(b.txt,size),y=b.small?105:150;
   return {size,textX:320-w/2,textY:y,x:b.small?320-w/2-10:0,y:y-9,w:b.small?w+20:640,h:size*7+18};
 }
+// A result survives expired/missed FX events, including a guest's first snapshot.
+// phaseT is the existing active round clock; this adds no simulation state.
+function pxRoundResultLayout(S) {
+  if(S.phase!=='over'&&(S.phase!=='ko'||S.phaseT<30))return null;
+  return {x:138,y:88,w:364,h:80,title:S.winner<0?'DRAW':S.timer<=0?'TIME UP':'K.O.',final:S.wins[0]>=2||S.wins[1]>=2};
+}
 const PX_BODY_BOUNDS=new WeakMap();
 function pxBodyBounds(S,f) {
   const {sprite,ox,oy}=pxFighterFrame(f.ch,pxPose(S,f),f.i===1&&S.f[0].ch===f.ch);
@@ -102,7 +108,8 @@ function pxDamageLayout(S,nums,F={}) {
   const blocked=S.f.map(f=>pxBodyBounds(S,f));
   // The world can shake by five pixels while the HUD stays still.
   for(const f of S.f)if(f.st!=='ko') {const p=pxActorAnchor(f);blocked.push({x:p.x-20,y:p.y-8,w:40,h:28});}
-  const banner=pxBannerLayout(F.banner);if(banner)blocked.push({x:banner.x-6,y:banner.y-6,w:banner.w+12,h:banner.h+12+(F.banner.sub?10:0)});
+  const result=pxRoundResultLayout(S),banner=result||pxBannerLayout(F.banner);
+  if(banner)blocked.push({x:banner.x-6,y:banner.y-6,w:banner.w+12,h:banner.h+12+(!result&&F.banner.sub?10:0)});
   const overlap=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));
   const out=[];
   for(const n of nums.slice().reverse()) {

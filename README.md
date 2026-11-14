@@ -14,6 +14,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Technique labels use the full card width, wrap at spaces and start below a consistent name/portrait row. On narrow screens, title and selection use the viewport height; fights keep their 16:9 canvas. This remains a keyboard game.
 - The title tray uses one compact row on desktop, with its keyboard hint by the logo. Selection cards use smaller portraits and padding at <=900px to give the arena row more room.
 - Damage values rise above the struck fighter, with clear space around both fighters, actor tags and banners. Simultaneous values use separate nearby lanes. Hit effects, damage and timing stay the same.
+- Round results distinguish K.O., time up and draws, identify the winner and score, and say which round comes next. They remain visible until the round changes. The match screen shows the final score, keeps rematch context clear and tells online guests to wait for the host. Tab, Enter and Space reach the result buttons.
 
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
@@ -26,6 +27,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/round-results.cjs` checks 180 actual knockout/timeout/draw timelines and 4,500 all-mode result rasters/snapshots across the roster, result boundaries, score progression, freezes and unchanged outcomes. Also covers unequal-max-health timeouts and result/damage clearance. Optional output directory and filename save six round/match composites; `--preview-only` exports the audit without assertions for comparison against earlier code. `tests/runtime.cjs` additionally checks ten actual match endings, guest snapshot updates during the result delay, keyboard-event routing, focus, rematch resets, navigation and stale timer isolation. Native browser focus/activation, layout and human play still need review.
 
 `node tests/hud-learning.cjs` checks 2,100 HUD layout/alpha/snapshot states across all builds, slots and five modes, 90 actual art inputs/cooldown expiries and 60 actual full-gauge/low-health Domain uses/round resets. It checks complete basic controls, CE totals, exact readiness thresholds, countdown boundaries and nonoverlapping card text. Optional output directory and filename save six composite HUD scenarios. `node tests/hud.cjs <output-directory> <version-prefix>` also saves version-prefixed all-roster card sheets. These are raster/script checks, not human play.
 

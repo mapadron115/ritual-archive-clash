@@ -25,6 +25,8 @@ function readRemote() { const b = G.remoteIn | (G.remoteTap << INPUT_SHIFT); G.r
 addEventListener('keydown', e => {
   if (e.code === 'Escape' && G.running) { if (!e.repeat) togglePause(); return; }
   if (e.code === 'KeyM') { if (!e.repeat) setMute(!AUDIO.mute); return; }
+  // Let native Tab/Enter/Space reach the result buttons after the fight ends.
+  if (G.over) return;
   if (!e.repeat && !G.keys[e.code] && G.running && !G.paused) G.taps[e.code] = true;
   G.keys[e.code] = true; if (G.running && !e.ctrlKey && !e.metaKey && e.code !== 'F5' && e.code !== 'F12') e.preventDefault();
   initAudio();
@@ -284,10 +286,13 @@ function joinGame() {
 }
 
 function endMatch() {
-  G.over = true; const w = G.S.wins[0] >= 2 ? 0 : 1;
-  $('overTitle').textContent = CH[G.S.f[w].ch].name + ' wins'; $('overTitle').style.color = CH[G.S.f[w].ch].look.accent;
+  G.over = true; clearInput(); const match=G.S,w=match.wins[0]>=2?0:1,lab=labels(),token=G.resultToken=(G.resultToken||0)+1;
+  $('overTitle').textContent = pxResultRole(lab,w)+' / '+CH[match.f[w].ch].name+' wins'; $('overTitle').style.color = CH[match.f[w].ch].look.accent;
+  $('overScore').textContent=pxResultRole(lab,0)+' '+match.wins[0]+' - '+match.wins[1]+' '+pxResultRole(lab,1)+' / First to 2 wins';
+  $('overFighters').textContent=CH[match.f[0].ch].name+' vs '+CH[match.f[1].ch].name;
+  $('overNote').textContent=G.mode==='guest'?'Waiting for the host to choose a rematch or change fighters.':'Rematch keeps these fighters and '+PX_STAGES.find(s=>s.id===pxStageId(match.stage)).name+'.';
   $('overBtns').style.display = G.mode === 'guest' ? 'none' : '';
-  setTimeout(() => { if (G.over && G.running) show('over'); }, 1400);
+  setTimeout(() => { if (G.resultToken===token && G.over && G.running && G.S.phase==='over') {show('over');$(G.mode==='guest'?'overTitle':'rematchBtn').focus();} }, 1400);
 }
 
 // ---------- loop

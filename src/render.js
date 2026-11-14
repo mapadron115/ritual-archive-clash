@@ -56,7 +56,7 @@ function fxEvent(S, e) {
       const n = FX.nums[FX.nums.length - 1]; if (n) { n.bf = 1; n.big = 1; n.life = 60; }
       break;
     }
-    case 'ko': FX.impact = { t: 0, sil: 4, kind: 'white' }; FX.banner = { txt: 'K.O.', t: 0, life: 120 }; FX.flash = .6; FX.flashCol = '#fff'; FX.shake = 20; break;
+    case 'ko': FX.impact = { t: 0, sil: 4, kind: 'white' }; FX.banner = { txt: S.winner<0?'DRAW':S.timer<=0?'TIME UP':'K.O.', t: 0, life: 120 }; FX.flash = .6; FX.flashCol = '#fff'; FX.shake = 20; break;
     case 'round': FX.banner = { txt: 'ROUND ' + e.a, t: 0, life: 70 }; break;
     case 'fight': FX.banner = { txt: 'FIGHT!', t: 0, life: 45, col: '#ffe36b' }; break;
     case 'domain': { const d = CH[e.a].dom; FX.banner = { txt: d.name.toUpperCase(), sub: d.maximum ? 'MAXIMUM' : 'DOMAIN EXPANSION', t: 0, life: 70, col: CH[e.a].look.accent }; FX.flash = .5; FX.flashCol = CH[e.a].look.accent; break; }

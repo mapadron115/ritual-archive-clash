@@ -24,6 +24,10 @@ function pxWrap(text,width) {
 function pxPanel(s,x,y,w,h,base='#263346',edge='#68768a') {
   s.rect(x-2,y-2,w+4,h+4,PX_INK);s.rect(x,y,w,h,base);s.rect(x,y,w,1,edge);s.rect(x,y,1,h,edge);
 }
+function pxResultRole(labels,i) {
+  if(!labels[0]&&!labels[1]||labels[0]&&labels[1])return 'P'+(i+1);
+  return labels[i]?'YOU':labels.other==='Computer'?'CPU':'FOE';
+}
 function pxHUDSurface(S,labels,F=FX) {
   const s=new PixelSurface(640,360);
   for(let i=0;i<2;i++) {
@@ -70,8 +74,16 @@ function pxHUDSurface(S,labels,F=FX) {
   pxPanel(s,299,19,42,29,'#243448','#b1a08a');const timer=String(Math.ceil(S.timer/60));pxText(s,timer,320-pxTextWidth(timer,2)/2,25,'#ecd3a0',2);
   const round='ROUND '+S.round;pxText(s,round,320-pxTextWidth(round)/2,53,PX_LIGHT);
   if(S.dom&&!S.freeze){const name=CH[S.f[S.dom.o].ch].dom.name;pxOutlinedText(s,name,320-pxTextWidth(name)/2,76,PX_KITS[S.f[S.dom.o].ch].accent);}
-  const b=F.banner;
-  if(b){const p=pxBannerLayout(b);
+  const result=pxRoundResultLayout(S),b=F.banner;
+  if(result){
+    const p=result,col=S.winner<0?'#ecd3a0':PX_KITS[S.f[S.winner].ch].accent;
+    pxPanel(s,p.x,p.y,p.w,p.h,'#172438',col);
+    const center=(text,y,color=PX_LIGHT,size=1)=>pxText(s,text,320-pxTextWidth(text,size)/2,y,color,size);
+    center(p.title,p.y+5,col,3);
+    center(S.winner<0?'NO ROUND AWARDED':pxResultRole(labels,S.winner)+' / '+CH[S.f[S.winner].ch].name+' WINS',p.y+32,PX_LIGHT,2);
+    center(pxResultRole(labels,0)+' '+S.wins[0]+' - '+S.wins[1]+' '+pxResultRole(labels,1),p.y+51,'#ecd3a0');
+    center(p.final?'MATCH COMPLETE':'ROUND '+(S.round+1)+' NEXT',p.y+65,'#a7b3bf');
+  }else if(b){const p=pxBannerLayout(b);
     s.rect(p.x,p.y,p.w,p.h,PX_INK);
     s.rect(p.x,p.y,p.w,2,b.col||'#ecd3a0');
     pxText(s,b.txt,p.textX,p.textY,b.col||PX_LIGHT,p.size);
