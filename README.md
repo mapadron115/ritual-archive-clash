@@ -22,7 +22,9 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Script checks
 
-`node tests/summons.cjs` checks original hound bounds/bites, Nue wing strokes and dive/bank angles, Toad extension/recoil, directional cells, actual summon timelines, freeze/time-stop clocks, snapshot stability and unchanged simulation. Add an output directory for phase and scene previews.
+`node tests/art-animation.cjs` checks all 45 arts for both owners, exact startup/contact/recovery boundaries, six distinct art-family silhouettes across all builds, release-hand alignment, frozen/snapshotted frames and unchanged deterministic outcomes. Add an output directory for color/silhouette sheets and actual firing-tick scenes.
+
+`node tests/summons.cjs` checks original hound bounds/bites, Nue wing strokes and dive/bank angles, Toad extension/recoil, three-tone palettes, directional cells, actual summon timelines, freeze/time-stop clocks, snapshot stability and unchanged simulation. Add an output directory and optional version prefix for phase and scene previews.
 
 `node tests/trails.cjs` checks all projectile wakes, birth/flight/expiry phases, diagonal direction, real art samples, freeze/JSON stability and unchanged simulation.
 

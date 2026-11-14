@@ -153,36 +153,62 @@ function pxSummonFrame(e,S) {
   const sprite=new PixelSurface(144,112),ox=72,oy=e.k==='dog'?96:56;
   const angle=tilt*.4,co=Math.cos(angle),si=Math.sin(angle);
   const at=([a,b])=>[ox+a*co-b*si,oy+a*si+b*co];
-  const poly=(pts,col)=>sprite.poly(pts.map(at),col,PX_INK);
+  const poly=(pts,col,outline=PX_INK)=>sprite.poly(pts.map(at),col,outline);
   const line=(a,b,col,w=1)=>sprite.line(at(a),at(b),col,w);
   const dot=(a,b,col)=>sprite.dot(...at([a,b]),col);
   if(e.k==='dog') {
     const color=e.v?'#625774':'#c9c5cf',shade=e.v?'#393449':'#827d98',light=e.v?'#9484a6':'#efdfd7';
     const run=mode==='run',bite=mode==='bite',release=mode==='release',bob=run?[0,2,4,-3][phase]:bite?1:0;
-    const legs=[[[[-14,-13],[-20,-8],[-27,-1]],[[13,-13],[21,-8],[28,-2]]],[[[-14,-11],[-16,-6],[-19,-1]],[[13,-11],[17,-6],[13,-1]]],[[[-14,-10],[-8,-5],[-2,-1]],[[13,-10],[7,-6],[0,-1]]],[[[-14,-16],[-3,-13],[0,-7]],[[13,-16],[7,-11],[0,-8]]]];
+    // Gather each leg under its own shoulder/haunch. Separated, outlined toes
+    // remain visible during both tucked bounds instead of merging at the belly.
+    const legs=[[[[-14,-13],[-20,-8],[-27,-2]],[[13,-13],[21,-8],[28,-2]]],[[[-14,-11],[-16,-6],[-19,-2]],[[13,-11],[17,-6],[13,-2]]],[[[-14,-10],[-23,-7],[-15,-3]],[[13,-10],[7,-6],[21,-3]]],[[[-14,-16],[-22,-10],[-9,-6]],[[13,-16],[16,-10],[25,-8]]]];
     const feet=run?legs[phase]:[[[-14,-12],[-21,-7],[-23,-1]],[[14,-12],[19,-7],[bite?29:23,-1]]];
-    const limb=(pts,far)=>{for(let n=1;n<pts.length;n++){const end=n===2?[pts[n][0],pts[n][1]-2]:pts[n];line(pts[n-1],end,PX_INK,5);line(pts[n-1],end,far?shade:color,3);}const p=pts[2];line([p[0]-2,p[1]],[p[0]+3,p[1]],far?shade:light,2);};
+    const limb=(pts,far)=>{
+      for(let n=1;n<pts.length;n++) {
+        const end=n===2?[pts[n][0],pts[n][1]-2]:pts[n];
+        line(pts[n-1],end,PX_INK,6);line(pts[n-1],end,far?shade:color,4);
+        if(!far)line([pts[n-1][0]-1,pts[n-1][1]-1],[end[0]-1,end[1]-1],light);
+      }
+      const [a,b]=pts[2];poly([[a-4,b-3],[a+2,b-3],[a+5,b-1],[a+5,b],[a-4,b]],far?shade:color);
+      if(!far){line([a-2,b-2],[a+1,b-2],light);dot(a+2,b-1,shade);}
+    };
     feet.forEach(pts=>limb(pts.map(([a,b])=>[a-4,b-3]),true));
     poly([[-14,-18+bob],[-30,-30+bob],[-28,-35+bob],[-21,-27+bob],[-10,-23+bob]],shade);
     poly([[-20,-16+bob],[-19,-23+bob],[-7,-28+bob],[12,-26+bob],[20,-17+bob],[13,-10+bob],[-12,-10+bob]],color);
-    line([-16,-23+bob],[9,-25+bob],light,2);poly([[-17,-15+bob],[8,-14+bob],[13,-10+bob],[-12,-10+bob]],shade);
+    poly([[-17,-16+bob],[-2,-18+bob],[14,-17+bob],[11,-11+bob],[-11,-11+bob]],shade,false);
+    poly([[-15,-22+bob],[-6,-26+bob],[8,-25+bob],[13,-21+bob],[0,-20+bob]],light,false);
+    line([-17,-20+bob],[-16,-15+bob],shade);line([12,-22+bob],[15,-18+bob],shade);
     feet.forEach(pts=>limb(pts,false));
     const hx=bite?5:release?2:0,hy=bob;
     poly([[10+hx,-24+hy],[12+hx,-36+hy],[18+hx,-30+hy],[22+hx,-33+hy],[25+hx,-23+hy],[33+hx,-20+hy],[31+hx,-15+hy],[14+hx,-15+hy]],color);
-    line([16+hx,-24+hy],[26+hx,-21+hy],light,2);dot(23+hx,-26+hy,'#c8a2e1');dot(24+hx,-26+hy,PX_INK);
+    poly([[13+hx,-24+hy],[16+hx,-21+hy],[28+hx,-20+hy],[30+hx,-17+hy],[15+hx,-16+hy]],shade,false);
+    poly([[15+hx,-29+hy],[17+hx,-33+hy],[21+hx,-27+hy],[28+hx,-22+hy],[23+hx,-22+hy]],light,false);
+    dot(23+hx,-26+hy,'#c8a2e1');dot(24+hx,-26+hy,PX_INK);
     line([31+hx,-20+hy],[34+hx,-20+hy],PX_INK,3);
     poly([[18+hx,-16+hy],[32+hx,-16+hy],[bite?33+hx:30+hx,(bite?-7:-12)+hy],[20+hx,(bite?-8:-12)+hy]],shade);
     if(bite) {line([25+hx,-15+hy],[27+hx,-12+hy],PX_LIGHT,2);line([30+hx,-15+hy],[29+hx,-12+hy],PX_LIGHT);}
   } else if(e.k==='nue') {
     const wings=[[[0,0],[-17,-21],[-39,-37],[-32,-38],[-23,-31],[-18,-36],[-9,-26],[5,-8]],[[0,0],[-18,-12],[-46,-14],[-41,-8],[-36,-10],[-29,-3],[-20,-7],[-7,7]],[[0,-2],[-12,11],[-25,38],[-18,34],[-14,26],[-9,30],[-7,16],[7,2]],[[0,0],[-6,-17],[-23,-27],[-25,-21],[-16,-12],[-16,2],[-4,8]]];
     const wing=mode==='glide'?[[0,0],[-20,-8],[-42,-4],[-31,2],[-20,1],[-8,9]]:wings[phase];
-    poly(wing.map(([a,b])=>[a-3,b-3]),'#77523e');
-    poly([[-9,-3],[-29,-2],[-35,8],[-20,9],[-8,5]],'#b18354');
-    poly([[-12,-7],[7,-10],[20,-4],[15,6],[-4,8]],'#b18354');
-    poly(wing,'#dfad65');line(wing[1],wing[2],'#f0cd8c',2);
+    const shade='#77523e',color='#c18b50',light='#f0cd8c';
+    poly(wing.map(([a,b])=>[a-4,b-4]),shade);
+    poly([[-9,-3],[-29,-2],[-35,8],[-20,9],[-8,5]],shade);
+    poly([[-12,-7],[7,-10],[20,-4],[15,6],[-4,8]],color);
+    poly([[-9,1],[3,3],[15,0],[13,5],[-4,7]],shade,false);
+    line([-8,-6],[5,-8],light,2);
+    poly(wing,shade);
+    // Three broad feather tiers retain a navy silhouette and dark trailing tips.
+    const center=wing.reduce((p,q)=>[p[0]+q[0]/wing.length,p[1]+q[1]/wing.length],[0,0]);
+    const inset=(p,k)=>[center[0]+(p[0]-center[0])*k,center[1]+(p[1]-center[1])*k];
+    poly(wing.map(p=>inset(p,.79)),color,false);
+    const lead=[wing[0],wing[1],wing[2]].map(p=>inset(p,.66));
+    line(lead[0],lead[1],light,2);line(lead[1],lead[2],light,2);
+    for(let n=3;n<wing.length-1;n+=2)line(inset(wing[n],.58),inset(wing[n],.9),shade);
     poly([[12,-10],[20,-14],[28,-10],[26,-2],[16,2]],'#e8d6b5');
-    poly([[26,-7],[35,-3],[26,0]],'#cf975b');line([20,-10],[25,-10],PX_INK,2);
-    line([4,7],[8,13],PX_INK,2);line([8,13],[14,12],'#cf975b',2);
+    poly([[15,-3],[24,-4],[26,-8],[25,-2],[17,1]],'#af9276',false);
+    line([18,-11],[22,-12],PX_LIGHT,2);
+    poly([[26,-7],[35,-3],[26,0]],color);line([27,-5],[30,-4],light);line([20,-10],[25,-10],PX_INK,2);
+    line([4,7],[8,13],PX_INK,4);line([4,7],[8,12],color,2);line([8,13],[14,12],PX_INK,3);line([9,12],[13,12],light);
   }
   const frame={sprite,ox,oy};PX_SUMMONS.set(key,frame);return frame;
 }
@@ -196,16 +222,22 @@ function pxToad(s,z) {
   const phase=u<.2?0:u<.65?1:2,key='toad:'+phase;
   if(!PX_SUMMONS.has(key)) {
     const cell=new PixelSurface(96,64),ox=48,oy=60,stretch=[0,4,-2][phase];
-    const poly=(pts,col)=>cell.poly(pts.map(([a,b])=>[ox+a,oy+b]),col,PX_INK);
+    const poly=(pts,col,outline=PX_INK)=>cell.poly(pts.map(([a,b])=>[ox+a,oy+b]),col,outline);
     for(const side of [-1,1]) {
       poly([[side*10,-13],[side*23,-15],[side*29,-6],[side*23,-1],[side*12,-2]],'#4e477c');
-      cell.line([ox+side*26,oy-2],[ox+side*32,oy-1],'#a29bc4',2);
+      poly([[side*24,-6],[side*28,-5],[side*30,-2],[side*23,-3]],'#8279a8',false);
+      poly([[side*24,-3],[side*30,-3],[side*33,-1],[side*23,-1]],'#8279a8');
+      cell.line([ox+side*25,oy-2],[ox+side*29,oy-2],'#bdb2d4');
     }
     poly([[-19,-5],[-18,-17-stretch],[-9,-24-stretch],[10,-24-stretch],[21,-15],[23,-5],[12,-2],[-11,-2]],'#8279a8');
-    poly([[-13,-19-stretch],[7,-21-stretch],[15,-14],[8,-8],[-12,-9]],'#a29bc4');
+    poly([[-17,-9],[-5,-7],[16,-9],[20,-6],[11,-3],[-10,-3]],'#4e477c',false);
+    poly([[-13,-19-stretch],[7,-22-stretch],[14,-17],[5,-13],[-12,-12]],'#bdb2d4',false);
     for(const a of [-10,8]) {cell.rect(ox+a-4,oy-27-stretch,9,9,PX_INK);cell.rect(ox+a-3,oy-26-stretch,7,7,PX_LIGHT);cell.rect(ox+a+1,oy-24-stretch,2,4,PX_INK);}
     cell.line([ox+8,oy-14],[ox+22,oy-14],PX_INK,phase===1?7:3);
-    cell.line([ox-8,oy-8],[ox-4,oy-1],'#4e477c',3);cell.line([ox+12,oy-7],[ox+16,oy-1],'#4e477c',3);
+    for(const [a,b]of [[-10,-5],[11,17]]) {
+      cell.line([ox+a,oy-12],[ox+b,oy-2],PX_INK,5);cell.line([ox+a,oy-12],[ox+b,oy-2],'#8279a8',3);
+      cell.line([ox+a-1,oy-11],[ox+b-1,oy-3],'#bdb2d4');
+    }
     PX_SUMMONS.set(key,{sprite:cell,ox,oy});
   }
   const k=Math.sin(u*Math.PI),reach=z.hitFoe?Math.max(k,.25):k,mouth=[x+f*18,y-14];

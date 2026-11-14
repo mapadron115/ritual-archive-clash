@@ -2,12 +2,14 @@
 // Generated previews and scripted checks are not human play or live-browser validation.
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
 const root=path.join(__dirname,'..'),writePNG=require('./png.cjs'),ctx=vm.createContext({console,assert});
+const prefix=process.argv[3]||'v18';
 vm.runInContext(['sim','fighters','fighters2','pixel','pixel-stage','pixel-world','render'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n'),ctx);
 vm.runInContext(`
 let frames=0,timelines=0;
 const empty=()=>new PixelSurface(240,200);
 const same=(a,b,msg)=>assert.deepEqual(a.data,b.data,msg);
 const draw=e=>{const s=empty();pxSummon(s,{x:240,y:240,face:1,...e});return s;};
+const tones=(s,colors)=>{for(const color of colors){const rgb=pxRGB(color);let count=0;for(let i=0;i<s.data.length;i+=4)if(s.data[i+3]&&rgb.every((v,c)=>s.data[i+c]===v))count++;assert(count>=4,'missing broad shade '+color);}};
 const layer=S=>{const s=new PixelSurface(640,360);for(const e of S.ents)pxSummon(s,e,S);for(const z of S.zones)if(z.k==='tongue')pxToad(s,z);return s;};
 const validate=(s,floor)=>{
   let count=0;for(let y=0;y<s.h;y++)for(let x=0;x<s.w;x++) {
@@ -21,6 +23,8 @@ for(const k of ['dog','nue'])for(const v of [0,1])for(const bite of [0,9,4])for(
   for(const t of [0,5,10,15]) {
     const e={k,v,bite,t,vx:12,vy},a=draw(e),b=draw({...e,face:-1});
     validate(a,k==='dog'?120:undefined);validate(b,k==='dog'?120:undefined);
+    tones(a,k==='dog'?(v?['#393449','#625774','#9484a6']:['#827d98','#c9c5cf','#efdfd7']):['#77523e','#c18b50','#f0cd8c']);
+    tones(a,[PX_INK]);
     for(let y=0;y<a.h;y++)for(let x=1;x<a.w;x++) {
       const i=(y*a.w+x)*4,j=(y*a.w+(240-x))*4;
       for(let c=0;c<4;c++)assert.equal(a.data[i+c],b.data[j+c],'directional cell mismatch');
@@ -37,7 +41,7 @@ for(const hitFoe of [false,true])for(const face of [-1,1]) {
   const shapes=new Set();
   for(let t=0;t<16;t++) {
     const z={k:'tongue',x:240,y:240,tx:240+face*180,face,t,dur:16,hitFoe},before=JSON.stringify(z),s=empty();
-    pxToad(s,z);validate(s,120);assert.equal(JSON.stringify(z),before);shapes.add(s.data.join(','));
+    pxToad(s,z);validate(s,120);tones(s,[PX_INK,'#4e477c','#8279a8','#bdb2d4']);assert.equal(JSON.stringify(z),before);shapes.add(s.data.join(','));
   }
   assert(shapes.size>8,'tongue animation lacks extension/recoil');
 }
@@ -79,7 +83,7 @@ assert(sawBite&&sawWait&&sawDive,'missing real summon phases');
 assert(PX_SUMMONS.size<128,'unbounded animation cache');
 
 globalThis.sheet=new PixelSurface(1280,1280);sheet.rect(0,0,sheet.w,sheet.h,PX_INK);
-pxText(sheet,'V17 / SUMMONS: BOUND, BITE, WING STROKES AND TONGUE',18,16,PX_LIGHT,2);
+pxText(sheet,'SUMMONS / NAVY CONTOURS, THREE TONES AND SEPARATE PAWS',18,16,PX_LIGHT,2);
 const rows=[['LIGHT HOUND',[0,5,10,15].map(t=>({k:'dog',t}))],['DARK HOUND',[0,5,10,15].map(t=>({k:'dog',v:1,t,face:-1}))],['BITE / RELEASE / WAIT / BOUND',[{k:'dog',bite:9},{k:'dog',bite:4},{k:'dog',o:0},{k:'dog',t:15}]],['NUE / WING STROKES',[0,5,10,15].map(t=>({k:'nue',t,vx:12,vy:0}))],['NUE / DIVE AND BANK',[-10,0,10,10].map((vy,n)=>({k:'nue',t:5,vx:12,vy,face:n%2?-1:1,done:n===3}))]];
 rows.forEach(([title,states],row)=>{
   pxText(sheet,title,18,48+row*210,'#b4c2ce');
@@ -99,4 +103,4 @@ demo.ents=[{k:'dog',o:0,x:430,y:GROUND,face:1,t:15},{k:'dog',o:0,x:590,y:GROUND,
 globalThis.scene=pxWorldSurface(demo,{});
 console.log('PASS',frames,'bounded hard-alpha summon frames; exact directional cells; four-phase bounds/wings, bite/release/wait, dive/bank and toad extension/recoil;',timelines,'actual art/owner timelines; freeze/time-stop, JSON stability, cleanup and read-only deterministic rendering');
 `,ctx);
-if(process.argv[2])for(const [name,key]of [['v17-summon-phases.png','sheet'],['v17-summon-scene.png','scene']])writePNG(path.join(process.argv[2],name),ctx[key]);
+if(process.argv[2])for(const [name,key]of [['summon-phases.png','sheet'],['summon-scene.png','scene']])writePNG(path.join(process.argv[2],prefix+'-'+name),ctx[key]);
