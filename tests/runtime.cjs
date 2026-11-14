@@ -322,6 +322,51 @@ for(const [sender,fromResult] of [['guest',false],['host',false],['host',true]])
   selectionReturnChecks++;
 }
 console.log('PASS',selectionReturnChecks,'actual online Change fighters actions notify either role, receive without echo and retain selection/start authority');
+// The host can still have snapshots in flight when the guest leaves a fight.
+// They must not inject hits/sound/results into selection, including before
+// the first start. A move list is still a running match and keeps receiving.
+let inactiveSnapshotChecks=0;
+const snapshotSounds=[],originalSnapshotSfx=sfx;
+sfx=e=>snapshotSounds.push(e.k);
+for(const route of ['local-select','remote-select','before-start']){
+  G.running=false;netWire(conn,'guest');wire.open();
+  const source=newMatch(0,1,12345);source.phase='fight';source.t=200;
+  source.f[0].x=500;source.f[1].x=575;
+  startMove(source.f[0],'p1');source.f[0].mt=BASIC.p1.su-1;step(source,[0,0]);
+  assert(source.ev.some(e=>e.k==='hit'),'snapshot fixture must contain a real hit');
+  const hitPacket={t:'s',s:JSON.parse(JSON.stringify(source)),e:JSON.parse(JSON.stringify(source.ev))};
+  if(route!=='before-start'){
+    wire.data({t:'start',p:[0,1],stage:'gallery'});togglePause();
+    wire.data(hitPacket);assert.equal(G.S,hitPacket.s,'open move list lost live hit');
+    assert(snapshotSounds.includes('hit'));assert(FX.nums.length>0);
+    if(route==='local-select'){
+      const action=html.slice(html.indexOf('id="pause"')).match(/onclick="([^"]+)">Change fighters/)[1];eval(action);
+    }else wire.data({t:'select'});
+  }
+  const waitingMatch=G.S,waitingOver=G.over,timers=timeouts.length,fx=JSON.stringify(FX),sounds=snapshotSounds.length;
+  const roster=$('col1').children[7];roster.focus();sent.length=0;
+  const finalState=JSON.parse(JSON.stringify(source));finalState.phase='over';finalState.wins=[2,0];
+  for(const packet of [hitPacket,{t:'s',s:finalState,e:[{k:'ko'}]}]){
+    wire.data(JSON.parse(JSON.stringify(packet)));
+    assert(G.S===waitingMatch,'inactive guest accepted a fight snapshot after '+route);
+    assert.equal(G.over,waitingOver);assert.equal(timeouts.length,timers,'inactive snapshot scheduled results');
+    assert(JSON.stringify(FX)===fx,'inactive snapshot injected fight effects');
+    assert.equal(snapshotSounds.length,sounds,'inactive snapshot played fight sound');
+    assert.equal(G.running,false);assert.equal($('stage').attributes['data-screen'],'select');
+    assert.equal(document.activeElement,roster);assert.equal(sent.length,0);
+    inactiveSnapshotChecks++;
+  }
+  wire.data({t:'pick',ch:6});wire.data({t:'stage',stage:'observatory'});
+  assert.equal(G.pick[0],6);assert.equal(G.stage,'observatory');
+  wire.data({t:'start',p:[6,9],stage:'observatory'});assert.equal(G.running,true);
+  const fresh=JSON.parse(JSON.stringify(G.S));fresh.t+=2;
+  wire.data({t:'s',s:fresh,e:[]});assert.equal(G.S,fresh,'host start did not restore snapshots');
+  togglePause();const paused=JSON.parse(JSON.stringify(fresh));paused.t+=2;
+  wire.data({t:'s',s:paused,e:[]});assert.equal(G.S,paused);assert.equal($('stage').attributes['data-screen'],'pause');
+  togglePause();
+}
+sfx=originalSnapshotSfx;
+console.log('PASS',inactiveSnapshotChecks,'inactive guest hit/result snapshots ignored across initial/local/remote selection; sound/effects/focus/timers untouched, live move lists and host restarts retained');
 // A hit on an odd host tick waits for the next snapshot. Starting another
 // fight before that snapshot must not deliver the old hit with the new state.
 let eventResetChecks=0;

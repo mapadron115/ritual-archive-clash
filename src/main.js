@@ -280,7 +280,9 @@ function netWire(conn, mode) {
     else if (m.t === 'stage' && mode==='guest') { G.stage=pxStageId(m.stage);if(!G.running)refreshSelection(); }
     else if (m.t === 'start' && mode==='guest') { G.pick = m.p; G.stage=pxStageId(m.stage);startFight(); }
     else if (m.t === 'select') toSelect(true);
-    else if (m.t === 's' && G.mode === 'guest') { G.S = m.s; for (const e of m.e) fxEvent(G.S, e); if (G.S.phase === 'over' && !G.over) endMatch(); if (G.S.phase !== 'over' && G.over) { G.over = false; show('none'); } }
+    // In-flight fight snapshots must not inject effects or results into selection.
+    // An online move list still has G.running=true and keeps its live updates.
+    else if (m.t === 's' && G.mode === 'guest' && G.running) { G.S = m.s; for (const e of m.e) fxEvent(G.S, e); if (G.S.phase === 'over' && !G.over) endMatch(); if (G.S.phase !== 'over' && G.over) { G.over = false; show('none'); } }
   });
   conn.on('close', () => { if (active() && (G.mode === 'host' || G.mode === 'guest')) { toMenu(true); netClose(); show('online'); netStatus('The other player disconnected.'); } });
 }
