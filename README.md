@@ -22,6 +22,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Script checks
 
+`node tests/domain-animation.cjs` checks all fifteen input-driven Domain/Maximum timelines in both player slots, cinematic countdown poses, actual release ticks, held casts, interruption/clash/expiry, snapshots and unchanged simulation. Add an output directory for phase, silhouette and actual-timeline scene previews.
+
 `node tests/cast-animation.cjs` checks palm-cast and spoken-art silhouettes, actual release events and projectile origins, immediate dash transitions, frozen/time-stopped frames, snapshots and unchanged simulation. Add an output directory for phase, silhouette and in-stage previews.
 
 `node tests/art-animation.cjs` checks all 45 arts for both owners, exact startup/contact/recovery boundaries, six distinct art-family silhouettes across all builds, release-hand alignment, frozen/snapshotted frames and unchanged deterministic outcomes. Add an output directory for color/silhouette sheets and actual firing-tick scenes.

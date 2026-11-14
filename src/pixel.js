@@ -106,6 +106,19 @@ const PX_POSES = {
   speech: {h:[17,-75],tilt:.15,s:[9,-61],hip:[-2,-33],a:[[24,-46],[36,-55]],b:[[-18,-39],[-28,-29]],l:[[22,-17],[32,0]],r:[[-22,-19],[-32,0]],voice:true},
   speechre: {h:[4,-69],tilt:.25,s:[0,-57],hip:[-5,-31],a:[[20,-45],[9,-57]],b:[[-19,-41],[-23,-28]],l:[[16,-16],[26,0]],r:[[-23,-17],[-31,0]]},
   speechsettle: {h:[-2,-77],s:[-5,-62],hip:[-5,-34],a:[[14,-48],[6,-65]],b:[[-19,-45],[-17,-34]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
+  // Domain introductions use the existing sixty-tick cinematic countdown.
+  // A tall closed seal opens into a wide, sustained frame; Maximums coil low instead.
+  domgather: {h:[-6,-81],s:[-8,-65],hip:[-5,-35],a:[[20,-47],[27,-33]],b:[[-25,-48],[-31,-34]],l:[[12,-18],[23,0]],r:[[-23,-19],[-32,0]]},
+  domseal: {h:[0,-82],s:[-2,-66],hip:[-4,-36],a:[[18,-62],[8,-84]],b:[[-13,-62],[3,-82]],l:[[10,-19],[20,0]],r:[[-18,-20],[-26,0]]},
+  domopen: {h:[4,-82],s:[1,-66],hip:[-3,-35],a:[[29,-61],[45,-73]],b:[[-27,-61],[-40,-72]],l:[[18,-18],[29,0]],r:[[-25,-19],[-35,0]],palm:true},
+  domhold: {h:[2,-80],s:[-1,-64],hip:[-4,-34],a:[[26,-49],[42,-57]],b:[[-25,-51],[-38,-59]],l:[[18,-18],[29,0]],r:[[-25,-18],[-35,0]],palm:true},
+  domsettle: {h:[0,-79],s:[-3,-63],hip:[-5,-34],a:[[20,-44],[27,-35]],b:[[-22,-47],[-25,-36]],l:[[14,-18],[24,0]],r:[[-23,-18],[-32,0]]},
+  maxcoil: {h:[-11,-72],s:[-13,-56],hip:[-8,-28],a:[[13,-36],[1,-44]],b:[[-26,-40],[-7,-48]],l:[[19,-13],[32,0]],r:[[-27,-14],[-38,0]]},
+  maxcharge: {h:[-15,-76],s:[-17,-59],hip:[-10,-30],a:[[-5,-42],[-19,-33]],b:[[5,-46],[18,-51]],l:[[18,-14],[32,0]],r:[[-30,-16],[-40,0]]},
+  maxopen: {h:[3,-83],s:[0,-67],hip:[-4,-35],a:[[25,-56],[38,-77]],b:[[-27,-55],[-38,-75]],l:[[21,-18],[33,0]],r:[[-25,-19],[-36,0]]},
+  ultleap: {h:[-9,-78],tilt:-.15,s:[-7,-63],hip:[2,-35],a:[[15,-60],[10,-83]],b:[[-24,-48],[-32,-60]],l:[[22,-50],[8,-38]],r:[[-15,-22],[-30,-32]]},
+  ultdive: {h:[20,-58],tilt:.45,s:[7,-49],hip:[-13,-31],a:[[32,-34],[40,-13]],b:[[-9,-45],[-25,-56]],l:[[-3,-23],[7,-7]],r:[[-31,-39],[-44,-49]]},
+  ultimpact: {h:[11,-53],s:[4,-39],hip:[-9,-22],a:[[28,-22],[36,-4]],b:[[-17,-31],[-28,-17]],l:[[14,-11],[29,0]],r:[[-27,-12],[-37,0]]},
   clapw: {h:[-2,-79],s:[-4,-64],hip:[-4,-35],a:[[23,-55],[32,-65]],b:[[-21,-55],[-29,-65]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
   signw: {h:[-2,-80],s:[-3,-65],hip:[-4,-35],a:[[12,-49],[8,-56]],b:[[-12,-49],[-1,-57]],l:[[13,-18],[23,0]],r:[[-21,-19],[-29,0]]},
   throww: {h:[-10,-79],s:[-12,-63],hip:[-6,-35],a:[[-22,-53],[-29,-74]],b:[[7,-50],[21,-60]],l:[[10,-18],[20,0]],r:[[-25,-19],[-34,0]]},
@@ -399,13 +412,52 @@ function pxPose(S,f) {
   if(f.st === 'down') return f.stT>28?'collapse':f.stT>12?'down':f.stT>6?'rise1':'rise2';
   if(f.st === 'ko') return f.y<GROUND ? pxAirHitPose(f) : 'down';
   if(f.st === 'hit') return f.y<GROUND ? pxAirHitPose(f) : f.stT>8?'hit':'hitrecover';
-  if(f.st === 'cast') return 'clap';
+  if(f.st === 'cast') return pxDomainPose(S,f);
   if(f.st === 'idle' && S.phase === 'over' && S.wins[f.i] >= 2) return 'win';
   if(f.st === 'idle') return Math.floor(S.t/22)%2 ? 'breathe' : 'idle';
   return PX_POSES[f.st] ? f.st : 'idle';
 }
 // Velocity is an existing active-physics clock: these poses hold during hit-stop and Domains.
 function pxAirHitPose(f) { return f.vy < -7 ? 'launch' : f.vy < -2 ? 'airarch' : f.vy < 3 ? 'aircrest' : f.vy < 9 ? 'fall' : 'fallbrace'; }
+function pxDomainPose(S,f) {
+  const d=S.dom && S.dom.o===f.i ? S.dom : null,maximum=CH[f.ch].dom.maximum;
+  // An expired/interrupted Domain must not borrow a new owner's clock.
+  if(!d)return f.stT>10?'domsettle':'ready';
+  const t=d.t;
+  // Input-driven starts already execute Domain tick 1 before the cinematic freeze.
+  if(t<=1 && S.freeze>0) {
+    const phase=S.freeze>40?0:S.freeze>20?1:2;
+    const load=d.k==='nuclear'||d.k==='bloodsweep'?'cannonload':d.k==='megaphone'?'speechload':d.k==='allout'?'hookload':'maxopen';
+    return (maximum?['maxcoil','maxcharge',load]:['domgather','domseal','domopen'])[phase];
+  }
+  // Charge and release boundaries match the existing DOMAIN definitions. No new clocks/state.
+  if(d.k==='nuclear' || d.k==='bloodsweep') {
+    const fire=d.k==='nuclear'?72:40;
+    return t<fire/2?'cannonw':t<fire?'cannonload':t<fire+5?'cannon':t<fire+13?'cannonre':'cannonsettle';
+  }
+  if(d.k==='megaphone')return t<12?'speechw':t<24?'speechload':t<29?'speech':t<42?'speechre':'speechsettle';
+  if(d.k==='howitzer')return t<46?(f.vy<0?'ultleap':'ultdive'):t<51?'ultimpact':'cannonsettle';
+  if(d.k==='allout')return t<12?'hookw':!d.done&&t<40?'hookload':t<40?'punch':t<48?'punchre':'ready';
+  if(d.k==='ovation') {
+    const phase=(t+13)%14;
+    return t>77?'clapseparate':t>73?'clapre':t>71?'clap':phase<3?'clap':phase<7?'clapre':phase<11?'clapseparate':'clapload';
+  }
+  if(d.k==='effigy') {
+    const next=[10,24,38,60].find(n=>t<=n+8);
+    if(next===undefined)return 'throwsettle';
+    return t<next-4?'throww':t<next?'wind':t<next+3?'throw':t<next+7?'throwre':'throwsettle';
+  }
+  if(d.k==='web' || d.k==='jce') {
+    const last=d.k==='web'?62:56;
+    if(t>last+7)return d.k==='web'?'clapseparate':'slashsettle';
+    const phase=d.k==='web'?(t+10)%24:t%8;
+    return d.k==='web'?(phase<3?'clap':phase<8?'clapre':phase<17?'clapseparate':'clapload'):t<8?'slashload':
+      (phase<2&&t>0?'slash':phase<5&&t>0?'slashre':'slashload');
+  }
+  // These Domains allow movement again after the original twenty cast ticks.
+  // Never cover an attack, interruption or guard with a persistent Domain drawing.
+  return f.stT>14?(maximum?'maxopen':'domopen'):f.stT>7?'domhold':'domsettle';
+}
 function pxArtPose(m) {
   if(m.id==='dontmove' || m.id==='blastaway' || m.id==='crushed')return 'speech';
   return m.pose==='slashw'?'slash':m.pose;
