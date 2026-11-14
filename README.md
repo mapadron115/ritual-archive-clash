@@ -22,6 +22,10 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Script checks
 
+`node tests/trails.cjs` checks all projectile wakes, birth/flight/expiry phases, diagonal direction, real art samples, freeze/JSON stability and unchanged simulation.
+
+`node tests/airborne.cjs` checks actual airborne reactions, freeze holds, takeoff/landing/body-impact dust, event coalescing, bounds and lifecycle.
+
 `node tests/contacts.cjs` checks contact-effect phases, real hit/block/break event wiring, exact directional mirroring, expiry and unchanged simulation state.
 
 `node tests/audio.cjs` checks synthesized sound scheduling, damage-dependent hit layers, shared compressor/master gain, mute, audio resume, cached noise, voice limits and node cleanup. Add an output directory to generate a browser audition page and envelope preview. Mocked audio checks do not establish how the game sounds.

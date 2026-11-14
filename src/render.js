@@ -1,6 +1,13 @@
 'use strict';
 // Event-driven impact effects and sounds. World and HUD rasterization live in pixel-*.js.
-const FX = { parts: [], rings: [], lines: [], contacts: [], shake: 0, flash: 0, flashCol: '#fff', banner: null, ghosts: [], nope: [0, 0] };
+const FX = { parts: [], rings: [], lines: [], contacts: [], dust: [], shake: 0, flash: 0, flashCol: '#fff', banner: null, ghosts: [], nope: [0, 0] };
+function groundDust(e) {
+  // Physics emits land and thud together on knockdown. Keep one larger floor contact.
+  const prior=FX.dust.find(p=>p.t===0 && p.kind!=='jump' && Math.abs(p.x-e.x)<16);
+  if(prior && e.k!=='jump') {if(e.k==='thud'){prior.kind='thud';prior.life=24;}return;}
+  FX.dust.push({x:e.x,y:GROUND,kind:e.k,t:0,life:e.k==='thud'?24:e.k==='land'?18:12});
+  if(FX.dust.length>32)FX.dust.shift();
+}
 // Contact direction is presentation only. Older block events have no direction;
 // infer their defender from the contact root, including on remote clients.
 function contact(S,e,kind) {
@@ -36,8 +43,8 @@ function fxEvent(S, e) {
     case 'nuke': FX.shake = 28; FX.flash = .8; FX.flashCol = '#fff'; break;
     case 'blast': star(e.x, e.y, 26, '#fff', 6); break;
     case 'wall': star(e.x, e.y, 46, '#fff', 10); puff(e.x, e.y + 40, 6); FX.shake = 12; break;
-    case 'thud': puff(e.x, e.y, 6); FX.shake = Math.max(FX.shake, 5); break;
-    case 'land': case 'jump': puff(e.x, GROUND, 3); break;
+    case 'thud': groundDust(e); FX.shake = Math.max(FX.shake, 5); break;
+    case 'land': case 'jump': groundDust(e); break;
     case 'tick': burst(e.x, e.y, 3, '#c9b8ff', 2); break;
     case 'blackflash': {
       FX.impact = { t: 0, sil: 5, kind: 'black', a: e.a }; FX.bf = { x: e.x, y: e.y, t: 0, life: 36, rot: Math.random() * 7 }; FX.shake = 26;
@@ -61,6 +68,7 @@ function fxEvent(S, e) {
   if (!FX.silent && typeof sfx === 'function') sfx(e);
 }
 function fxTick() {
+  for(const e of FX.dust)e.t++; FX.dust=FX.dust.filter(e=>e.t<e.life);
   for(const e of FX.contacts)e.t++; FX.contacts=FX.contacts.filter(e=>e.t<e.life);
   for (const p of FX.parts) { p.t++; p.x += p.vx; p.y += p.vy; p.vy += .25; p.vx *= .95; }
   FX.parts = FX.parts.filter(p => p.t < p.life); if (FX.parts.length > 400) FX.parts.splice(0, FX.parts.length - 400);

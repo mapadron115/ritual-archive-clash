@@ -161,7 +161,7 @@ function buildSelect() {
 }
 function pickMode(m) { G.mode = m; show('select'); buildSelect(); }
 function startFight() {
-  G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); FX.parts = []; FX.contacts = []; FX.banner = null; FX.impact = null; FX.bf = null;
+  G.S = newMatch(G.pick[0], G.pick[1], (Math.random() * 1e9) | 0); FX.parts = []; FX.contacts = []; FX.dust = []; FX.banner = null; FX.impact = null; FX.bf = null;
   G.S.stage=pxStageId(G.stage);
   AI_MEM[0] = {}; AI_MEM[1] = {}; FX.rings = []; FX.shake = 0; FX.flash = 0; FX.nope = [0, 0]; FX.stars = []; FX.puffs = []; FX.nums = []; FX.lines = []; FX.words = []; FX.silent = false; G.paused = false; G.running = true; G.over = false; G.acc = 0; G.remoteIn = 0; G.remoteTap = 0; G.lastSent = -1; clearInput();
   if (G.mode === 'host') netSend({ t: 'start', p: G.pick, stage: G.S.stage });

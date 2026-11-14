@@ -103,7 +103,10 @@ const PX_POSES = {
   boww: {h:[-4,-80],s:[-6,-65],hip:[-5,-35],a:[[12,-60],[24,-65]],b:[[-20,-58],[-22,-70]],l:[[11,-18],[21,0]],r:[[-22,-19],[-30,0]]},
   hitrecover: {h:[-8,-73],s:[-8,-58],hip:[-3,-32],a:[[9,-43],[18,-49]],b:[[-25,-44],[-24,-54]],l:[[18,-16],[27,0]],r:[[-21,-18],[-29,0]]},
   launch: {h:[-18,-73],s:[-15,-57],hip:[0,-32],a:[[5,-40],[20,-48]],b:[[-32,-42],[-40,-53]],l:[[22,-29],[32,-10]],r:[[-14,-20],[-30,-26]]},
+  airarch: {h:[-25,-69],s:[-20,-53],hip:[1,-29],a:[[3,-35],[17,-40]],b:[[-38,-39],[-46,-48]],l:[[24,-34],[36,-20]],r:[[-12,-23],[-30,-31]]},
+  aircrest: {h:[-23,-63],s:[-18,-47],hip:[0,-26],a:[[5,-29],[19,-35]],b:[[-36,-32],[-44,-39]],l:[[23,-32],[38,-16]],r:[[-16,-23],[-34,-30]]},
   fall: {h:[-15,-66],s:[-13,-50],hip:[-1,-28],a:[[8,-32],[21,-40]],b:[[-30,-34],[-39,-43]],l:[[20,-20],[35,-8]],r:[[-16,-12],[-32,-18]]},
+  fallbrace: {h:[-7,-60],s:[-9,-44],hip:[0,-24],a:[[13,-28],[25,-18]],b:[[-25,-28],[-32,-16]],l:[[20,-24],[31,-5]],r:[[-17,-17],[-28,-7]]},
   // Composed curled bodies, raster-rotated only for their horizontal ground contact.
   collapse: {h:[3,-58],s:[-3,-43],hip:[3,-18],a:[[16,-32],[29,-44]],b:[[-18,-30],[-26,-41]],l:[[20,-21],[30,-2]],r:[[-10,-10],[-19,0]]},
   down: {h:[0,-76],s:[-2,-60],hip:[0,-32],a:[[9,-48],[7,-62]],b:[[-13,-43],[-18,-29]],l:[[5,-15],[10,0]],r:[[-8,-18],[-3,-1]]},
@@ -343,13 +346,15 @@ function pxPose(S,f) {
   if(f.st === 'walk') return 'walk'+(Math.floor(f.walkT/6)%4);
   if(f.st === 'block') return 'guard';
   if(f.st === 'down') return f.stT>28?'collapse':f.stT>12?'down':f.stT>6?'rise1':'rise2';
-  if(f.st === 'ko') return f.y<GROUND ? (f.vy<0?'launch':'fall') : 'down';
-  if(f.st === 'hit') return f.y<GROUND ? (f.vy<0?'launch':'fall') : f.stT>8?'hit':'hitrecover';
+  if(f.st === 'ko') return f.y<GROUND ? pxAirHitPose(f) : 'down';
+  if(f.st === 'hit') return f.y<GROUND ? pxAirHitPose(f) : f.stT>8?'hit':'hitrecover';
   if(f.st === 'cast') return 'clap';
   if(f.st === 'idle' && S.phase === 'over' && S.wins[f.i] >= 2) return 'win';
   if(f.st === 'idle') return Math.floor(S.t/22)%2 ? 'breathe' : 'idle';
   return PX_POSES[f.st] ? f.st : 'idle';
 }
+// Velocity is an existing active-physics clock: these poses hold during hit-stop and Domains.
+function pxAirHitPose(f) { return f.vy < -7 ? 'launch' : f.vy < -2 ? 'airarch' : f.vy < 3 ? 'aircrest' : f.vy < 9 ? 'fall' : 'fallbrace'; }
 // Startup pair, recoil, settle. All selection uses existing active simulation clocks.
 const PX_ATTACKS = {
   punch:['wind','punchload','punchre','ready'],punch2:['wind','punchload','punch2re','ready'],

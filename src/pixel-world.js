@@ -71,6 +71,25 @@ function pxOutlinedText(s,text,x,y,col,scale=1) {
   for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]])pxText(s,text,Math.round(x)+dx,Math.round(y)+dy,PX_INK,scale);
   pxText(s,text,Math.round(x),Math.round(y),col,scale);
 }
+const PX_DUST=new Map();
+function pxDust(s,e) {
+  const key=e.kind+':'+e.t;
+  if(!PX_DUST.has(key)) {
+    const cell=new PixelSurface(192,96),t=e.t,heavy=e.kind==='thud',jump=e.kind==='jump';
+    const x=96,y=80,u=Math.floor(t/3),spread=(heavy?13:jump?8:10)+u*(heavy?5:3);
+    for(const dir of [-1,1])for(let n=0;n<(heavy?3:2);n++) {
+      const cx=x+dir*(spread+n*7),cy=y-2-Math.min(12,u*2)-n*2;
+      const r=Math.max(1,(heavy?12:jump?6:9)-u-n*2),h=Math.max(1,r*.55);
+      if(t<2) {cell.poly([[x+dir*3,y],[cx,y-(heavy?8:4)],[cx+dir*9,y]],'#b7a98f');continue;}
+      // Angular, shrinking clusters rise and separate; their lowest pixel stays on/above the floor.
+      cell.poly([[cx-r,cy],[cx-r+2,cy-h],[cx,cy-h-2],[cx+r-2,cy-h],[cx+r,cy],[cx+r-2,cy+2],[cx-r+2,cy+2]],'#857e73');
+      cell.poly([[cx-r+2,cy-1],[cx-2,cy-h],[cx+3,cy-h],[cx+r-2,cy-1]],'#c8bba0');
+      if(heavy&&t<15)cell.rect(cx+dir*6,Math.min(y-2,cy-5-u),2,2,'#ddd0b4');
+    }
+    PX_DUST.set(key,cell);
+  }
+  s.blit(PX_DUST.get(key),Math.round(e.x/2)-96,Math.round(e.y/2)-80);
+}
 function pxDomain(s,S) {
   const d=S.dom;if(!d)return;
   const ac=PX_KITS[S.f[d.o].ch].accent,t=Math.floor(S.t/4);
@@ -138,8 +157,36 @@ function pxSummon(s,e) {
     poly([[12,-10],[20,-13],[27,-9],[25,-2],[15,2]],'#e8d6b5');poly([[25,-6],[34,-3],[25,0]],'#cf975b');s.rect(x+22*f,y-9,2,2,PX_INK);
   }
 }
+function pxProjectileColor(p) {return p.col||({cut:'#e79b9b',red:'#df798b',flame:'#eaaa65',shell:'#c5bd8c',pellet:'#edd095',gum:'#dc8fb8',nail:'#d7cfc0',knife:'#f0d997',stone:'#9e9d91',wave:'#bca782'})[p.k]||'#c2d8d1';}
+function pxProjectileTrail(s,p) {
+  const speed=Math.hypot(p.vx||0,p.vy||0),age=Math.max(0,p.t||0);
+  if(speed<.5 || age<1 || p.life<=0)return;
+  // Current velocity gives a short directional wake, not a second collision silhouette.
+  // Age limits its birth length; lifetime thins it before expiry. No history on simulation objects.
+  const dx=(p.vx||0)/speed,dy=(p.vy||0)/speed,nx=-dy,ny=dx,x=p.x/2,y=p.y/2;
+  const blade=['cut','knife','nail'].includes(p.k),solid=p.k==='stone',smoke=p.k==='shell',beads=p.k==='gum';
+  const length=Math.min(blade?34:solid?25:52,speed*Math.min(age,6)/2)*Math.min(1,(p.life===undefined?8:p.life)/6);
+  const width=blade?2:solid?2:smoke?4:Math.min(7,(p.r||10)/3),col=pxProjectileColor(p);
+  const pt=(d,off=0)=>[x-dx*d+nx*off,y-dy*d+ny*off],phase=Math.floor(age/3)%3;
+  if(solid || smoke || beads) {
+    for(let n=1;n<=4;n++) {
+      const d=length*(n+phase*.18)/4;if(d>length)continue;
+      const [cx,cy]=pt(d,(n%2?1:-1)*(solid?2:1)),r=Math.max(1,width*(1-n/5));
+      s.poly([[cx-r,cy],[cx,cy-r],[cx+r,cy],[cx,cy+r]],smoke?'#767c7b':solid?'#847c70':'#9a698e');
+      if(n<3)s.dot(cx,cy,smoke?'#c0bba8':col);
+    }
+  } else {
+    s.poly([pt(2,-width),pt(length*.62,-width*.4),pt(length),pt(length*.62,width*.4),pt(2,width)],'#555565');
+    s.line(pt(2),pt(length*.64),col,blade?1:2);
+    for(let n=0;n<2;n++) {
+      const d=length*(.7+n*.18),off=(n?1:-1)*(3+phase);
+      s.line(pt(d,off),pt(Math.min(length,d+4),off),n?col:'#92929a');
+    }
+  }
+}
 function pxProjectile(s,p) {
-  const x=p.x/2,y=p.y/2,f=p.vx<0?-1:1,r=Math.max(3,(p.r||9)/2),col=p.col||({cut:'#e79b9b',red:'#df798b',flame:'#eaaa65',shell:'#c5bd8c',pellet:'#edd095',gum:'#dc8fb8',nail:'#d7cfc0',knife:'#f0d997',stone:'#9e9d91',wave:'#bca782'})[p.k]||'#c2d8d1';
+  pxProjectileTrail(s,p);
+  const x=p.x/2,y=p.y/2,f=p.vx<0?-1:1,r=Math.max(3,(p.r||9)/2),col=pxProjectileColor(p);
   const poly=(pts,c=col)=>s.poly(pts.map(([a,b])=>[x+a*f,y+b]),c,PX_INK);
   if(p.k==='cut') {poly([[-24,-3],[6,-10],[18,-8],[8,-2],[-4,9],[-20,11],[-8,1]]);s.line([x-15*f,y+7],[x+12*f,y-7],PX_LIGHT);}
   else if(p.k==='knife'||p.k==='nail') {poly([[-10,-2],[8,-2],[14,0],[8,2],[-10,2]]);s.line([x-9*f,y-4],[x-9*f,y+4],col,2);}
@@ -155,6 +202,7 @@ function pxWorldSurface(S,F=FX) {
   if(impact)s.rect(0,0,640,360,impact.kind==='black'?'#111623':'#f8edce');
   for(const z of S.zones)if(z.k!=='beam')pxZone(s,S,z);
   for(const e of S.ents)pxSummon(s,e);
+  for(const e of F.dust||[])pxDust(s,e);
   for(const p of F.puffs||[]) {const r=p.r/2*(1-p.t/p.life*.5);s.ellipse(p.x/2,p.y/2,r,r*.55,'#b9ad9c');s.ellipse(p.x/2-2,p.y/2-2,r*.7,r*.4,'#d1c2a7');}
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const f of S.f)if(f.gum>0){const o=S.f[1-f.i];s.line([o.x/2,o.y/2-40],[(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],'#d78bb7',2);s.line([(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],[f.x/2,f.y/2-40],'#d78bb7',2);}
