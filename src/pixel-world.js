@@ -92,8 +92,10 @@ function pxActorAnchor(f) {
 function pxBannerLayout(b) {
   if(!b)return null;
   const size=Math.min(b.small?2:3,Math.max(1,Math.floor(550/Math.max(1,pxTextWidth(b.txt)))));
-  const w=pxTextWidth(b.txt,size),y=b.small?105:150;
-  return {size,textX:320-w/2,textY:y,x:b.small?320-w/2-10:0,y:y-9,w:b.small?w+20:640,h:size*7+18};
+  // Opening announcements keep their large type, but leave the first jump and
+  // approach visible. The old full-width strip crossed both starting fighters.
+  const w=pxTextWidth(b.txt,size),y=b.opening?76:b.small?105:150,pad=b.opening?4:9,side=b.opening?6:10,compact=b.opening||b.small;
+  return {size,textX:320-w/2,textY:y,x:compact?320-w/2-side:0,y:y-pad,w:compact?w+side*2:640,h:size*7+pad*2};
 }
 // A result survives expired/missed FX events, including a guest's first snapshot.
 // phaseT is the existing active round clock; this adds no simulation state.
