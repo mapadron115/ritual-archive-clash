@@ -360,6 +360,19 @@ function pxFighterShadow(s,f) {
   const scale=f.big>0?1.3:1;
   s.ellipse(Math.round(f.x/2),307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
 }
+// A brief boot wake connects the kick's low load to its high extension. It is
+// tucked behind the body, follows the existing active clock, and adds no FX state.
+function pxKickSweep(s,f) {
+  if(f.st!=='atk'||f.move!=='k'||f.mt<BASIC.k.su||f.mt>=BASIC.k.su+BASIC.k.ac)return;
+  const age=f.mt-BASIC.k.su,h=PX_KITS[f.ch].height||1,scale=f.big>0?1.3:1;
+  const cell=new PixelSurface(144,128),x=64,y=120;
+  const tail=age*6;
+  const poly=(pts,col)=>cell.poly(pts.map(([a,b])=>[x+a,y+b*h]),col);
+  poly([[tail-10,-7-tail*.35],[tail+8,-8-tail*.35],[34,-22],[49,-39],[57,-52],[64,-55],[65,-46],[58,-29],[43,-15],[22,-5],[tail,-2-tail*.35]],PX_INK);
+  poly([[tail-5,-7-tail*.35],[tail+9,-10-tail*.35],[36,-24],[51,-41],[59,-52],[62,-52],[62,-46],[55,-31],[41,-17],[21,-7],[tail+1,-4-tail*.35]],'#a7aaa5');
+  poly([[tail+4,-8-tail*.35],[24,-11],[40,-22],[54,-41],[60,-50],[59,-43],[51,-27],[37,-16],[21,-9]],'#f1e5cd');
+  s.blit(cell,Math.round(f.x/2)-(f.face<0?79:64)*scale,Math.round(f.y/2)-120*scale,scale,f.face<0);
+}
 function pxPaintFighter(s,S,f,impact) {
   const x=Math.round(f.x/2),y=Math.round(f.y/2),scale=f.big>0?1.3:1,alt=f.i===1&&S.f[0].ch===f.ch;
   if(f.inv>0 && S.t%4<2)return;
@@ -995,6 +1008,7 @@ function pxWorldSurface(S,F=FX) {
   pxJceRhythm(s,S);
   pxOvationRhythm(s,S);
   pxGumTether(s,S);
+  if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2))pxKickSweep(s,f);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
   for(const p of S.proj)pxProjectile(s,p);
