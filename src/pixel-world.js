@@ -246,6 +246,32 @@ function pxChargeCue(s,f) {
   }
   s.blit(cell,Math.round(f.x/2)-(f.face<0?47:48),Math.round(f.y/2)-90,1,f.face<0);
 }
+// Nuclear Shell's sustained pressure gathers toward the forward hand. Use its
+// existing active Domain age, including the held cinematic tick, never FX time.
+function pxMaximumCharge(s,S,f) {
+  const d=S.dom;
+  if(!d||d.o!==f.i||d.k!=='nuclear'||d.t<1||d.t>=72||f.st!=='cast')return;
+  const cell=new PixelSurface(112,112),ox=32,oy=100,x=ox+28,y=oy-45;
+  const phase=Math.min(5,Math.floor((d.t-1)/12)),tier=Math.floor(phase/2),r=16-tier*2;
+  const shade='#a96341',body='#e7a267',light='#ffd69a',ivory='#fff2bd';
+  // A broad hollow octagonal collar keeps the hand visible and tightens as
+  // pressure builds. Its warm material matches the existing cannon beam.
+  const oct=(rx,ry)=>[[x-rx,y-ry+6],[x-rx+6,y-ry],[x+rx-6,y-ry],[x+rx,y-ry+6],[x+rx,y+ry-6],[x+rx-6,y+ry],[x-rx+6,y+ry],[x-rx,y+ry-6]];
+  cell.poly(oct(r,21-tier*2),shade,PX_INK);
+  cell.poly(oct(r-2,19-tier*2),[body,light,ivory][tier]);
+  const hole=new PixelSurface(112,112);hole.poly(oct(r-6,15-tier*2),'#ffffff');
+  for(let p=0;p<cell.data.length;p+=4)if(hole.data[p+3])cell.data.fill(0,p,p+4);
+  cell.line([x-r+6,y-18+tier*2],[x+r-6,y-18+tier*2],light,3);
+  cell.line([x-r+3,y-12],[x-r+8,y-17],ivory,2);
+  // Paired broad vanes approach the collar, leaving a clear forward center.
+  const gap=28-phase*3;
+  for(const dir of [-1,1]) {
+    const cy=y+dir*13,fx=x+gap;
+    cell.poly([[fx+4,cy-dir*7],[fx-4,cy],[fx+4,cy+dir*7],[fx+1,cy]],body,PX_INK);
+    cell.line([fx+2,cy-dir*4],[fx-2,cy],ivory,2);
+  }
+  s.blit(cell,Math.round(f.x/2)-(f.face<0?111-ox:ox),Math.round(f.y/2)-oy,1,f.face<0);
+}
 function pxPaintFighter(s,S,f,impact) {
   const x=Math.round(f.x/2),y=Math.round(f.y/2),scale=f.big>0?1.3:1,alt=f.i===1&&S.f[0].ch===f.ch;
   if(!impact)s.ellipse(x,307,Math.max(9,23-(GROUND-f.y)/30)*scale,3,'#776c69');
@@ -260,6 +286,7 @@ function pxPaintFighter(s,S,f,impact) {
   if(f.st==='stun')for(let n=0;n<3;n++){const a=S.t*.12+n*2.1;pxBurst(s,x+Math.cos(a)*14,y-97+Math.sin(a)*3,3,'#eed790');}
   if(f.nails>0)for(let n=0;n<f.nails;n++)s.line([x-5+n*6,y-43+n%2*5],[x-2+n*6,y-50+n%2*5],'#e8d7bc',2);
   pxChargeCue(s,f);
+  pxMaximumCharge(s,S,f);
 }
 // Beam families use only the serialized zone's active age/material. Clip columns
 // before painting, including the wide Maximum cones; no animation state/cache.
