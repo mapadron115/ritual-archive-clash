@@ -560,6 +560,40 @@ function pxEffigyRite(s,S) {
   const flip=d.o===1;
   s.blit(cell,Math.round(o.x/2)-(flip?cell.w-1-ox:ox),Math.round((o.y-70)/2)-oy,1,flip);
 }
+// Shrine's flank planes mark its existing sixteen-tick rhythm. The open center
+// is a readability lane, not a safe area or an attack's collision boundary.
+function pxShrineRhythm(s,S) {
+  const d=S.dom;
+  if(!d||d.k!=='shrine'||S.phase!=='fight'||d.t<1||d.t>=192)return;
+  const f=S.f[d.o],o=S.f[1-d.o];
+  if(f.st==='ko'||o.st==='ko')return;
+  const beat=Math.floor(d.t/16),age=d.t%16,snap=beat>0&&age<4;
+  const phase=snap?Math.floor(age/2):Math.min(2,Math.floor((age-(beat?4:1))/(beat?4:5)));
+  const cell=new PixelSurface(224,144),ox=112,oy=100;
+  const shade=['#854353','#b56b7a','#d5a0a4'][snap?2:phase];
+  const body=['#ce7188','#efa8b8','#ffe0dc'][snap?2:phase],light='#fff1df';
+  const poly=(pts,c)=>cell.poly(pts.map(([x,y])=>[ox+x,oy+y]),c,PX_INK);
+  const line=(a,b,c,w=1)=>cell.line([ox+a[0],oy+a[1]],[ox+b[0],oy+b[1]],c,w);
+  // Broad, bevelled incisions alternate their slope each volley. They approach
+  // from the flanks, staying outside the actor tag, face and body at every phase.
+  for(const side of [-1,1]) {
+    const tip=snap?34+phase*8:50-phase*8,tail=snap?96+phase*5:108-phase*3;
+    const slope=beat%2?-1:1;
+    const at=(x,y)=>[side*x,-25+y*slope];
+    poly([at(tip,-12),at(tail,-42),at(tail-8,-24),at(tip+6,0)],shade);
+    poly([at(tip+3,-11),at(tail-3,-39),at(tail-12,-27),at(tip+8,-4)],body);
+    line(at(tip+7,-11),at(tail-8,-35),light,2);
+    poly([at(tip,20),at(tail-8,44),at(tail-15,28),at(tip+8,10)],shade);
+    poly([at(tip+4,19),at(tail-12,40),at(tail-18,29),at(tip+10,14)],body);
+    line(at(tip+8,19),at(tail-17,36),light,2);
+    if(snap)for(const y of [-30,25]) {
+      const x=tip+10;
+      poly([at(x,y-5),at(x+13,y-2),at(x+18,y+5),at(x+4,y+2)],body);
+    }
+  }
+  const flip=d.o===1;
+  s.blit(cell,Math.round(o.x/2)-(flip?cell.w-1-ox:ox),Math.round((o.y-70)/2)-oy,1,flip);
+}
 // Finite authored cells, mirrored after rasterization. Active clocks and velocity
 // come from the existing snapshot; rendering never adds animation state to it.
 const PX_SUMMONS=new Map();
@@ -794,6 +828,7 @@ function pxWorldSurface(S,F=FX) {
   for(const p of F.puffs||[]) {const r=p.r/2*(1-p.t/p.life*.5);s.ellipse(p.x/2,p.y/2,r,r*.55,'#b9ad9c');s.ellipse(p.x/2-2,p.y/2-2,r*.7,r*.4,'#d1c2a7');}
   pxWebVolley(s,S);
   pxEffigyRite(s,S);
+  pxShrineRhythm(s,S);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const f of S.f)if(f.gum>0){const o=S.f[1-f.i];s.line([o.x/2,o.y/2-40],[(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],'#d78bb7',2);s.line([(f.x+o.x)/4,Math.min(f.y,o.y)/2-25],[f.x/2,f.y/2-40],'#d78bb7',2);}
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);

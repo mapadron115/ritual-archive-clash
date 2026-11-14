@@ -26,6 +26,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - Nuclear Shell has a sustained copper pressure collar ahead of the hands. Its broad face brightens and its vanes close through the existing charge; it clears when the beam fires.
 - Web of Strings frames the foe with pink strands that straighten and brighten before each of its three existing hits, then snap and recoil. The center stays open; these strands show the volley rhythm, not a collision boundary.
 - Grand Effigy Rite prepares three broad, square-headed nails around the foe, then raises and drops a shaded hammer on the existing final blow. The nail and hammer materials brighten before each hit; the face and body remain clear.
+- Shrine's four rose cut planes close and brighten around the foe before each existing hit, then split and recoil. They leave the fighter's center clear and show the cut rhythm, not collision boundaries.
 
 ## Rules
 - Best of three rounds, 99 seconds each. Punch (three presses chain), kick, jump, guard.
@@ -38,6 +39,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
 
 ## Script checks
+
+`node tests/shrine-rhythm.cjs` checks 193 ages, broad value steps, hard alpha, clear face/body/HUD lanes, root reflection, snapshots, 66 actual-event native composites and 60 edge crops. Six real front/guard/jump timelines preserve all twelve tick-16..192 hits and damage; 372 pause holds, Domain cancellation/reset and existing time-stop advancement pass. An optional output directory and prefix export 84 native scenes and six lifecycle sheets; `--baseline --rules-only` checks unchanged combat against HEAD. These are script/raster checks, not play or observed motion.
 
 `node tests/effigy-rite.cjs` checks 70 ages, broad preparation value steps, hard alpha, materials, clear face/body/HUD lanes, root reflection, snapshots, 60 actual-event native composites and 60 edge crops. Six real front/guard/jump timelines preserve tick-10/24/38/60 hits, damage and nail cleanup; 408 pause holds, Domain cancellation/reset and existing time-stop advancement pass. An optional output directory and prefix export 96 native scenes and six lifecycle sheets; `--baseline --rules-only` checks unchanged combat against HEAD. These are script/raster checks, not play or observed motion.
 
