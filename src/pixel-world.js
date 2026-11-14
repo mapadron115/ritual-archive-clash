@@ -800,10 +800,10 @@ function pxProjectileTrail(s,p) {
 // Only projectile age selects a phase; freezes and transported snapshots hold it.
 const PX_PROJECTILE_BODIES=new Map();
 function pxProjectileBody(p) {
-  if(!['red','flame','orb','pellet','gum','knife','nail'].includes(p.k))return null;
+  if(!['red','flame','orb','pellet','gum','knife','nail','cut','wave','stone','shell'].includes(p.k))return null;
   const r=Math.max(3,(p.r||9)/2),col=pxProjectileColor(p),phase=Math.floor(Math.max(0,p.t||0)/4)%4;
   const moving=p.k==='red'||p.k==='flame'||p.k==='gum'||p.k==='orb';
-  const frame=moving?phase:0,key=[p.k,r,col,!!p.spin,frame].join(':');
+  const frame=moving?phase:0,key=[p.k,r,col,!!p.spin,!!p.ground,frame].join(':');
   if(PX_PROJECTILE_BODIES.has(key))return PX_PROJECTILE_BODIES.get(key);
   const ox=Math.ceil(Math.max(32,r*3+6)),oy=Math.ceil(Math.max(24,r*1.6+6)),sprite=new PixelSurface(ox*2+1,oy*2+1);
   const poly=(pts,c=col,outline=PX_INK)=>sprite.poly(pts.map(([a,b])=>[ox+a,oy+b]),c,outline);
@@ -811,7 +811,40 @@ function pxProjectileBody(p) {
   const ellipse=(x,y,rx,ry,c)=>sprite.ellipse(ox+x,oy+y,rx,ry,c);
   const mix=(a,b,t)=>'#'+pxRGB(a).slice(0,3).map((v,i)=>Math.round(v*(1-t)+pxRGB(b)[i]*t).toString(16).padStart(2,'0')).join('');
   const shade=mix(col,PX_INK,.55),light=mix(col,PX_LIGHT,.65);
-  if(p.k==='flame') {
+  if(p.k==='cut') {
+    // A broad bevelled slash: a rose back, shadowed lower fold and pale edge.
+    poly([[-24,-3],[6,-10],[18,-8],[8,-2],[-4,9],[-20,11],[-8,1]],col);
+    poly([[-19,8],[-6,0],[14,-7],[7,-1],[-5,8]],shade,false);
+    poly([[-20,-2],[5,-8],[13,-8],[-7,0],[-17,6],[-11,0]],light,false);
+    line([-16,7],[10,-6],PX_LIGHT,2);
+  } else if(p.k==='wave'&&p.ground) {
+    // Low folded earth crests keep their feet above the existing floor line.
+    poly([[-23,11],[-19,2],[-13,3],[-7,-14],[-1,-18],[3,-8],[10,-21],[15,-20],[12,-7],[18,3],[18,11]],col);
+    poly([[-20,9],[-12,5],[-5,-9],[-2,-12],[1,-3],[10,-13],[8,-3],[14,5],[15,10]],shade,false);
+    poly([[-17,2],[-13,3],[-7,-14],[-2,-16],[-8,1],[-13,7],[-20,9]],light,false);
+    poly([[3,-6],[10,-20],[13,-19],[9,-6],[12,1],[8,3]],light,false);
+    line([-15,9],[13,9],col,2);
+  } else if(p.k==='wave') {
+    // An upright pressure sail, hollow behind its broad shaded leading edge.
+    poly([[-20,12],[-15,-3],[-10,-19],[1,-28],[9,-28],[2,-15],[5,-5],[0,12]],col);
+    poly([[-17,10],[-11,-5],[-6,-18],[2,-25],[5,-26],[-1,-14],[1,-4],[-3,10]],shade,false);
+    poly([[-11,-17],[1,-27],[7,-27],[0,-14],[3,-5],[-1,8],[-4,9],[0,-5],[-4,-14]],light,false);
+    line([-8,-17],[2,-26],PX_LIGHT,2);
+  } else if(p.k==='stone') {
+    // Shared by the thrown stone and its resting imbued pebble.
+    poly([[-r,-2],[-r/2,-r],[r/2,-r],[r,2],[r/2,r],[-r/2,r]],'#96998f');
+    poly([[-r+1,0],[-r*.3,-r*.3],[r-1,2],[r*.4,r-1],[-r*.4,r-1]],'#5b645f',false);
+    poly([[-r+1,-2],[-r*.4,-r+1],[r*.4,-r+1],[r*.2,-r*.3],[-r*.3,-1]],'#d0ccad',false);
+  } else if(p.k==='shell') {
+    // Steel nose, broad brass collar and separate copper exhaust throat.
+    poly([[-13,-6],[6,-6],[14,0],[6,6],[-13,6]],'#566978');
+    poly([[-11,1],[10,0],[5,5],[-11,5]],'#334451',false);
+    poly([[-10,-5],[5,-5],[10,-1],[-9,-1]],'#a3b7bf',false);
+    poly([[-8,-6],[-3,-6],[-3,6],[-8,6]],col);
+    line([-7,-4],[-4,-4],light,2);line([-7,3],[-4,3],shade,2);
+    poly([[-20,-3],[-14,-4],[-14,4],[-20,3]],'#a96745');
+    line([-19,-1],[-15,-1],'#edbc7e',2);
+  } else if(p.k==='flame') {
     // Three curling tongues feed a compact hot front; no round ball with a tail.
     const flick=[0,2,-1,1][phase],u=r/11;
     const flame=pts=>pts.map(([a,b])=>[a*u,b*u]);
@@ -880,11 +913,7 @@ function pxProjectile(s,p) {
   const body=pxProjectileBody(p);
   if(body){s.blit(body.sprite,Math.round(x)-body.ox,Math.round(y)-body.oy,1,f<0);return;}
   const poly=(pts,c=col)=>s.poly(pts.map(([a,b])=>[x+a*f,y+b]),c,PX_INK);
-  if(p.k==='cut') {poly([[-24,-3],[6,-10],[18,-8],[8,-2],[-4,9],[-20,11],[-8,1]]);s.line([x-15*f,y+7],[x+12*f,y-7],PX_LIGHT);}
-  else if(p.k==='wave') {poly([[-20,12],[-15,-3],[-10,-19],[1,-28],[9,-28],[2,-15],[5,-5],[0,12]]);s.line([x-12*f,y-2],[x+3*f,y-23],PX_LIGHT,2);}
-  else if(p.k==='stone') {poly([[-r,-2],[-r/2,-r],[r/2,-r],[r,2],[r/2,r],[-r/2,r]],'#96998f');s.line([x-r/2,y-r+1],[x+r/2,y-r+1],'#d0ccad');}
-  else if(p.k==='shell') {poly([[-13,-6],[6,-6],[14,0],[6,6],[-13,6]],'#566978');s.rect(x-7,y-4,5,8,col);s.rect(x-20*f,y-2,6,4,'#d39060');}
-  else {poly([[-r*2.7,0],[-r,-r*.8],[r*.7,-r*.8],[r,0],[r*.7,r*.8],[-r,r*.8]]);s.ellipse(x,y,r,r,col);s.ellipse(x-r*.2,y-r*.2,r*.55,r*.55,PX_LIGHT);if(p.spin)pxRing(s,x,y,r+4,r+4,col,2,Math.floor(p.t/3));}
+  poly([[-r*2.7,0],[-r,-r*.8],[r*.7,-r*.8],[r,0],[r*.7,r*.8],[-r,r*.8]]);s.ellipse(x,y,r,r,col);s.ellipse(x-r*.2,y-r*.2,r*.55,r*.55,PX_LIGHT);if(p.spin)pxRing(s,x,y,r+4,r+4,col,2,Math.floor(p.t/3));
 }
 // Attached gum follows the two current roots, not an event or global clock.
 // Draw behind the sprites so a strand cannot cut across a face or action pose.
