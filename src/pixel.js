@@ -127,6 +127,10 @@ const PX_POSES = {
   punch2w: {h:[4,-76],s:[0,-60],hip:[-7,-32],a:[[23,-49],[29,-66]],b:[[-25,-53],[-29,-71]],l:[[20,-16],[30,0]],r:[[-24,-18],[-33,0]]},
   punch2load: {h:[-8,-73],s:[-12,-57],hip:[-9,-30],a:[[23,-47],[29,-64]],b:[[-34,-51],[-36,-70]],l:[[20,-15],[31,0]],r:[[-28,-17],[-36,0]]},
   punchre: {h:[9,-77],s:[7,-62],hip:[-1,-34],a:[[25,-56],[36,-59]],b:[[-8,-47],[5,-57]],l:[[18,-18],[27,0]],r:[[-22,-19],[-31,0]]},
+  // First-punch return: withdraw, fold the elbow, then raise guard without moving the soles.
+  jabpull: {h:[10,-77],s:[8,-62],hip:[0,-34],a:[[27,-55],[39,-60]],b:[[-7,-46],[7,-55]],l:[[22,-18],[31,0]],r:[[-21,-19],[-32,0]]},
+  jabfold: {h:[6,-78],s:[3,-63],hip:[-2,-35],a:[[23,-45],[21,-56]],b:[[-12,-47],[1,-58]],l:[[21,-18],[31,0]],r:[[-23,-19],[-32,0]]},
+  jabsettle: {h:[2,-78],s:[-1,-63],hip:[-4,-35],a:[[17,-49],[25,-66]],b:[[-18,-48],[-4,-61]],l:[[20,-18],[31,0]],r:[[-24,-19],[-32,0]]},
   punch2re: {h:[10,-77],s:[7,-62],hip:[-1,-34],a:[[10,-47],[22,-56]],b:[[24,-55],[38,-58]],l:[[18,-18],[29,0]],r:[[-21,-19],[-30,0]]},
   ready: {h:[3,-78],s:[0,-63],hip:[-4,-35],a:[[17,-49],[25,-62]],b:[[-16,-48],[-4,-59]],l:[[15,-18],[24,0]],r:[[-21,-19],[-29,0]]},
   hookw: {h:[-14,-68],s:[-17,-51],hip:[-12,-28],a:[[-16,-35],[-24,-26]],b:[[3,-44],[15,-56]],l:[[13,-13],[29,0]],r:[[-29,-14],[-37,0]]},
@@ -310,7 +314,7 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   const hip=p.hip, shoulder=p.s, head=p.h;
   // Far limbs are darker; near limbs get one narrow upper-left highlight cluster.
   // Keep the thick calf contour inside the boot instead of below a planted sole.
-  const ankle=foot=>[foot[0],foot[1]-(/^(walk|back)[0-7]$/.test(pose)||pose.startsWith('win')||pose.startsWith('kick')?Math.ceil((9*(kit.bulk||1)+2)/2):4)];
+  const ankle=foot=>[foot[0],foot[1]-(/^(walk|back)[0-7]$/.test(pose)||pose.startsWith('win')||pose.startsWith('kick')||pose.startsWith('jab')?Math.ceil((9*(kit.bulk||1)+2)/2):4)];
   limb([hip[0]-4,hip[1]],p.r[0],12,pant,true); limb(p.r[0],ankle(p.r[1]),9,kit.shorts?skin:pant,true); shoe(p.r[1],true);
   if(kit.limbDetail)kneeDetail(p.r[0],true);
   limb([shoulder[0]-w*.65,shoulder[1]+2],p.b[0],9,kit.sl?top:skin,true); limb(p.b[0],p.b[1],7,kit.sl===2?top:skin,true);
@@ -454,6 +458,8 @@ function pxPose(S,f) {
     // Arts fire at startup; only basics have a separate active window. Never imply idle during recovery.
     const contact=m.ac || Math.min(3,Math.ceil(m.re/3)),elapsed=f.mt-m.su;
     if(elapsed<contact)return pose in PX_POSES?pose:'cast1';
+    // Eight original recovery ticks; shared punch-shaped arts retain their existing sequence.
+    if(f.move==='p1')return elapsed<contact+3?'jabpull':elapsed<contact+5?'jabfold':'jabsettle';
     // Only the third basic punch gets this three-part return; hook-shaped arts retain their sequence.
     if(f.move==='p3')return elapsed<contact+4?'hookfollow':elapsed<contact+9?'hookre':'hooksettle';
     // Basic grounded kick only; keep art and airborne kick sequences intact.
