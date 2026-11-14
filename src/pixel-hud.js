@@ -28,6 +28,14 @@ function pxResultRole(labels,i) {
   if(!labels[0]&&!labels[1]||labels[0]&&labels[1])return 'P'+(i+1);
   return labels[i]?'YOU':labels.other==='Computer'?'CPU':'FOE';
 }
+// Persistent state-derived identification: the opening flash also belongs to
+// Rewind, so an event alone must never imply that time is still stopped.
+function pxTimeStopHUD(s,S) {
+  if(S.phase!=='fight'||!(S.stop&&S.stop.t>0)||(S.stop.o!==0&&S.stop.o!==1))return;
+  pxPanel(s,263,63,114,11,'#e5cc8f',PX_LIGHT);
+  s.rect(270,65,3,7,PX_INK);s.rect(276,65,3,7,PX_INK);
+  pxText(s,'P'+(S.stop.o+1)+' TIME STOP',284,65,PX_INK);
+}
 // These are existing cast prerequisites, not a promise that recovery has ended
 // or that a cast will hit. Never call a mutating art/recast handler from drawing.
 function pxArtCardState(S,f,n) {
@@ -88,6 +96,7 @@ function pxHUDSurface(S,labels,F=FX) {
   }
   pxPanel(s,299,19,42,29,'#243448','#b1a08a');const timer=String(Math.ceil(S.timer/60));pxText(s,timer,320-pxTextWidth(timer,2)/2,25,'#ecd3a0',2);
   const round='ROUND '+S.round;pxText(s,round,320-pxTextWidth(round)/2,53,PX_LIGHT);
+  pxTimeStopHUD(s,S);
   if(S.dom&&!S.freeze){const name=CH[S.f[S.dom.o].ch].dom.name;pxOutlinedText(s,name,320-pxTextWidth(name)/2,76,PX_KITS[S.f[S.dom.o].ch].accent);}
   const result=pxRoundResultLayout(S),b=F.banner;
   if(result){
