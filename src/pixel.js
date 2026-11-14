@@ -103,10 +103,10 @@ const PX_POSES = {
   boww: {h:[-4,-80],s:[-6,-65],hip:[-5,-35],a:[[12,-60],[24,-65]],b:[[-20,-58],[-22,-70]],l:[[11,-18],[21,0]],r:[[-22,-19],[-30,0]]},
   hitrecover: {h:[-8,-73],s:[-8,-58],hip:[-3,-32],a:[[9,-43],[18,-49]],b:[[-25,-44],[-24,-54]],l:[[18,-16],[27,0]],r:[[-21,-18],[-29,0]]},
   launch: {h:[-18,-73],s:[-15,-57],hip:[0,-32],a:[[5,-40],[20,-48]],b:[[-32,-42],[-40,-53]],l:[[22,-29],[32,-10]],r:[[-14,-20],[-30,-26]]},
-  airarch: {h:[-25,-69],s:[-20,-53],hip:[1,-29],a:[[3,-35],[17,-40]],b:[[-38,-39],[-46,-48]],l:[[24,-34],[36,-20]],r:[[-12,-23],[-30,-31]]},
-  aircrest: {h:[-23,-63],s:[-18,-47],hip:[0,-26],a:[[5,-29],[19,-35]],b:[[-36,-32],[-44,-39]],l:[[23,-32],[38,-16]],r:[[-16,-23],[-34,-30]]},
-  fall: {h:[-15,-66],s:[-13,-50],hip:[-1,-28],a:[[8,-32],[21,-40]],b:[[-30,-34],[-39,-43]],l:[[20,-20],[35,-8]],r:[[-16,-12],[-32,-18]]},
-  fallbrace: {h:[-7,-60],s:[-9,-44],hip:[0,-24],a:[[13,-28],[25,-18]],b:[[-25,-28],[-32,-16]],l:[[20,-24],[31,-5]],r:[[-17,-17],[-28,-7]]},
+  airarch: {h:[-32,-66],tilt:-.65,s:[-17,-55],hip:[12,-32],a:[[5,-65],[17,-83]],b:[[-37,-38],[-48,-52]],l:[[34,-48],[48,-29]],r:[[-7,-9],[-22,-1]]},
+  aircrest: {h:[8,-55],tilt:.55,s:[-4,-46],hip:[-8,-24],a:[[25,-43],[25,-26]],b:[[3,-58],[18,-51]],l:[[23,-50],[31,-30]],r:[[-7,-44],[8,-34]]},
+  fall: {h:[11,-62],tilt:.35,s:[0,-50],hip:[-14,-31],a:[[27,-35],[40,-17]],b:[[-8,-30],[-1,-13]],l:[[-1,-20],[9,-1]],r:[[-34,-31],[-38,-12]]},
+  fallbrace: {h:[20,-46],tilt:.55,s:[9,-34],hip:[-10,-22],a:[[30,-22],[38,-5]],b:[[10,-14],[17,-3]],l:[[-6,-13],[0,-1]],r:[[-31,-16],[-40,-3]]},
   // Composed curled bodies, raster-rotated only for their horizontal ground contact.
   collapse: {h:[3,-58],s:[-3,-43],hip:[3,-18],a:[[16,-32],[29,-44]],b:[[-18,-30],[-26,-41]],l:[[20,-21],[30,-2]],r:[[-10,-10],[-19,0]]},
   down: {h:[0,-76],s:[-2,-60],hip:[0,-32],a:[[9,-48],[7,-62]],b:[[-13,-43],[-18,-29]],l:[[5,-15],[10,0]],r:[[-8,-18],[-3,-1]]},
@@ -167,14 +167,24 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
     }
   }
   if(kit.hammer && pose==='win') p=Object.assign({},p,{a:[[14,-70],[9,-82]]});
-  const s = new PixelSurface(PX_W, PX_H), at = v => [PX_OX+v[0], PX_OY+v[1]*(kit.height||1)];
+  // Tilt the face, hair and accessories together around the authored head center.
+  // Transform geometry before the integer raster; never resample a rotated sprite.
+  let headPart=false;
+  const cosine=Math.cos(p.tilt||0),sine=Math.sin(p.tilt||0);
+  const s = new PixelSurface(PX_W, PX_H), at = v => {
+    if(headPart && p.tilt) {
+      const dx=v[0]-p.h[0],dy=v[1]-p.h[1];
+      v=[p.h[0]+dx*cosine-dy*sine,p.h[1]+dx*sine+dy*cosine];
+    }
+    return [PX_OX+v[0], PX_OY+v[1]*(kit.height||1)];
+  };
   const top = alt ? ['#655e7c','#b2a8bf','#e8dfde'] : kit.top;
   const pant = alt ? ['#3a3658','#655e7e','#9a91ab'] : kit.pants;
   const skin = kit.skin, hair = kit.hairCol, ac = alt ? '#efb2c7' : kit.accent, w = kit.width;
   const poly = (pts,col,edge=PX_INK) => s.poly(pts.map(at),col,edge);
   const line = (a,b,col,width=1) => s.line(at(a),at(b),col,width);
-  const rect = (x,y,r,h,col) => s.rect(PX_OX+x,PX_OY+y*(kit.height||1),r,h*(kit.height||1),col);
-  const oval = (a,rx,ry,col) => s.ellipse(...at(a),rx,ry*(kit.height||1),col);
+  const rect = (x,y,r,h,col) => headPart && p.tilt ? poly([[x,y],[x+r,y],[x+r,y+h],[x,y+h]],col,null) : s.rect(PX_OX+x,PX_OY+y*(kit.height||1),r,h*(kit.height||1),col);
+  const oval = (a,rx,ry,col) => headPart && p.tilt ? poly(Array.from({length:20},(_,n)=>[a[0]+Math.cos(n*Math.PI/10)*rx,a[1]+Math.sin(n*Math.PI/10)*ry]),col,null) : s.ellipse(...at(a),rx,ry*(kit.height||1),col);
   function limb(a,b,width,colors,far=false) {
     width*=kit.bulk||1;
     line(a,b,PX_INK,width+2); line(a,b,colors[far?0:1],width);
@@ -213,11 +223,13 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   oval(p.b[1],4,4,PX_INK); oval(p.b[1],3,3,skin[0]);
   if(kit.limbDetail)heavyHand(p.b[0],p.b[1],true);
   // Hair behind the neck, with a stepped wind-blown shape instead of fine single-pixel noise.
+  headPart=true;
   if(['sweep','braid','tail','long'].includes(kit.hair)) {
     poly([[head[0]-10,head[1]-8],[head[0]+2,head[1]-10],[head[0]+6,head[1]+5],[head[0]-1,head[1]+21],[head[0]-12,head[1]+17],[head[0]-8,head[1]+5]],hair[0]);
     if(kit.hair==='braid' || kit.hair==='tail') for(let n=0;n<6;n++) {oval([head[0]-10-n,head[1]+9+n*4],3,3,hair[n%2]);if(n===5)rect(head[0]-18,head[1]+30,5,3,ac);}
   }
   if(kit.fit==='hood') {oval([head[0]-2,head[1]+5],14,19,PX_INK);oval([head[0]-2,head[1]+5],12,17,top[0]);line([head[0]-11,head[1]-5],[head[0]-12,head[1]+14],top[2],2);}
+  headPart=false;
   limb([hip[0]+5,hip[1]],p.l[0],12,pant); limb(p.l[0],ankle(p.l[1]),9,kit.shorts?skin:pant); shoe(p.l[1],false);
   if(kit.limbDetail)kneeDetail(p.l[0],false);
   // Torso: fitted long coat, inset warm ivory front, offset cyan clasp.
@@ -240,6 +252,7 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   if(kit.vials) for(let n=0;n<3;n++) {rect(hip[0]-10+n*4,hip[1]+2,3,8,PX_INK);rect(hip[0]-9+n*4,hip[1]+3,1,5,ac);}
   if(kit.clock || kit.charm) {const med=[shoulder[0]+3,shoulder[1]+17];line([shoulder[0]-4,shoulder[1]+4],med,ac);oval(med,4,5,PX_INK);oval(med,3,4,ac);line(med,[med[0]+1,med[1]-3],top[0]);}
   // Face: asymmetric brow, warm nose plane, a two-pixel eye and no borrowed mask or facial marking.
+  headPart=true;
   rect(head[0]-2,head[1]+7,6,8,skin[0]); rect(head[0],head[1]+7,4,6,skin[1]);
   poly([[head[0]-7,head[1]-7],[head[0]+5,head[1]-8],[head[0]+9,head[1]-3],[head[0]+9,head[1]+2],[head[0]+12,head[1]+4],[head[0]+8,head[1]+6],[head[0]+6,head[1]+10],[head[0]-2,head[1]+10],[head[0]-7,head[1]+5]],skin[1]);
   poly([[head[0]+1,head[1]-5],[head[0]+7,head[1]-4],[head[0]+7,head[1]+2],[head[0]+10,head[1]+4],[head[0]+5,head[1]+6],[head[0]+2,head[1]+5]],skin[2],null);
@@ -268,6 +281,7 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   if(kit.beard) {poly([[hx-4,hy+6],[hx+5,hy+8],[hx+9,hy+5],[hx+7,hy+12],[hx-2,hy+12]],hair[0]);line([hx,hy+10],[hx+5,hy+10],hair[1]);}
   if(kit.goggles) {rect(hx-6,hy-2,16,5,PX_INK);rect(hx-3,hy-1,4,2,ac);rect(hx+4,hy-1,5,2,ac);}
   if(kit.phones) {line([hx-9,hy+1],[hx-9,hy-10],top[2],3);line([hx-9,hy-10],[hx+7,hy-10],PX_INK,3);oval([hx-7,hy+2],4,6,PX_INK);oval([hx-7,hy+2],2,4,ac);}
+  headPart=false;
   // High collar and an angular scarf tail identify Isolde at a distance.
   poly([[shoulder[0]-7,shoulder[1]-2],[head[0]-3,head[1]+10],[head[0]+5,head[1]+10],[shoulder[0]+8,shoulder[1]-3],[shoulder[0]+3,shoulder[1]+3]],top[0]);
   line([shoulder[0]-3,shoulder[1]],[shoulder[0]+6,shoulder[1]-3],ac,2);

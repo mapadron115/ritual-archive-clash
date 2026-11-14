@@ -38,12 +38,35 @@ for(const kind of ['jump','land','thud']) {
   }
   assert(hashes.size>4,'dust has no evolving phases');
 }
+// A palette-independent regression for the coordinator's stiff-juggle note.
+// An open arch and a curled crest must change the occupied shape, not only its colors.
+for(let ch=0;ch<15;ch++) {
+  const phases=['airarch','aircrest','fallbrace'].map(p=>pxSprite(ch,p));
+  for(let n=0;n<2;n++) {
+    let common=0,union=0;
+    for(let i=3;i<phases[n].data.length;i+=4) {
+      const a=!!phases[n].data[i],b=!!phases[n+1].data[i];
+      common+=a&&b;union+=a||b;
+    }
+    assert(common/union<.65,'air phases still share a stiff silhouette: '+ch);
+  }
+}
 globalThis.sheet=new PixelSurface(1440,930);sheet.rect(0,0,1440,930,PX_INK);
-pxText(sheet,'V14 / AIR HIT: LAUNCH, ARCH, CREST, FALL, BRACE',18,16,PX_LIGHT,2);
+pxText(sheet,'V16 / AIR HIT: LAUNCH, ARCH, CREST, FALL, BRACE',18,16,PX_LIGHT,2);
 for(let row=0;row<3;row++)['launch','airarch','aircrest','fall','fallbrace'].forEach((pose,n)=>{
   const x=n*288,y=45+row*285,ch=[0,7,14][row],frame=pxFighterFrame(ch,pose,row===1);
   sheet.rect(x+3,y,282,275,'#28364a');sheet.blit(frame.sprite,x+144-frame.ox*2,y+245-frame.oy*2,2);
   pxText(sheet,CH[ch].name+' / '+pose,x+10,y+258,PX_LIGHT);
+});
+globalThis.silhouettes=new PixelSurface(2160,650);silhouettes.rect(0,0,2160,650,'#28364a');
+pxText(silhouettes,'V16 / ALL FIFTEEN: OPEN ARCH, TUCKED CREST, FLOOR REACH',18,16,PX_LIGHT,2);
+CH.forEach((fighter,ch)=>{
+  const x=ch%5*432,y=45+Math.floor(ch/5)*200;
+  ['airarch','aircrest','fallbrace'].forEach((pose,n)=>{
+    silhouettes.blit(pxSprite(ch,pose,false,PX_LIGHT),x+n*144,y+12);
+    pxText(silhouettes,pose,x+n*144+20,y+150,'#9babbc');
+  });
+  pxText(silhouettes,fighter.name,x+18,y+172,PX_LIGHT,2);
 });
 globalThis.dustSheet=new PixelSurface(1280,690);dustSheet.rect(0,0,1280,690,PX_INK);
 pxText(dustSheet,'V14 / TAKEOFF, LANDING AND BODY IMPACT',18,16,PX_LIGHT,2);
@@ -53,6 +76,6 @@ pxText(dustSheet,'V14 / TAKEOFF, LANDING AND BODY IMPACT',18,16,PX_LIGHT,2);
   if(t<(kind==='jump'?12:kind==='land'?18:24))pxDust(dustSheet,{x:(x+128)*2,y:(y+158)*2,kind,t});
   pxText(dustSheet,kind.toUpperCase()+' / T'+t,x+12,y+180,PX_LIGHT);
 }));
-console.log('PASS actual airborne timeline, freeze-held poses, real jump/land/thud, coalescing, expiry, cap;',frames,'bounded hard-alpha dust frames; read-only rendering');
+console.log('PASS actual airborne timeline, freeze-held poses, 15 distinct arch/crest/brace silhouettes, real jump/land/thud, coalescing, expiry, cap;',frames,'bounded hard-alpha dust frames; read-only rendering');
 `,ctx);
-if(process.argv[2])for(const [name,key]of [['v14-airborne-frames.png','sheet'],['v14-floor-dust.png','dustSheet']])writePNG(path.join(process.argv[2],name),ctx[key]);
+if(process.argv[2])for(const [name,key]of [['v16-airborne-frames.png','sheet'],['v16-airborne-silhouettes.png','silhouettes']])writePNG(path.join(process.argv[2],name),ctx[key]);

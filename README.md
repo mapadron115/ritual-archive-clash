@@ -22,9 +22,11 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 
 ## Script checks
 
+`node tests/summons.cjs` checks original hound bounds/bites, Nue wing strokes and dive/bank angles, Toad extension/recoil, directional cells, actual summon timelines, freeze/time-stop clocks, snapshot stability and unchanged simulation. Add an output directory for phase and scene previews.
+
 `node tests/trails.cjs` checks all projectile wakes, birth/flight/expiry phases, diagonal direction, real art samples, freeze/JSON stability and unchanged simulation.
 
-`node tests/airborne.cjs` checks actual airborne reactions, freeze holds, takeoff/landing/body-impact dust, event coalescing, bounds and lifecycle.
+`node tests/airborne.cjs` checks actual airborne reactions, distinct arch/crest/floor-reach silhouettes across all fifteen fighters, freeze holds, takeoff/landing/body-impact dust, event coalescing, bounds and lifecycle. Add an output directory for the current reaction and silhouette preview sheets.
 
 `node tests/contacts.cjs` checks contact-effect phases, real hit/block/break event wiring, exact directional mirroring, expiry and unchanged simulation state.
 
