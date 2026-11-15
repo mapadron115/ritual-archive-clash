@@ -65,7 +65,7 @@ function fxEvent(S, e) {
     case 'word': FX.words.push({ x: clamp(e.x, 160, W - 160), y: e.y, txt: e.a, t: 0, life: 50 }); FX.shake = Math.max(FX.shake, 6); break;
     case 'counter': star(e.x, e.y, 70, '#7dffb0', 12); FX.rings.push({ x: e.x, y: e.y, r: 20, vr: 9, t: 0, life: 12, col: '#7dffb0' }); FX.shake = 10; FX.banner = { txt: 'COUNTER!', t: 0, life: 34, small: 1, col: '#7dffb0' }; break;
     case 'stop': FX.flash = .5; FX.flashCol = '#ffe07a'; FX.rings.push({ x: e.x, y: e.y, r: 20, vr: 26, t: 0, life: 22, col: '#ffe07a' }); break;
-    case 'dash': FX.lines.push({ x1: e.x, y1: e.y, x2: e.a, y2: e.b, t: 0, life: 12, col: '#6fe8ff', w: 12 }); break;
+    case 'dash': FX.lines.push({ kind: 'dash', x1: e.x, y1: e.y, x2: e.a, y2: e.b, t: 0, life: 12, col: '#6fe8ff', w: 12 }); break;
     case 'cuts': for (let n = 0; n < 6; n++) { const a = Math.random() * 3.14, r = e.a; FX.lines.push({ x1: e.x - Math.cos(a) * r, y1: e.y - Math.sin(a) * r, x2: e.x + Math.cos(a) * r, y2: e.y + Math.sin(a) * r, t: 0, life: 9, col: '#bff4ff', w: 6 }); } FX.shake = Math.max(FX.shake, 6); break;
   }
   if (!FX.silent && typeof sfx === 'function') sfx(e);

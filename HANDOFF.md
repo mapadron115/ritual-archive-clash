@@ -1,26 +1,25 @@
 # Handoff: Ritual Archive: Clash
 
-## Current - version 97, script cache v=100 (2026-11-15)
+## Current - version 98, script cache v=101 (2026-11-15)
 
-Mailbox through 15:31 acted on; final reread unchanged. V96 committed by coordinator as 6abc3b4 (not pushed). Acknowledged owner's publication of v1-v95 at 1dbd5a6, keeping AGENTS.md, and new authorized dive escape rule. Owner directly repeated autonomous check-in/report instructions; no other decision. All arenas remain closed.
+Mailbox through 15:41 acted on; final reread unchanged. V97 committed by coordinator as 53f628d (not pushed). Owner directly repeated autonomous check-in/report instructions; no other decision. All arenas remain closed. Earlier implementation orders remain acted on.
 
-V97 locks Howitzer's target at active tick 2 instead of 20, after the opening freeze. Contact stays tick 46: 44 warning ticks (733 ms), previously 26. Blast remains 155 units each side (310 wide), 190 high, 250 damage/100 guarded health damage. Full-gauge OR <=30% HP readiness, once-per-round use, descent, invulnerability and recovery unchanged. Reticle radius now matches actual 155 rather than 150; its existing six-phase countdown derives from the new 44-tick zone. Move explanation teaches moving/jumping clear. No other combat, AI, audio, roster, style or network change. Eleven URLs v=100.
+V98 replaces Rapid Slash's static cyan bar across both fighters' waists with three shaded, pointed ribbons behind both bodies. They contract toward the destination; the outer ribbons clear at age 8 and the last remnant expires at the existing age 12. Local raster/reflection keeps exact facing mirrors; zero-distance wall events draw nothing. The existing event endpoints and FX age drive the cue. No combat, travel, contact, damage, cost, timing, input, AI, audio, roster, style or network rule changes. Other line effects remain identical. Eleven script URLs v=101.
 
-Bram's actual cue-time movement covers 190.08 retreat / 216 forward / 230.25 directional-jump units in 44 ticks. Retreat delayed 8 ticks clears by 0.52, 9 ticks is hit; forward delayed 11 clears, 12 is hit; jump-away delayed 15 (250 ms) clears by 0.73, 16 is hit. There is no separate sprint input. Vertical jump remains caught (171.05 peak height <190); Gideon's slow backstep remains caught, while forward or jump-away at the cue escapes for all fifteen builds. Geometry/body pushes/facing matter; these are measured input timelines, not speed-only estimates or human balance claims.
-
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/fighters2.js, tests/landing-warning.cjs, tests/dive-gap.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base 6abc3b4; never pushed. Ready for coordinator review/commit and owner's feel/balance check before publication.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-world.js, src/render.js, tests/rapid-trail.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base 53f628d; never pushed. Ready for coordinator review/commit and owner motion/readability assessment before publication.
 
 ## Verification and limits
 
-- New dive-gap regression: 222 actual Maximum/defender timelines, 23,310 parallel-state ticks, 12 freeze holds; fixed 6abc3b4 comparison proves old cue-time movement was caught. Both slots/full-gauge and low-HP readiness, all fifteen builds, walls, adjacent-tick cutoffs, exact tick-46 event, identical old/new stationary/guard contact snapshots, cost, locked target and JSON determinism pass.
-- Landing-warning: all 44 ages, six phases, 180 edge/fractional crops, 18 native world/body/HUD composites (minimum 474 visible bright pixels), 10 real-input timelines, 60 freeze holds, cleanup/read-only/snapshot checks pass. Existing time-stop zone advance retained.
-- Feel/input (eleven groups + keyboard handlers), full smoke (90 arts/30 ultimates/225 matches/1,147,397 ticks), Domain animation (30 timelines), world (308 frames), actual-script runtime/menu/input/results and online lifecycle pass. Syntax, eleven v100 URLs and diff whitespace pass.
-- Inspected native courtyard P1 away-delay0 t46 before/after: v96 contacts and v97 clears; also inspected after away-delay8 t45 / delay9 t46. Gallery P2 t20 pair shows the earlier lock/countdown; Observatory P2 jumpAway-delay15/16 t46 shows escape/contact. Native pairs for both owners, three stages, five input timings and five active moments plus runtime/menu assets retained in codex mailbox. Generated memory rasters, not browser captures or observed motion.
-- No owner play/listening, live browser layout/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC. Browser not retried. Unchanged stage/HUD/art/audio/performance suites not repeated. Owner must judge whether this reaction window feels suitably difficult; scripts/stills do not count as played.
+- New rapid-trail regression: sixteen actual Rapid Slash hit/block/whiff/wall timelines, both slots/facings/mirror costumes, 352 ticks exactly matching fixed v97 combat; 240 native scene/snapshot checks. Clear occupied fighter pixels, minimum early whiff visibility 761 pixels, read-only state/effects, hard alpha, exact mirrors, contraction/expiry, 120 fractional/edge crops and zero-distance safety pass. Twelve non-dash (slash/rain/cuts/swap) stage comparisons are byte-identical to v97. --baseline fails first on the reproduced body overlap; --baseline --preview-only exports exact fixed 53f628d presentation.
+- World (308 frames), feel/input (eleven groups + keyboard handlers), actual-script runtime/menu/input/results and online lifecycle pass. Source/test syntax, eleven matching v101 URLs and diff whitespace pass.
+- Inspected native courtyard P1 right hit t4 before/after: cyan waist bar becomes a shaded path behind the bodies; gallery P2 left whiff t1 and courtyard P1 right whiff t8 after show early trail and later contraction. Native before/after scenes for all stages, slots, facings, four contact/travel cases and ages 1/4/8/11, plus runtime/menu assets retained in codex mailbox. Generated memory rasters, not browser captures or observed motion.
+- No owner play/listening, live browser layout/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC. Browser not retried. Unchanged stage, full-match, individual art, HUD, audio/contact and performance suites not repeated. Scripts/stills do not count as played.
 
 ## Next priorities
 
-Owner dive feel/readability notes take priority. Otherwise continue first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. Arenas stay closed. No pending decision needed for v97; leave this one-version run ready for coordinator commit.
+Owner dive feel/readability notes take priority. V97 still gives 44 active warning ticks before tick-46 impact: 250 damage, 310-unit width, unchanged cost. Bram's retreat delayed 8 ticks escapes, 9 is hit; jump-away delayed 15 escapes, 16 is hit. Owner must judge the feel.
+
+Otherwise continue first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. Arenas stay closed. No pending decision for v98; leave this one-version run ready for coordinator commit.
 
 ## Code and run
 

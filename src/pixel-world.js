@@ -1128,6 +1128,26 @@ function pxGumTether(s,S) {
     }
   }
 }
+// Rapid Slash leaves a pointed wake, not a solid bar through the fighters.
+// The existing event endpoints and FX age drive its direction and contraction.
+function pxRapidTrail(s,l) {
+  if(l.t>=l.life)return;
+  const age=clamp(l.t/l.life,0,1),len=Math.abs(l.x2-l.x1)/2;
+  if(len<1)return;
+  // Raster once in a local right-facing cell, then reflect exact pixels.
+  const cell=new PixelSurface(Math.ceil(len)+5,48),point=(along,across)=>[2+along,24+across];
+  const ribbon=(start,end,offset,width)=>{
+    if(end<=start)return;
+    const poly=(inset,col)=>cell.poly([point(start,offset),point(end-(end-start)*.18,offset-width+inset),
+      point(end,offset),point(end-(end-start)*.25,offset+width-inset)],col);
+    poly(0,PX_INK);poly(1,'#75b4c8');
+    if(width>2)poly(2,'#d9eee1');
+  };
+  ribbon(len*age,len,0,Math.max(1.5,5*(1-age*.8)));
+  if(l.t<8)for(const side of [-1,1])ribbon(len*(age+.08),len-9,side*(8-age*3),Math.max(1.3,2.8*(1-age)));
+  const mirror=l.x2<l.x1;
+  s.blit(cell,Math.round(l.x1/2)-(mirror?cell.w-3:2),Math.round(l.y1/2)-24,1,mirror);
+}
 function pxWorldSurface(S,F=FX) {
   const s=new PixelSurface(640,360);s.data.set(pxBackdrop(Math.floor(S.t/8),S.stage).data);
   pxDomain(s,S);
@@ -1149,10 +1169,11 @@ function pxWorldSurface(S,F=FX) {
   if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2)){pxStraightPunchWake(s,f);pxKickSweep(s,f);pxAirPunchWake(s,f);pxAirKickSweep(s,f);pxHookSweep(s,f);}
   if(F.bf)pxBlackFlash(s,F.bf);
   if(!impact)for(const f of S.f)pxStunCrown(s,S,f);
+  for(const l of F.lines||[])if(l.kind==='dash')pxRapidTrail(s,l);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
   for(const p of S.proj)pxProjectile(s,p);
-  for(const l of F.lines||[]) {s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],PX_INK,Math.max(3,l.w/2+2));s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],l.col,Math.max(1,l.w/2));}
+  for(const l of F.lines||[])if(l.kind!=='dash') {s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],PX_INK,Math.max(3,l.w/2+2));s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],l.col,Math.max(1,l.w/2));}
   for(const r of F.rings||[])pxRing(s,r.x/2,r.y/2,r.r/2,r.r/2,r.col,1,Math.floor(r.t/3));
   for(const p of F.parts||[]) {const r=Math.max(1,p.s/2*(1-p.t/p.life));s.rect(p.x/2-r,p.y/2-r,r*2,r*2,p.col);}
   for(const e of F.stars||[])pxBurst(s,e.x/2,e.y/2,e.r/2*(1-e.t/e.life*.7),e.col,e.t);
