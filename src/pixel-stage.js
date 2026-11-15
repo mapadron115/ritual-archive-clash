@@ -188,6 +188,7 @@ function pxObservatory(s) {
   s.poly([[369,281],[379,250],[399,250],[407,281]],'#6a6974','#394858');s.rect(373,274,32,7,'#b2a08b');
   s.line([383,255],[383,205],'#384958',9);s.line([383,255],[383,205],'#b69d7e',5);
   s.line([383,229],[352,207],'#384958',7);s.line([383,229],[352,207],'#b69d7e',3);
+  pxObservatoryMeridian(s);
   pxStageRing(s,392,178,67,65,'#394858',6);pxStageRing(s,392,178,67,65,'#c6aa83',3);
   s.line([352,126],[432,230],'#394858',6);s.line([352,126],[432,230],'#d5b98e',3);
   s.ellipse(392,178,9,9,'#394858');s.ellipse(392,178,6,6,'#d9bf96');
@@ -204,6 +205,17 @@ function pxObservatory(s) {
 }
 function pxStageRing(s,x,y,rx,ry,col,width) {
   let prev=[x+rx,y];for(let n=1;n<=64;n++){const a=n*Math.PI/32,p=[x+Math.cos(a)*rx,y+Math.sin(a)*ry];s.line(prev,p,col,width);prev=p;}
+}
+function pxObservatoryMeridian(s) {
+  // A fixed, opposing meridian keeps an open globe when the turning hoop is
+  // edge-on. It belongs to the static frame, behind the hoop, axle and hub.
+  const points=[];
+  for(let n=0;n<=64;n++) {
+    const a=n*Math.PI/32,u=Math.cos(a)*27,v=Math.sin(a)*61;
+    points.push([392+u*.766+v*.643,178-u*.643+v*.766]);
+  }
+  for(let n=1;n<points.length;n++)s.line(points[n-1],points[n],'#394858',6);
+  for(let n=1;n<points.length;n++)s.line(points[n-1],points[n],n<=32?'#b29878':'#ddbf94',3);
 }
 function pxObservatoryHoop(s,frame) {
   // An unmarked hoop repeats after half a turn. Sixteen projections ease from
