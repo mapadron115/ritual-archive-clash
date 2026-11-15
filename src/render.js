@@ -35,7 +35,12 @@ function fxEvent(S, e) {
     case 'inf': FX.rings.push({ x: e.x, y: e.y, r: 40, vr: 2, t: 0, life: 14, col: '#7fd6ff' }); break;
     case 'clap': star(e.x, e.y, 34, '#ffe9a0', 8); FX.rings.push({ x: e.x, y: e.y, r: 6, vr: 9, t: 0, life: 12, col: '#ffe9a0' }); break;
     case 'swap': FX.lines.push({ x1: e.x, y1: e.y, x2: e.a, y2: e.b, t: 0, life: 12, col: '#ffe9a0', w: 7 }); puff(e.x, e.y + 40, 5); puff(e.a, e.b + 40, 5); burst(e.x, e.y, 8, '#ffd866', 4); burst(e.a, e.b, 8, '#ffd866', 4); FX.flash = .15; FX.flashCol = '#ffe9a0'; break;
-    case 'slash': FX.lines.push({ x1: e.x - 50, y1: e.y - 40 - (e.a ? 20 : 0), x2: e.x + 50, y2: e.y + 40 + (e.a ? 20 : 0), t: 0, life: 9, col: '#ff5a5a', w: e.a ? 12 : 7 }); break;
+    case 'slash': {
+      // Only Dismantle/Cleave supply a facing. Other users of this legacy
+      // event (including Web's target cuts) retain their own presentation.
+      const cue=e.b===-1||e.b===1?{kind:'slash',dir:e.b,heavy:!!e.a}:{};
+      FX.lines.push({ ...cue, x1: e.x - 50, y1: e.y - 40 - (e.a ? 20 : 0), x2: e.x + 50, y2: e.y + 40 + (e.a ? 20 : 0), t: 0, life: 9, col: '#ff5a5a', w: e.a ? 12 : 7 }); break;
+    }
     case 'rain': for (let n = 0; n < 3; n++) { const x = e.x + (Math.random() - .5) * 160, y = e.y + (Math.random() - .5) * 120, a = Math.random() * 3; FX.lines.push({ x1: x - Math.cos(a) * 70, y1: y - Math.sin(a) * 70, x2: x + Math.cos(a) * 70, y2: y + Math.sin(a) * 70, t: 0, life: 8, col: '#ff3b3b', w: 6 }); } for (let n = 0; n < 4; n++) { const x = Math.random() * W, y = 150 + Math.random() * 450; FX.lines.push({ x1: x - 60, y1: y - 40, x2: x + 60, y2: y + 40, t: 0, life: 8, col: 'rgba(255,60,60,.5)', w: 4 }); } break;
     case 'boom': star(e.x, e.y, e.a * .9, '#ffb347', 14); star(e.x, e.y, e.a * .5, '#fff3c0', 12); burst(e.x, e.y, 24, '#ffb347', 9, 30); puff(e.x, e.y + 30, 8); FX.shake = 14; FX.flash = .25; FX.flashCol = '#fff'; break;
     case 'pop': star(e.x, e.y, 16, '#fff', 6); break;

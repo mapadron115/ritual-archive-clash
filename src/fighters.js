@@ -57,8 +57,8 @@ DOMAIN.void = { dur: 100, tick(S, d, f, o) {
 } };
 
 // ---------- Shrine
-ART.dismantle = (S, f) => { shoot(S, f, { k: 'cut', vx: f.face * 24, vy: 0, r: 18, life: 60, dmg: 58, kb: 3, stun: 15 }); ev(S, 'slash', f.x + f.face * 60, f.y - 78); };
-ART.cleave = (S, f) => { ev(S, 'slash', f.x + f.face * 70, f.y - 78, 1); };
+ART.dismantle = (S, f) => { shoot(S, f, { k: 'cut', vx: f.face * 24, vy: 0, r: 18, life: 60, dmg: 58, kb: 3, stun: 15 }); ev(S, 'slash', f.x + f.face * 60, f.y - 78, undefined, f.face); };
+ART.cleave = (S, f) => { ev(S, 'slash', f.x + f.face * 70, f.y - 78, 1, f.face); };
 ART.flame = (S, f) => { shoot(S, f, { k: 'flame', vx: f.face * 13, vy: 0, r: 22, life: 120, explode: { r: 130, dmg: 140, kb: 12, lift: 9, stun: 26, chip: 0.25 } }); ev(S, 'blast', f.x, f.y - 78); };
 DOMAIN.shrine = { dur: 192, tick(S, d, f, o) {
   if (d.t % 16 === 0) { ev(S, 'rain', o.x, o.y - 70); hit(S, f.i, o, o.x - o.face, { dmg: 17, stun: 7, chip: 0.4, anyGuard: 1, dom: 1, guardDmg: 0.01 }); }

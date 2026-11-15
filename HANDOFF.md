@@ -1,25 +1,25 @@
 # Handoff: Ritual Archive: Clash
 
-## Current - version 98, script cache v=101 (2026-11-15)
+## Current - version 99, script cache v=102 (2026-11-15)
 
-Mailbox through 15:41 acted on; final reread unchanged. V97 committed by coordinator as 53f628d (not pushed). Owner directly repeated autonomous check-in/report instructions; no other decision. All arenas remain closed. Earlier implementation orders remain acted on.
+Mailbox through 15:46 acted on; final reread unchanged. V98 committed by coordinator as 25ee956 (not pushed); coordinator reports owner published through v97 (53f628d). Owner directly repeated autonomous check-in/report instructions; no other decision. All arenas remain closed. Earlier implementation orders remain acted on. Rapid Slash's optional visibility note is deferred as directed.
 
-V98 replaces Rapid Slash's static cyan bar across both fighters' waists with three shaded, pointed ribbons behind both bodies. They contract toward the destination; the outer ribbons clear at age 8 and the last remnant expires at the existing age 12. Local raster/reflection keeps exact facing mirrors; zero-distance wall events draw nothing. The existing event endpoints and FX age drive the cue. No combat, travel, contact, damage, cost, timing, input, AI, audio, roster, style or network rule changes. Other line effects remain identical. Eleven script URLs v=101.
+V99 replaces Dismantle/Cleave's static red baton across Karasu's arm with a shaded rose crescent ahead of the hand. It sweeps down and contracts behind both bodies through the existing nine-tick effect; Cleave is broader than Dismantle. Those two release events now carry facing in their previously unused b field, avoiding guesses from subsequent actor positions on either client. Original raster reflection keeps exact mirrors. No combat, projectile, contact, damage, cost, timing, input, AI, audio, roster, style or network rule changes. Every other slash-event user and other line effects remain identical. Eleven script URLs v=102.
 
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-world.js, src/render.js, tests/rapid-trail.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base 53f628d; never pushed. Ready for coordinator review/commit and owner motion/readability assessment before publication.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/fighters.js, src/pixel-world.js, src/render.js, tests/slash-cue.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base 25ee956; never pushed. Ready for coordinator review/commit and owner motion/readability assessment before publication.
 
 ## Verification and limits
 
-- New rapid-trail regression: sixteen actual Rapid Slash hit/block/whiff/wall timelines, both slots/facings/mirror costumes, 352 ticks exactly matching fixed v97 combat; 240 native scene/snapshot checks. Clear occupied fighter pixels, minimum early whiff visibility 761 pixels, read-only state/effects, hard alpha, exact mirrors, contraction/expiry, 120 fractional/edge crops and zero-distance safety pass. Twelve non-dash (slash/rain/cuts/swap) stage comparisons are byte-identical to v97. --baseline fails first on the reproduced body overlap; --baseline --preview-only exports exact fixed 53f628d presentation.
-- World (308 frames), feel/input (eleven groups + keyboard handlers), actual-script runtime/menu/input/results and online lifecycle pass. Source/test syntax, eleven matching v101 URLs and diff whitespace pass.
-- Inspected native courtyard P1 right hit t4 before/after: cyan waist bar becomes a shaded path behind the bodies; gallery P2 left whiff t1 and courtyard P1 right whiff t8 after show early trail and later contraction. Native before/after scenes for all stages, slots, facings, four contact/travel cases and ages 1/4/8/11, plus runtime/menu assets retained in codex mailbox. Generated memory rasters, not browser captures or observed motion.
-- No owner play/listening, live browser layout/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC. Browser not retried. Unchanged stage, full-match, individual art, HUD, audio/contact and performance suites not repeated. Scripts/stills do not count as played.
+- New slash-cue regression: 32 actual Dismantle/Cleave hit/block/whiff/wall timelines, both slots/facings/mirror costumes, 672 ticks matching fixed v98 except the new effect-facing field; 480 native scene/snapshot checks and 32 serialized event replays. Clear occupied fighter pixels, minimum early whiff visibility 396 pixels, read-only state/effects, hard alpha, exact mirrors, sweep/contraction/expiry, 200 fractional/edge crops and simultaneous releases pass. Thirty-nine actual legacy-slash scenes and fifteen other effect scenes are byte-identical to v98. --baseline fails on reproduced body overlap; --baseline --preview-only exports fixed 25ee956 presentation.
+- Rapid-trail (sixteen timelines, 240 native checks), world (308 frames), feel/input (eleven groups + keyboard handlers), actual-script runtime/menu/input/results and online lifecycle pass. Source/test syntax, eleven matching v102 URLs and diff whitespace pass.
+- Inspected native courtyard P1 right Cleave whiff t3 before/after: the straight red baton becomes a bright curved sweep ahead of a clear forearm. Gallery P2 left Dismantle whiff t1, courtyard Cleave hit t3 and late whiff t8 inspected for facing, contact and contraction. Native pairs for both moves, all stages, slots, facings, hit/guard/whiff and ages 1/3/6/8, plus runtime/menu assets retained in codex mailbox. Generated memory rasters, not browser captures or observed motion.
+- No owner play/listening, live browser layout/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC. Browser not retried. Unchanged stage, full-match, other individual art, HUD, audio/contact and performance suites not repeated. Scripts/stills do not count as played.
 
 ## Next priorities
 
 Owner dive feel/readability notes take priority. V97 still gives 44 active warning ticks before tick-46 impact: 250 damage, 310-unit width, unchanged cost. Bram's retreat delayed 8 ticks escapes, 9 is hit; jump-away delayed 15 escapes, 16 is hit. Owner must judge the feel.
 
-Otherwise continue first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. Arenas stay closed. No pending decision for v98; leave this one-version run ready for coordinator commit.
+Otherwise continue first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. Arenas stay closed. No pending decision for v99; leave this one-version run ready for coordinator commit.
 
 ## Code and run
 

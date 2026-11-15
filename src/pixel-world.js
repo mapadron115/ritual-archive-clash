@@ -1148,6 +1148,34 @@ function pxRapidTrail(s,l) {
   const mirror=l.x2<l.x1;
   s.blit(cell,Math.round(l.x1/2)-(mirror?cell.w-3:2),Math.round(l.y1/2)-24,1,mirror);
 }
+// The slash opens ahead of the hand, then its tail catches up with the tip.
+// Reflect a local raster so left and right share the exact same pixel contour.
+const PX_SLASH_CUES=new Map();
+function pxSlashCue(s,l) {
+  const t=Math.max(0,Math.floor(l.t));if(t>=l.life)return;
+  const key=!!l.heavy+':'+t;
+  if(!PX_SLASH_CUES.has(key)) {
+    const cell=new PixelSurface(128,128),rx=l.heavy?47:40,ry=l.heavy?38:30;
+    const start=[-1.4,-1.4,-1.25,-1.05,-.7,-.3,.1,.5,.95][t];
+    const end=[.15,.6,.95,1.3,1.35,1.4,1.45,1.45,1.45][t];
+    const width=(l.heavy?7:4.5)*(t<4?1:1-(t-3)*.12),steps=18;
+    const band=(gain,pad,shift,col)=>{
+      const points=[];
+      for(const side of [1,-1])for(let n=0;n<=steps;n++) {
+        const u=(side>0?n:steps-n)/steps,a=start+(end-start)*u;
+        const w=(.4+Math.sin(u*Math.PI)*width)*gain+pad;
+        points.push([46+Math.cos(a)*(rx+shift+side*w),60+Math.sin(a)*(ry+shift+side*w)]);
+      }
+      cell.poly(points,col);
+    };
+    band(1,1,0,PX_INK);band(1,0,0,t<6?'#9c2948':'#87435a');
+    band(.66,0,1,t<6?'#ed7480':'#bf7b82');
+    if(t<6)band(.23,0,2,'#ffd3c2');
+    PX_SLASH_CUES.set(key,cell);
+  }
+  const mirror=l.dir<0;
+  s.blit(PX_SLASH_CUES.get(key),Math.round((l.x1+l.x2)/4)-(mirror?63:64),Math.round((l.y1+l.y2)/4)-64,1,mirror);
+}
 function pxWorldSurface(S,F=FX) {
   const s=new PixelSurface(640,360);s.data.set(pxBackdrop(Math.floor(S.t/8),S.stage).data);
   pxDomain(s,S);
@@ -1170,10 +1198,11 @@ function pxWorldSurface(S,F=FX) {
   if(F.bf)pxBlackFlash(s,F.bf);
   if(!impact)for(const f of S.f)pxStunCrown(s,S,f);
   for(const l of F.lines||[])if(l.kind==='dash')pxRapidTrail(s,l);
+  for(const l of F.lines||[])if(l.kind==='slash')pxSlashCue(s,l);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
   for(const p of S.proj)pxProjectile(s,p);
-  for(const l of F.lines||[])if(l.kind!=='dash') {s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],PX_INK,Math.max(3,l.w/2+2));s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],l.col,Math.max(1,l.w/2));}
+  for(const l of F.lines||[])if(l.kind!=='dash'&&l.kind!=='slash') {s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],PX_INK,Math.max(3,l.w/2+2));s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],l.col,Math.max(1,l.w/2));}
   for(const r of F.rings||[])pxRing(s,r.x/2,r.y/2,r.r/2,r.r/2,r.col,1,Math.floor(r.t/3));
   for(const p of F.parts||[]) {const r=Math.max(1,p.s/2*(1-p.t/p.life));s.rect(p.x/2-r,p.y/2-r,r*2,r*2,p.col);}
   for(const e of F.stars||[])pxBurst(s,e.x/2,e.y/2,e.r/2*(1-e.t/e.life*.7),e.col,e.t);
