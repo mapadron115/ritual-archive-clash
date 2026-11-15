@@ -79,6 +79,13 @@ function pxArtCardState(S,f,n) {
     f.y<GROUND&&!a.air?'LAND FIRST':garden?'FREE CE':'CE READY';
   return {cost,status,ready:status==='CE READY'||status==='FREE CE'||status==='SWAP STONE'};
 }
+// Default presentation is shared with mobile. The desktop-only adapter refines
+// this card's availability/press cue without changing simulation or phone HUDs.
+function pxDomainCardState(S,f,F) {
+  const ready=domReady(f),used=f.domUsed;
+  return {ready,used,denied:!!(F.nope&&F.nope[f.i]>0&&!ready),
+    status:used?'USED 1/1':ready?(f.hp<=maxHp(f)*DOM_HP?'HP READY':'FULL READY'):'OR 30% HP'};
+}
 function pxHUDSurface(S,labels,F=FX) {
   const s=new PixelSurface(640,360);
   for(let i=0;i<2;i++) {
@@ -105,10 +112,10 @@ function pxHUDSurface(S,labels,F=FX) {
     }
     const cardX=left?14:331,cy=319,cardH=39;
     for(let n=0;n<4;n++) {
-      const xx=cardX+n*72,dom=n===3,cw=dom?83:67,a=dom?c.dom:c.arts[n],art=dom?null:pxArtCardState(S,f,n),ready=dom?domReady(f):art.ready,used=dom&&f.domUsed;
+      const xx=cardX+n*72,dom=n===3,cw=dom?83:67,a=dom?c.dom:c.arts[n],art=dom?pxDomainCardState(S,f,F):pxArtCardState(S,f,n),ready=art.ready,used=dom&&art.used;
       // The existing rejected-press effect covers unavailable cards for this
       // actor. Give it a broad field and pale rails, with the reason intact.
-      const denied=F.nope&&F.nope[i]>0&&!ready;
+      const denied=dom?art.denied:F.nope&&F.nope[i]>0&&!ready;
       pxPanel(s,xx,cy,cw,cardH,denied?'#603346':dom&&ready?ac:ready?'#293a50':'#202c3d',denied?'#f1ad91':ready?ac:'#475367');
       if(denied){s.rect(xx,cy,cw,2,'#f1ad91');s.rect(xx,cy,2,cardH,'#f1ad91');s.rect(xx+cw-2,cy,2,cardH,'#f1ad91');}
       const ink=dom&&ready?PX_INK:ready||denied?PX_LIGHT:'#95a0af',key=lab?lab[dom?'DOM':'A'+(n+1)]:null;
@@ -117,9 +124,7 @@ function pxHUDSurface(S,labels,F=FX) {
       const type=dom?(a.maximum?'MAXIMUM':'DOMAIN'):null;
       const footer=dom?type+(used||ready?'':' '+Math.floor(clamp(f.gauge/GAUGE_MAX,0,1)*100)+'%'):art.cost+' CE';
       pxText(s,footer,xx+(key?17:4),cy+22,dom&&ready?PX_INK:denied?'#f1ad91':ready?ac:'#b1bccb');
-      const status=dom?(used?'USED 1/1':ready?(f.hp<=maxHp(f)*DOM_HP?'HP READY':'FULL READY'):'OR 30% HP'):
-        art.status;
-      pxText(s,status,xx+4,cy+30,dom&&ready?PX_INK:ready||denied?PX_LIGHT:'#c4cbd4');
+      pxText(s,art.status,xx+4,cy+30,dom&&ready?PX_INK:ready||denied?PX_LIGHT:'#c4cbd4');
       const ratio=dom?(used?0:f.gauge/GAUGE_MAX):1-f.cd[n]/a.cd;s.rect(xx+3,cy+cardH-1,cw-6,1,PX_INK);s.rect(xx+3,cy+cardH-1,(cw-6)*clamp(ratio,0,1),1,ac);
     }
     const hint=lab?'MOVE '+lab.move.replace(/ /g,'')+'  JUMP '+lab.U+'  GUARD '+lab.G+'  PUNCH '+lab.P+'  KICK '+lab.K:(labels.other||'Computer');

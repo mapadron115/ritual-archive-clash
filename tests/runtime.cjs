@@ -21,20 +21,20 @@ class Context {
     }
   }
 }
-const nodes=new Map(),events={};
+const nodes=new Map(),events={},listeners={};
 const element=id=>({id,style:{setProperty(){}},children:[],_html:'',set innerHTML(value){this._html=value;this.children=[];},get innerHTML(){return this._html;},textContent:'',attributes:{},setAttribute(key,value){this.attributes[key]=value;},appendChild(child){this.children.push(child);},focus(){document.activeElement=this;}});
 const cv=new Canvas(1280,720);nodes.set('cv',cv);
 for(const id of ['title','select','online','pause','over'])nodes.set(id,element(id));
 const document={visibilityState:'visible',getElementById(id){if(!nodes.has(id))nodes.set(id,element(id));return nodes.get(id);},querySelectorAll(){return ['title','select','online','pause','over'].map(id=>nodes.get(id));},createElement(tag){return tag==='canvas'?new Canvas():element(tag);},head:element('head')};
 const timeouts=[];
-const context=vm.createContext({console,assert,document,window:{},setTimeout(fn,ms){timeouts.push({fn,ms});},requestAnimationFrame(){},addEventListener(name,fn){events[name]=fn;}});
+const context=vm.createContext({console,assert,document,window:{},setTimeout(fn,ms){timeouts.push({fn,ms});},requestAnimationFrame(){},addEventListener(name,fn){(listeners[name]??=[]).push(fn);events[name]=(...args)=>listeners[name].forEach(listener=>listener(...args));}});
 context.timeouts=timeouts;
 context.events=events;
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,11);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,12);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -505,6 +505,24 @@ hostGame();document.head.children.at(-1).onerror();
 assert.equal($('netStatus').textContent,'Could not load the network library. Is this computer online?');
 netClose();show('title');
 console.log('PASS closed-room start/open isolation,',staleEvents,'stale peer/connection events, synchronous destroy, replacement connection, current disconnect, joins and cancelled/superseded PeerJS loads');
+// The desktop adapter loads after main's boot, and must run on the real frame
+// and guest transport paths. Multiple blur listeners must both be delivered.
+const normalAI=aiInput;aiInput=()=>0;
+for(const mode of ['ai','local','host','guest']) {
+  G.mode=mode;G.pick=[0,14];startFight();G.S.phase='fight';G.acc=0;G.last=1000;
+  const packets=[];NET.conn={open:true,send(m){packets.push(m);}};
+  const slot=mode==='guest'||mode==='local'?1:0,code=mode==='local'?'Slash':'KeyL';
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+  frame(1017);assert(FX.domainNope[slot]&&FX.domainNope[slot].t===17);
+  assert(pxDomainCardState(G.S,G.S.f[slot],FX).denied);assert.equal(FX.domainNope[1-slot],null);
+  if(mode==='guest')assert(packets.some(m=>m.t==='in'&&m.b===(BTN.DOM<<INPUT_SHIFT)));
+  else assert.equal(G.S.f[slot].prev,0,'short press acquired a hold');
+  events.keydown({code:'KeyD',repeat:false,preventDefault(){}});events.blur();
+  assert.equal(Object.keys(G.keys).length,0);assert.equal(Object.keys(G.taps).length,0);assert.deepEqual(FX.domainNope,[null,null]);
+  NET.conn=null;
+}
+aiInput=normalAI;G.mode='ai';toMenu();
+console.log('PASS desktop Domain availability cues through actual AI/local/host/guest frames, exact guest input packet and both blur listeners');
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
