@@ -4,8 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#070f1c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Clash Mobile">
 <title>Ritual Archive: Clash — Mobile</title>
-<link rel="stylesheet" href="mobile.css?v=112">
+<link rel="manifest" href="manifest.webmanifest?v=113">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/clash-32.png?v=113">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/clash-180.png?v=113">
+<link rel="stylesheet" href="mobile.css?v=113">
 </head>
 <body>
 <main id="stage">
@@ -15,6 +21,12 @@
     <p>Mobile / touch to fight</p>
     <nav class="row"><button id="cpuMode" onclick="pickMode('ai')">Fight the CPU</button><button id="onlineMode" onclick="show('online')">Online friend</button><button id="watchMode" onclick="pickMode('watch')">Watch CPU</button></nav>
     <p id="attractNames"></p><p id="attractStage"></p>
+    <details id="installHelp">
+      <summary>Add to home screen</summary>
+      <p>iPhone / iPad: in Safari, open Share, then Add to Home Screen. Turn on Open as Web App if offered.</p>
+      <p>Android: open the browser menu, then Install app or Add to Home screen.</p>
+      <p>Open Clash Mobile from its icon, then turn your phone sideways. Internet is required to open the game and play online.</p>
+    </details>
   </section>
   <section class="screen" id="select">
     <header><h2>Choose your fighters</h2></header>
@@ -57,17 +69,17 @@
 </main>
 <aside id="rotate" role="status"><h1>Turn your phone sideways</h1><p>Clash Mobile plays in landscape.</p><p id="rotateNote"></p></aside>
 <div id="safeArea" aria-hidden="true"></div>
-<script src="../src/sim.js?v=112"></script>
-<script src="../src/fighters.js?v=112"></script>
-<script src="../src/fighters2.js?v=112"></script>
-<script src="../src/pixel.js?v=112"></script>
-<script src="../src/pixel-stage.js?v=112"></script>
-<script src="../src/pixel-domain.js?v=112"></script>
-<script src="../src/pixel-world.js?v=112"></script>
-<script src="../src/pixel-hud.js?v=112"></script>
-<script src="../src/ai.js?v=112"></script>
-<script src="../src/render.js?v=112"></script>
-<script src="../src/main.js?v=112"></script>
-<script src="touch.js?v=112"></script>
+<script src="../src/sim.js?v=113"></script>
+<script src="../src/fighters.js?v=113"></script>
+<script src="../src/fighters2.js?v=113"></script>
+<script src="../src/pixel.js?v=113"></script>
+<script src="../src/pixel-stage.js?v=113"></script>
+<script src="../src/pixel-domain.js?v=113"></script>
+<script src="../src/pixel-world.js?v=113"></script>
+<script src="../src/pixel-hud.js?v=113"></script>
+<script src="../src/ai.js?v=113"></script>
+<script src="../src/render.js?v=113"></script>
+<script src="../src/main.js?v=113"></script>
+<script src="touch.js?v=113"></script>
 </body>
 </html>

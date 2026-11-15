@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "Ritual Archive: Clash Mobile",
+  "short_name": "Clash Mobile",
+  "description": "An original pixel fighting game with touch controls. Internet required to open and play online.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#070f1c",
+  "theme_color": "#070f1c",
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "icons/clash-192.png?v=113", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/clash-512.png?v=113", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/clash-maskable-512.png?v=113", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
