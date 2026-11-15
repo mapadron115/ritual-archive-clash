@@ -52,14 +52,18 @@ function pxTimeStopHUD(s,S,labels=[null,null]) {
 }
 // Keep guard beside its fighter's other meters, above the world and control
 // hints. The old foot strip crossed the bottom cards and had no label.
-function pxGuardHUD(s,f,x) {
+function pxGuardHUDState(f) {
   // A break restores strength immediately, before its stun ends. Read the
   // serialized recovery state so even a guest's first snapshot explains why
   // holding guard cannot protect them yet. Block stun still allows blocking.
   const locked=f.st==='hit'||f.st==='stun'||f.st==='down';
+  return {locked,status:locked?'GUARD LOCKED':f.guardHp<35?'GUARD LOW':'GUARD '+Math.ceil(clamp(f.guardHp,0,100))+'%'};
+}
+function pxGuardHUD(s,f,x) {
+  const {locked,status}=pxGuardHUDState(f);
   const low=f.guardHp<35,col=locked?'#ecd3a0':low?'#f1ad91':'#b5dce5';
   if(locked)s.rect(x-2,53,84,10,PX_INK);
-  pxText(s,locked?'GUARD LOCKED':low?'GUARD LOW':'GUARD '+Math.ceil(clamp(f.guardHp,0,100))+'%',x,55,col);
+  pxText(s,status,x,55,col);
   pxPanel(s,x,65,80,6,'#263346',locked?col:low?'#f1ad91':'#68768a');
   const w=Math.round(80*clamp(f.guardHp/100,0,1));
   s.rect(x,65,w,6,locked?'#746757':col);s.rect(x,65,w,2,locked?'#ab9673':PX_LIGHT);

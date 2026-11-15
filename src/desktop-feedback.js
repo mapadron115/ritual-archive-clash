@@ -1,4 +1,15 @@
 'use strict';
+// Guard strength is separate from whether the current action allows guard.
+// Block stun still protects; other committed actions do not. Airborne free
+// states must land. Use only serialized state, including on a first snapshot.
+const desktopGuardHUDStateBase=pxGuardHUDState;
+pxGuardHUDState=function(f) {
+  if(f.st!=='block') {
+    if(!free(f))return {locked:true,status:'GUARD LOCKED'};
+    if(f.y<GROUND)return {locked:true,status:'LAND TO GUARD'};
+  }
+  return desktopGuardHUDStateBase(f);
+};
 // Loaded only by index.html, after main.js. This is availability at the local
 // input sample, not a cast/rejection acknowledgement from the simulation/host.
 FX.domainNope=[null,null];

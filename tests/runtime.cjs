@@ -521,8 +521,25 @@ for(const mode of ['ai','local','host','guest']) {
   assert.equal(Object.keys(G.keys).length,0);assert.equal(Object.keys(G.taps).length,0);assert.deepEqual(FX.domainNope,[null,null]);
   NET.conn=null;
 }
-aiInput=normalAI;G.mode='ai';toMenu();
 console.log('PASS desktop Domain availability cues through actual AI/local/host/guest frames, exact guest input packet and both blur listeners');
+for(const mode of ['ai','local','host'])for(const name of ['K','DOM','U']) {
+  G.mode=mode;G.pick=[0,14];startFight();G.S.phase='fight';G.acc=0;G.last=1000;
+  const slot=mode==='local'?1:0,binding=mode==='local'?BIND.p2:BIND.solo,code=binding[name][0];
+  if(name==='DOM')G.S.f[slot].gauge=100;
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});frame(1017);
+  const state=pxGuardHUDState(G.S.f[slot]);assert(state.locked);assert.equal(state.status,name==='U'?'LAND TO GUARD':'GUARD LOCKED');
+  toMenu();
+}
+// A guest's very first snapshot needs no preceding cast/break event.
+G.mode='guest';const guardConn=mockConnection();netWire(guardConn,'guest');guardConn.events.open();G.pick=[0,14];startFight();
+for(const st of ['atk','cast','jump','block','idle']) {
+  const snapshot=newMatch(0,14,115);snapshot.phase='fight';snapshot.f[1].st=st;
+  if(st==='jump')snapshot.f[1].y=GROUND-40;
+  guardConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+  const state=pxGuardHUDState(G.S.f[1]);assert.equal(state.locked,['atk','cast','jump'].includes(st));
+}
+netClose();aiInput=normalAI;G.mode='ai';toMenu();
+console.log('PASS desktop guard availability through actual AI/local/host frames and event-free guest snapshots');
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});

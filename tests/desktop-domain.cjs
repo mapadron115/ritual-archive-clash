@@ -84,7 +84,7 @@ group('pause, blur, selection, new fight and round cleanup',()=>{
   press();assert(crimson());toSelect(true);assert(!crimson());
   setup();press();assert(crimson());startFight();G.S.phase='fight';assert(!crimson());
 });
-group('shared/mobile default is byte-identical; desktop differences stay in Domain cards',()=>{
+group('shared/mobile default is byte-identical; Domain changes stay in cards, guard availability in its lanes',()=>{
   for(let ch=0;ch<15;ch++)for(const kind of ['ordinary','gauge','hp','air','used','denied','art']){
     const S=setup(ch,'local'),f=S.f[0];
     if(['gauge','air'].includes(kind))f.gauge=100;if(kind==='hp')f.hp=maxHp(f)*DOM_HP;
@@ -95,7 +95,10 @@ group('shared/mobile default is byte-identical; desktop differences stay in Doma
     if(['ordinary','gauge','hp','used'].includes(kind))assert.deepEqual(current.data,prior.data,'ordinary grounded card changed');
     for(let y=0;y<360;y++)for(let x=0;x<640;x++){
       const p=(y*640+x)*4;if(current.data[p]===prior.data[p]&&current.data[p+1]===prior.data[p+1]&&current.data[p+2]===prior.data[p+2]&&current.data[p+3]===prior.data[p+3])continue;
-      assert(y>=317&&((x>=228&&x<315)||(x>=545&&x<632)),'desktop change escaped Domain cards');
+      // v115 also refines desktop guard availability; its dedicated audit
+      // checks these exact lane pixels and their attack/air/recovery states.
+      const guard=y>=53&&y<73&&((x>=171&&x<255)||(x>=492&&x<576));
+      assert(guard||y>=317&&((x>=228&&x<315)||(x>=545&&x<632)),'desktop change escaped Domain cards/guard lanes');
     }
   }
 });
