@@ -318,7 +318,7 @@ function pixelSprite(ch, pose = 'idle', alt = false, flash = '') {
   const hip=p.hip, shoulder=p.s, head=p.h;
   // Far limbs are darker; near limbs get one narrow upper-left highlight cluster.
   // Keep the thick calf contour inside the boot instead of below a planted sole.
-  const ankle=foot=>[foot[0],foot[1]-(/^(walk|back)[0-7]$/.test(pose)||pose.startsWith('win')||pose.startsWith('kick')||pose.startsWith('jab')||pose.startsWith('cross')||pose.startsWith('hook')?Math.ceil((9*(kit.bulk||1)+2)/2):4)];
+  const ankle=foot=>[foot[0],foot[1]-(p.planted||/^(walk|back)[0-7]$/.test(pose)||pose.startsWith('win')||pose.startsWith('kick')||pose.startsWith('jab')||pose.startsWith('cross')||pose.startsWith('hook')?Math.ceil((9*(kit.bulk||1)+2)/2):4)];
   limb([hip[0]-4,hip[1]],p.r[0],12,pant,true); limb(p.r[0],ankle(p.r[1]),9,kit.shorts?skin:pant,true); shoe(p.r[1],true);
   if(kit.limbDetail)kneeDetail(p.r[0],true);
   limb([shoulder[0]-w*.65,shoulder[1]+2],p.b[0],9,kit.sl?top:skin,true); limb(p.b[0],p.b[1],7,kit.sl===2?top:skin,true);

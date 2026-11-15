@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,12);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,13);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -540,6 +540,27 @@ for(const st of ['atk','cast','jump','block','idle']) {
 }
 netClose();aiInput=normalAI;G.mode='ai';toMenu();
 console.log('PASS desktop guard availability through actual AI/local/host frames and event-free guest snapshots');
+// Verify the desktop pose adapter reaches the painter used by the actual loop.
+const hitPaintBase=pxPaintFighter,hitPaints=[];
+pxPaintFighter=function(s,S,f,impact){if(f.st==='hit')hitPaints.push(pxPose(S,f));return hitPaintBase(s,S,f,impact);};
+aiInput=()=>0;
+for(const mode of ['ai','local','host']) {
+  G.mode=mode;G.pick=[0,14];startFight();G.S.phase='fight';G.acc=0;G.last=1000;
+  G.S.seed=117;G.S.f[0].x=600;G.S.f[1].x=660;hitPaints.length=0;
+  const binding=mode==='local'?BIND.p1:BIND.solo,code=binding.P[0];
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+  for(let n=1;n<=35;n++)frame(1000+n*17);
+  for(const pose of ['hitreel','hitbrace','hitrise'])assert(hitPaints.includes(pose),mode+' loop missed '+pose);
+  toMenu();
+}
+G.mode='guest';const hitConn=mockConnection();netWire(hitConn,'guest');hitConn.events.open();G.pick=[0,14];startFight();
+for(const remaining of [14,10,5]) {
+  const snapshot=newMatch(0,14,117);snapshot.phase='fight';hit(snapshot,0,snapshot.f[1],snapshot.f[0].x,{dmg:32,stun:remaining});snapshot.ev=[];
+  hitPaints.length=0;hitConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+  assert(hitPaints.includes(remaining>10?'hitreel':remaining>5?'hitbrace':'hitrise'));
+}
+pxPaintFighter=hitPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop ground-hit poses through real keyboard/AI/local/host frames and event-free guest snapshot painting');
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
