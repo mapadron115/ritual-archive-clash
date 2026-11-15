@@ -5,7 +5,8 @@ const writePNG=require('./png.cjs'),root=path.join(__dirname,'..');
 const baseline=process.argv.includes('--baseline');
 const feedbackBaseline=process.argv.includes('--feedback-baseline');
 const domainBaseline=process.argv.includes('--domain-baseline');
-const baselineTouch=baseline||feedbackBaseline||domainBaseline?require('node:child_process').execFileSync('git',['show',(domainBaseline?'3c95ebc':feedbackBaseline?'921f7f1':'55a25d1')+':mobile/touch.js'],{cwd:root,encoding:'utf8'}):null;
+const guardBaseline=process.argv.includes('--guard-baseline');
+const baselineTouch=baseline||feedbackBaseline||domainBaseline||guardBaseline?require('node:child_process').execFileSync('git',['show',(guardBaseline?'8d53f71':domainBaseline?'3c95ebc':feedbackBaseline?'921f7f1':'55a25d1')+':mobile/touch.js'],{cwd:root,encoding:'utf8'}):null;
 class Canvas {
   constructor(w=300,h=150){this.width=w;this.height=h;this.buffer=null;this.style={};this.context=new Context(this);}
   getContext(){return this.context;}setAttribute(){}
@@ -143,10 +144,13 @@ globalThis.makePreview=(w,h,safe={top:0,right:0,bottom:0,left:0},ch=0,ce=100,fee
   for(const [key,b] of Object.entries(l.buttons)) {
     const layer=new PixelSurface(b.w,b.h),state=states[key];
     const node=button(key),pressed=node&&(Array.from(MOBILE.pointers.values()).includes(node)||node.dataset.pressed==='true'),denied=node&&node.dataset.denied==='true'&&(!feedbackBaseline||!pressed);
-    const edge=denied?[241,173,145]:pressed?[241,229,205]:state&&state.ready?[181,220,229]:key==='DOM'?[213,165,103]:[104,118,138];
-    for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){const d=((b.y+y)*w+b.x+x)*4,border=x<2||x>=b.w-2||y<2||y>=b.h-2,col=border?edge:denied?[96,51,70]:pressed?[52,73,95]:[38,51,70],alpha=baseline?1:border?(pressed||denied||state&&state.ready||key==='DOM'?1:.6):denied?.9:pressed?.95:.4;for(let k=0;k<3;k++)out.data[d+k]=Math.round(col[k]*alpha+out.data[d+k]*(1-alpha));out.data[d+3]=255;}
+    const guardLocked=node&&node.dataset.guardLocked==='true',guardActive=node&&node.dataset.guardActive==='true';
+    const edge=guardLocked?[213,165,103]:guardActive?[181,220,229]:denied?[241,173,145]:pressed?[241,229,205]:state&&state.ready?[181,220,229]:key==='DOM'?[213,165,103]:[104,118,138];
+    for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){const d=((b.y+y)*w+b.x+x)*4,border=x<2||x>=b.w-2||y<2||y>=b.h-2,col=border?edge:guardLocked?[68,54,39]:denied?[96,51,70]:pressed?[52,73,95]:[38,51,70],alpha=baseline?1:border?(guardLocked||guardActive||pressed||denied||state&&state.ready||key==='DOM'?1:.6):guardLocked?.85:denied?.9:pressed?.95:.4;for(let k=0;k<3;k++)out.data[d+k]=Math.round(col[k]*alpha+out.data[d+k]*(1-alpha));out.data[d+3]=255;}
+    if(guardLocked){layer.rect(2,2,b.w-4,4,'#9b7447');layer.rect(2,b.h-6,b.w-4,4,'#9b7447');}
     if(denied&&!feedbackBaseline){layer.rect(2,2,b.w-4,4,'#bd6472');layer.rect(2,b.h-6,b.w-4,4,'#bd6472');}
     if(state){pxWrap(state.short,b.w-8).forEach((t,j)=>pxText(layer,t,(b.w-pxTextWidth(t))/2,5+j*9,PX_LIGHT));pxText(layer,state.detail,(b.w-pxTextWidth(state.detail))/2,31,'#b5dce5');pxText(layer,state.status,(b.w-pxTextWidth(state.status))/2,43,state.ready?'#c3e4b7':'#f1ad91');layer.rect(2,b.h-4,(b.w-4)*state.fill,3,'#b5dce5');}
+    else if(key==='G'&&MOBILE.views.has('G')){const text=MOBILE.views.get('G').status.textContent;pxText(layer,'GUARD',(b.w-pxTextWidth('GUARD'))/2,13,PX_LIGHT);pxText(layer,text,(b.w-pxTextWidth(text))/2,27,guardLocked?'#ecd3a0':guardActive?'#c3e4b7':'#b5dce5');}
     else {const text=key==='pause'?'MOVES':key==='mute'?($('touchMute').textContent||'MUTE'):button(key).textContent;pxText(layer,text,(b.w-pxTextWidth(text))/2,(b.h-7)/2,PX_LIGHT);}
     for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){const a=(y*b.w+x)*4,d=((b.y+y)*w+b.x+x)*4;if(layer.data[a+3])out.data.set(layer.data.subarray(a,a+4),d);}
   }

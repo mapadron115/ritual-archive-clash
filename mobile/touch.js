@@ -118,8 +118,32 @@ function mobileSyncFeedback(states) {
     if(feedback&&feedback.pressUntil<=now&&feedback.denyUntil<=now)MOBILE.feedback.delete(key);
   }
 }
+// Contact brightness acknowledges a finger, not successful defense. Keep this
+// separate from art availability and derive it from the local serialized actor.
+// The button still accepts holds during recovery so guard can resume normally.
+function mobileGuardState(S,me) {
+  const f=S.f[me];
+  if(S.phase!=='fight')return {status:'WAIT',locked:true,active:false,label:'Guard, wait for the round'};
+  if(f.st==='guard'||f.st==='block')return {status:'ON',locked:false,active:true,label:'Guard active'};
+  if(!free(f))return {status:'LOCKED',locked:true,active:false,label:'Guard locked during this action'};
+  if(f.y<GROUND)return {status:'LAND',locked:true,active:false,label:'Guard, land first'};
+  return {status:'HOLD',locked:false,active:false,label:'Hold guard'};
+}
+function mobileUpdateGuard(S,me) {
+  const state=mobileGuardState(S,me),b=mobileButtons.find(b=>b.dataset.input==='G');
+  let view=MOBILE.views.get('G');
+  if(!view) {
+    b.textContent='';view={};
+    for(const part of ['name','status']){const span=document.createElement('span');span.className='guard-'+part;b.appendChild(span);view[part]=span;}
+    view.name.textContent='GUARD';MOBILE.views.set('G',view);
+  }
+  if(view.status.textContent!==state.status)view.status.textContent=state.status;
+  b.dataset.guardLocked=String(state.locked);b.dataset.guardActive=String(state.active);
+  if(view.label!==state.label){b.setAttribute('aria-label',state.label);view.label=state.label;}
+}
 function mobileUpdateControls(S) {
-  const states=mobileArtStates(S,G.mode==='guest'?1:0);
+  const me=G.mode==='guest'?1:0,states=mobileArtStates(S,me);
+  mobileUpdateGuard(S,me);
   mobileSyncFeedback(states);
   for(const [key,state] of Object.entries(states)) {
     const b=mobileButtons.find(b=>b.dataset.input===key);
