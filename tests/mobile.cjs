@@ -132,7 +132,7 @@ globalThis.makePreview=(w,h,safe={top:0,right:0,bottom:0,left:0},ch=0,ce=100)=>{
     const layer=new PixelSurface(b.w,b.h),state=states[key];
     for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){const d=((b.y+y)*w+b.x+x)*4,border=x<2||x>=b.w-2||y<2||y>=b.h-2,col=border?[104,118,138]:[38,51,70],alpha=baseline?1:border?.6:.4;for(let k=0;k<3;k++)out.data[d+k]=Math.round(col[k]*alpha+out.data[d+k]*(1-alpha));out.data[d+3]=255;}
     if(state){pxWrap(state.short,b.w-8).forEach((t,j)=>pxText(layer,t,(b.w-pxTextWidth(t))/2,5+j*9,PX_LIGHT));pxText(layer,state.detail,(b.w-pxTextWidth(state.detail))/2,31,'#b5dce5');pxText(layer,state.status,(b.w-pxTextWidth(state.status))/2,43,state.ready?'#c3e4b7':'#f1ad91');layer.rect(2,b.h-4,(b.w-4)*state.fill,3,'#b5dce5');}
-    else {const text=key==='pause'?'MOVES':key==='mute'?'MUTE':button(key).textContent;pxText(layer,text,(b.w-pxTextWidth(text))/2,(b.h-7)/2,PX_LIGHT);}
+    else {const text=key==='pause'?'MOVES':key==='mute'?($('touchMute').textContent||'MUTE'):button(key).textContent;pxText(layer,text,(b.w-pxTextWidth(text))/2,(b.h-7)/2,PX_LIGHT);}
     for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){const a=(y*b.w+x)*4,d=((b.y+y)*w+b.x+x)*4;if(layer.data[a+3])out.data.set(layer.data.subarray(a,a+4),d);}
   }
   pxText(out,'GENERATED LAYOUT MODEL',Math.floor((w-pxTextWidth('GENERATED LAYOUT MODEL'))/2),h-150,'#68768a');return out;

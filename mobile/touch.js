@@ -16,6 +16,72 @@ function mobileLayout(width,height,safe={top:0,right:0,bottom:0,left:0}) {
   return {portrait:height>width,canvas,buttons};
 }
 const MOBILE={pointers:new Map(),portrait:false,views:new Map(),selectTab:0,away:false,remoteAt:null};
+// Retry inside release/click gestures as well as fight presses. Menu-only
+// players (including Watch) must be able to unlock audio after returning.
+const mobileAudioSources=new Map(),mobileAudioContexts=new WeakSet();
+let mobileAudioBlocked=false;
+function mobileAudioReady() {
+  return !AUDIO.mute&&!MOBILE.away&&!mobileAudioBlocked&&document.visibilityState==='visible'&&AUDIO.ctx&&AUDIO.ctx.state==='running';
+}
+function mobileAudioStop() {
+  for(const [source,finish] of mobileAudioSources) {
+    try{source.stop();}catch(e){}finish();
+  }
+  AUDIO.recent={};
+}
+function mobileAudioGain() {
+  if(!AUDIO.master)return;
+  const p=AUDIO.master.gain,t=AUDIO.ctx.currentTime;
+  p.cancelScheduledValues(t);
+  // Hide immediately; use the shared short ramp when enabling sound.
+  if(mobileAudioReady())p.setTargetAtTime(.65,t,.008);else p.setValueAtTime(0,t);
+}
+const mobileInitAudioBase=initAudio;
+initAudio=function() {
+  if(AUDIO.mute||MOBILE.away||mobileAudioBlocked||document.visibilityState!=='visible')return;
+  mobileInitAudioBase();
+  const a=AUDIO.ctx;
+  if(!a)return;
+  if(!mobileAudioContexts.has(a)) {
+    mobileAudioContexts.add(a);
+    a.addEventListener('statechange',()=>{
+      if(AUDIO.ctx!==a)return;
+      if(a.state!=='running')mobileAudioStop();
+      mobileAudioGain();
+    });
+  }
+  // Shared initAudio already retries suspended. Safari also exposes interrupted.
+  if(a.state==='interrupted')try{const p=a.resume();if(p&&p.catch)p.catch(()=>{});}catch(e){}
+  mobileAudioGain();
+};
+function mobileAudioGesture(e) {
+  if(e.button>0||MOBILE.away||document.visibilityState!=='visible')return;
+  mobileAudioBlocked=false;initAudio();
+}
+for(const event of ['pointerup','click','keydown'])addEventListener(event,mobileAudioGesture,true);
+const mobileSetMuteBase=setMute;
+setMute=function(mute) {
+  mobileSetMuteBase(mute);
+  if(mute)mobileAudioStop();else {mobileAudioBlocked=false;initAudio();}
+  mobileAudioGain();
+  const b=$('touchMute');b.textContent=mute?'UNMUTE':'MUTE';
+  b.setAttribute('aria-pressed',String(!!mute));
+};
+const mobileSoundVoiceBase=soundVoice;
+soundVoice=function(source,...args) {
+  if(!mobileAudioReady())return false;
+  if(!mobileSoundVoiceBase(source,...args))return false;
+  const ended=source.onended;
+  const finish=()=>{
+    if(!mobileAudioSources.delete(source))return;
+    ended();
+  };
+  source.onended=finish;mobileAudioSources.set(source,finish);return true;
+};
+const mobileSfxBase=sfx,mobileToneBase=tone,mobileNoiseBase=noise;
+sfx=function(e){if(mobileAudioReady())mobileSfxBase(e);};
+tone=function(...args){if(mobileAudioReady())mobileToneBase(...args);};
+noise=function(...args){if(mobileAudioReady())mobileNoiseBase(...args);};
 const mobileButtons=Array.from(document.querySelectorAll('[data-input]'));
 // Two short display names; full library names stay in the move list and each
 // accessible label. The remaining names fit the two-line button heading whole.
@@ -95,6 +161,7 @@ for(const button of mobileButtons) {
 function mobileResetRemote() {G.remoteIn=0;G.remoteTap=0;MOBILE.remoteAt=null;}
 function mobileAway() {
   MOBILE.away=true;clearInput();G.acc=0;
+  mobileAudioBlocked=true;mobileAudioGain();mobileAudioStop();
   if(G.running&&!G.paused&&!G.over&&G.mode!=='host'&&G.mode!=='guest')togglePause();
 }
 function mobileReturn() {
