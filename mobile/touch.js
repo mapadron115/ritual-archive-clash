@@ -15,7 +15,7 @@ function mobileLayout(width,height,safe={top:0,right:0,bottom:0,left:0}) {
   put('pause',Math.floor(canvas.x+sw/2)-56,bottom-bh);put('mute',Math.floor(canvas.x+sw/2)+4,bottom-bh);
   return {portrait:height>width,canvas,buttons};
 }
-const MOBILE={pointers:new Map(),portrait:false,views:new Map(),selectTab:0};
+const MOBILE={pointers:new Map(),portrait:false,views:new Map(),selectTab:0,away:false,remoteAt:null};
 const mobileButtons=Array.from(document.querySelectorAll('[data-input]'));
 // Two short display names; full library names stay in the move list and each
 // accessible label. The remaining names fit the two-line button heading whole.
@@ -55,6 +55,8 @@ function mobileUpdateControls(S) {
 function mobileRelease(id,cancelled=false) {
   const b=MOBILE.pointers.get(id);if(!b)return;
   MOBILE.pointers.delete(id);
+  // Remove the contact first: releasing capture can synchronously notify us.
+  if(b.hasPointerCapture&&b.hasPointerCapture(id))b.releasePointerCapture(id);
   if(!Array.from(MOBILE.pointers.values()).includes(b)) {
     const code=BIND.solo[b.dataset.input][0];G.keys[code]=false;
     if(cancelled)delete G.taps[code];
@@ -65,27 +67,105 @@ const mobileClearBase=clearInput;
 clearInput=function() {
   for(const id of Array.from(MOBILE.pointers.keys()))mobileRelease(id);
   mobileClearBase();
+  // A hidden phone may never get another animation frame. Release the host's
+  // copy now, including when opening a list, rotating or changing fighters.
+  if(G.mode==='guest'&&NET.conn&&NET.conn.open) {
+    try {netSend({t:'in',b:0});G.lastSent=0;G.sendT=0;} catch(e) { /* The close/error callback owns recovery. */ }
+  }
 };
 for(const button of mobileButtons) {
   button.addEventListener('pointerdown',e=>{
     e.preventDefault();
-    if((e.pointerType==='mouse'&&e.button!==0)||!G.running||G.paused||G.over||MOBILE.portrait||G.mode==='watch')return;
+    if((e.pointerType==='mouse'&&e.button!==0)||!G.running||G.paused||G.over||MOBILE.portrait||MOBILE.away||document.visibilityState!=='visible'||G.mode==='watch')return;
     mobileRelease(e.pointerId);
     const code=BIND.solo[button.dataset.input][0];
     if(!G.keys[code])G.taps[code]=true;
     G.keys[code]=true;MOBILE.pointers.set(e.pointerId,button);
     button.classList.add('held');button.setPointerCapture(e.pointerId);initAudio();
   });
-  for(const name of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(name,e=>{e.preventDefault();mobileRelease(e.pointerId,name!=='pointerup');});
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(name,e=>{
+    e.preventDefault();
+    if(MOBILE.pointers.get(e.pointerId)!==button)return;
+    // An old capture-loss notification can arrive after a fresh capture.
+    if(name==='lostpointercapture'&&button.hasPointerCapture&&button.hasPointerCapture(e.pointerId))return;
+    mobileRelease(e.pointerId,name!=='pointerup');
+  });
   button.addEventListener('contextmenu',e=>e.preventDefault());
 }
-// These listeners call the new clear function (the shared blur listener captured
-// the original), so a returning finger must make a fresh press.
-addEventListener('blur',()=>clearInput());
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')clearInput();});
+function mobileResetRemote() {G.remoteIn=0;G.remoteTap=0;MOBILE.remoteAt=null;}
+function mobileAway() {
+  MOBILE.away=true;clearInput();G.acc=0;
+  if(G.running&&!G.paused&&!G.over&&G.mode!=='host'&&G.mode!=='guest')togglePause();
+}
+function mobileReturn() {
+  MOBILE.away=document.visibilityState!=='visible';clearInput();mobileResetRemote();
+  G.acc=0;G.last=performance.now();
+  // Offline play stays paused until the player explicitly taps Resume.
+}
+addEventListener('blur',mobileAway);addEventListener('pagehide',mobileAway);
+addEventListener('focus',mobileReturn);addEventListener('pageshow',mobileReturn);
+document.addEventListener('freeze',mobileAway);document.addEventListener('resume',mobileReturn);
+document.addEventListener('visibilitychange',()=>document.visibilityState==='visible'?mobileReturn():mobileAway());
+const mobileReadKeysBase=readKeys;
+readKeys=function(bind) {
+  if(MOBILE.away||MOBILE.portrait||document.visibilityState!=='visible'){mobileClearBase();return 0;}
+  return mobileReadKeysBase(bind);
+};
+// Guests already heartbeat every seven rendered frames. Give delayed packets
+// a full second, then discard held controls if the phone vanished before its
+// release could reach us. A fresh packet restores control without replaying taps.
+const mobileReadRemoteBase=readRemote;
+readRemote=function() {
+  if(MOBILE.remoteAt!==null&&performance.now()-MOBILE.remoteAt>=1000)mobileResetRemote();
+  return mobileReadRemoteBase();
+};
+const mobileNetCloseBase=netClose;
+netClose=function() {
+  clearInput();mobileResetRemote();G.netEv=[];G.running=false;G.paused=false;G.over=false;
+  G.resultToken=(G.resultToken||0)+1;
+  mobileNetCloseBase();
+};
+const mobileToMenuBase=toMenu;
+toMenu=function(fromNet) {
+  // Also cancel a pending host/join before its open callback sets G.mode.
+  if(!fromNet&&G.mode!=='host'&&G.mode!=='guest')netClose();
+  mobileToMenuBase(fromNet);
+};
+const mobileNetWireBase=netWire;
+function mobileDisconnected(message) {
+  toMenu(true);netClose();show('online');netStatus(message+' Host a new room or join again.');
+}
+netWire=function(conn,mode) {
+  if(NET.conn&&NET.conn!==conn) {try{conn.close();}catch(e){}return;}
+  const session=NET.session,active=()=>NET.session===session&&NET.conn===conn;
+  // Decorate the shared callbacks as they register, retaining the real
+  // connection identity and all existing session/stale-callback guards.
+  const on=conn.on;
+  conn.on=function(name,callback) {
+    return on.call(conn,name,(...args)=>{
+      if(!active())return;
+      if(name==='close'){mobileDisconnected('The other player disconnected.');return;}
+      if(name==='open'){G.running=false;G.paused=false;G.over=false;mobileResetRemote();}
+      if(name==='data'&&args[0].t==='in') {
+        if(!G.running||G.over)return;
+        MOBILE.remoteAt=performance.now();
+      }
+      callback(...args);
+    });
+  };
+  try{mobileNetWireBase(conn,mode);}finally{conn.on=on;}
+  conn.on('error',()=>{
+    if(!active())return;
+    mobileDisconnected('Connection lost.');
+  });
+};
+const mobileHostGameBase=hostGame,mobileJoinGameBase=joinGame;
+hostGame=function(){netStatus('Opening a new room...');mobileHostGameBase();};
+joinGame=function(){if($('code').value.trim().length===4)netStatus('Connecting...');mobileJoinGameBase();};
 const mobileShowBase=show;
 show=function(id) {
   clearInput();mobileShowBase(id);
+  if(id==='select'){mobileResetRemote();G.resultToken=(G.resultToken||0)+1;}
   if(id==='none'&&G.S) {
     mobileUpdateControls(G.S);
   }

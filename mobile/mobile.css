@@ -6,7 +6,7 @@ body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit
 canvas { image-rendering: pixelated; display: block; }
 #cv { position: absolute; }
 button, input, summary { font: inherit; min-height: 48px; border: 2px solid #68768a; border-radius: 0; color: #f1e5cd; background: #263346; padding: 8px; }
-button { font-weight: bold; cursor: pointer; touch-action: manipulation; }
+button { min-width: 48px; font-weight: bold; cursor: pointer; touch-action: manipulation; }
 button:focus-visible, summary:focus-visible, input:focus { outline: 2px solid #ecd3a0; outline-offset: 2px; }
 button:active, button.on, button[aria-pressed="true"] { background: #34495f; border-color: #b5dce5; }
 button:disabled { opacity: .65; }

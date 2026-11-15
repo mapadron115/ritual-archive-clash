@@ -15,24 +15,25 @@ class Context {
   putImageData(im,x,y){for(let j=0;j<im.height;j++)this.canvas.pixels().set(im.data.subarray(j*im.width*4,(j+1)*im.width*4),((y+j)*this.canvas.width+x)*4);}
   drawImage(im,x,y,w=im.width,h=im.height){const out=this.canvas.pixels(),src=im.pixels();for(let j=0;j<h;j++)for(let i=0;i<w;i++){const a=(Math.floor(j*im.height/h)*im.width+Math.floor(i*im.width/w))*4,b=((y+j)*this.canvas.width+x+i)*4;if(src[a+3])for(let k=0;k<4;k++)out[b+k]=src[a+k];}}
 }
-function target(id){const handlers={};return {id,handlers,style:{setProperty(k,v){this[k]=v;}},dataset:{},children:[],attributes:{},textContent:'',className:'',_html:'',classList:{add(){},remove(){}},set innerHTML(v){this._html=v;this.children=[];},get innerHTML(){return this._html;},setAttribute(k,v){this.attributes[k]=v;},appendChild(n){this.children.push(n);},focus(){document.activeElement=this;},setPointerCapture(id){this.capture=id;},addEventListener(k,fn){(handlers[k]??=[]).push(fn);},dispatch(k,e={}){for(const f of handlers[k]||[])f(e);}};}
+function target(id){const handlers={},captures=new Set();return {id,handlers,style:{setProperty(k,v){this[k]=v;}},dataset:{},children:[],attributes:{},textContent:'',className:'',_html:'',classList:{add(){},remove(){}},set innerHTML(v){this._html=v;this.children=[];},get innerHTML(){return this._html;},setAttribute(k,v){this.attributes[k]=v;},appendChild(n){this.children.push(n);},focus(){document.activeElement=this;},setPointerCapture(id){captures.add(id);},hasPointerCapture(id){return captures.has(id);},releasePointerCapture(id){captures.delete(id);this.dispatch('lostpointercapture',{pointerId:id,preventDefault(){}});},addEventListener(k,fn){(handlers[k]??=[]).push(fn);},dispatch(k,e={}){for(const f of handlers[k]||[])f(e);}};}
 const html=fs.readFileSync(path.join(root,'mobile/index.html'),'utf8'),nodes=new Map(),win=target('window'),doc=target('document'),timeouts=[];
 const buttons=[...html.matchAll(/<button data-input="(\w+)"[^>]*>([^<]+)<\/button>/g)].map(m=>{const b=target(m[1]);b.dataset.input=m[1];b.textContent=m[2];return b;});
 assert.equal(buttons.length,10);
 for(const b of buttons)if(b.dataset.input==='DOM')nodes.set('domainButton',b);
 const cv=new Canvas(1280,720);nodes.set('cv',cv);
 const document=Object.assign(doc,{visibilityState:'visible',getElementById(id){if(!nodes.has(id))nodes.set(id,target(id));return nodes.get(id);},querySelectorAll(s){return s==='[data-input]'?buttons:['title','select','online','pause','over'].map(id=>this.getElementById(id));},createElement(tag){return tag==='canvas'?new Canvas():target(tag);},head:target('head')});
-const context=vm.createContext({console,assert,document,window:{},innerWidth:844,innerHeight:390,getComputedStyle(){return {};},requestAnimationFrame(){},addEventListener:(k,f)=>win.addEventListener(k,f),setTimeout(f,ms){timeouts.push({f,ms});}});
+const context=vm.createContext({console,assert,document,window:{},performance:{now:()=>0},innerWidth:844,innerHeight:390,getComputedStyle(){return {};},requestAnimationFrame(){},addEventListener:(k,f)=>win.addEventListener(k,f),setTimeout(f,ms){timeouts.push({f,ms});}});
 Object.assign(context,{win,buttons,timeouts,baseline});
 const scripts=[...html.matchAll(/<script src="([^?]+)\?v=(\d+)"><\/script>/g)];
 assert.equal(scripts.length,12);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(baseline&&m[1]==='touch.js'?baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});
 vm.runInContext(`
 let now=0;
+performance.now=()=>now;
 const advance=(n=1)=>{for(let t=0;t<n;t++)frame(now+=1000/60);};
 const button=k=>buttons.find(b=>b.dataset.input===k);
-const pointer=(type,k,id=1,extra={})=>{let prevented=false;button(k).dispatch(type,{pointerId:id,pointerType:'touch',button:0,preventDefault(){prevented=true;},...extra});assert(prevented);};
-const fresh=(mode='ai',ch=0)=>{G.mode=mode;G.pick=[ch,1];startFight();G.S.phase='fight';G.S.intro=0;G.S.freeze=0;G.S.f[1].x=1050;};
+const pointer=(type,k,id=1,extra={})=>{let prevented=false;if(type==='lostpointercapture')button(k).releasePointerCapture(id);button(k).dispatch(type,{pointerId:id,pointerType:'touch',button:0,preventDefault(){prevented=true;},...extra});assert(prevented);};
+const fresh=(mode='ai',ch=0)=>{win.dispatch('focus');G.mode=mode;G.pick=[ch,1];startFight();G.S.phase='fight';G.S.intro=0;G.S.freeze=0;G.S.f[1].x=1050;};
 const input=()=>readKeys(BIND.solo);
 fresh();pointer('pointerdown','P');pointer('pointerup','P');assert.equal(input(),BTN.P<<INPUT_SHIFT);assert.equal(input(),0);
 // Two contacts on one button cannot release each other or add repeated edges.
