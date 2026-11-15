@@ -30,11 +30,17 @@ function check(S,mode){
       const p=(y*640+x)*4;
       assert(hud.data[p+3]===0||hud.data[p+3]===255,'soft alpha');
       const differs=hud.data[p]!==prior.data[p]||hud.data[p+1]!==prior.data[p+1]||hud.data[p+2]!==prior.data[p+2]||hud.data[p+3]!==prior.data[p+3];
-      if(differs){assert(hurry,'ordinary or ended timer changed');assert(x>=region.x&&x<region.x+region.w&&y>=region.y&&y<region.y+region.h,'warning overwrites another HUD area');changed++;}
+      if(differs){
+        // V104 owns the low-health lanes; their appearance is checked against
+        // v103 in health-warning.cjs. Keep the fixed v102 timer reference here.
+        const health=S.phase==='fight'&&S.f.some((f,i)=>f.hp>0&&f.hp<=maxHp(f)*DOM_HP&&x>=(i?368:47)&&x<(i?593:272)&&y>=22&&y<41);
+        if(health)continue;
+        assert(hurry,'ordinary or ended timer changed');assert(x>=region.x&&x<region.x+region.w&&y>=region.y&&y<region.y+region.h,'warning overwrites another HUD area');changed++;
+      }
     }
     if(hurry){assert(changed>=1500,'last ten seconds lack a conspicuous timer warning: '+changed);minChange=Math.min(minChange,changed);
       for(const t of texts)if(t!==time)assert(t.x+pxTextWidth(t.t,t.z)<=region.x||t.x>=region.x+region.w||t.y+7*t.z<=region.y||t.y>=region.y+region.h,'warning overlaps '+t.t);
-    }else{assert.deepEqual(hud.data,prior.data);unchanged++;}
+    }else{unchanged++;}
     frames++;
   }
   return hud;
@@ -86,5 +92,5 @@ for(const start of [601,600,1])for(const pause of ['hitstop','freeze']){
 reset();const stopped=newMatch(12,0,103);stopped.phase='fight';stopped.timer=601;stopped.stop={o:0,t:90};
 step(stopped,[0,0]);assert.equal(stopped.timer,600);check(stopped,'host');
 if(previewOnly)console.log('EXPORTED baseline scenes; warning appearance assertions skipped');
-else console.log('PASS',timelines,'actual timeout/draw timelines;',ticks,'parallel ticks;',frames,'read-only native HUD/snapshot checks;',unchanged,'byte-identical ordinary/result HUDs;',holds,'pause holds; minimum warning change',minChange,'pixels');
+else console.log('PASS',timelines,'actual timeout/draw timelines;',ticks,'parallel ticks;',frames,'read-only native HUD/snapshot checks;',unchanged,'unchanged ordinary/result clocks;',holds,'pause holds; minimum warning change',minChange,'pixels');
 `)(assert,writePNG,output,prefix,previewOnly,oldHUD,...shell);

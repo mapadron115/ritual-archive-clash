@@ -1,25 +1,25 @@
 # Handoff: Ritual Archive: Clash
 
-## Current - version 103, script cache v=106 (2026-11-15)
+## Current - version 104, script cache v=107 (2026-11-15)
 
-Mailbox through 16:18 acted on; final reread unchanged. V102 committed by coordinator as 5472545 (not pushed); coordinator reports owner published through v97 (53f628d). Owner directly repeated autonomous check-in/report instructions; no other decision. All arenas remain closed. Earlier implementation orders remain acted on. Rapid Slash's optional visibility note is deferred as directed.
+Mailbox through 16:25 acted on; final reread unchanged. v103 accepted/committed by coordinator as 6c176e3 (not pushed). Coordinator reports owner published through v97 (53f628d). Owner directly repeated autonomous check-in/report instructions; no new design decision. All arenas stay closed; Rapid Slash's optional visibility note remains deferred.
 
-V103 makes the final ten seconds conspicuous: a wider crimson clock panel, pale digits and inward warning markers replace the ordinary gold/navy clock from 600 ticks through 1. Steady, state-derived cue holds during hit-stop/freeze, agrees with snapshots and clears when the fight ends. Other HUD pixels and ordinary/result clocks stay identical. No simulation, event, damage, cost, movement, input, AI, audio, roster, style or network changes. Eleven script URLs v=106.
+V104 makes low health visible across the whole bar: at positive HP <=30% during a fight, a crimson empty lane, broad rose rails and pale end caps frame the existing amber fill. The frame remains conspicuous even under a full recent-damage bar. State-derived and steady through pauses/snapshots; clears above the threshold and on round end. Actual HP/ghost fill lengths and colors, ordinary/result HUDs and other pixels stay identical to v103. No simulation/event, damage, cost, movement, input, AI, audio, roster, style or network changes. Eleven script URLs v=107.
 
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-hud.js, tests/timer-warning.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base 5472545; never pushed. Ready for coordinator review/commit and owner readability assessment before publication.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-hud.js, tests/health-warning.cjs (new), tests/timer-warning.cjs. The timer test retains its fixed v102 clock reference and delegates only the now-changed low-health lanes to the dedicated health regression. No add/commit attempt per 01:34/03:00; HEAD/base 6c176e3; never pushed. Ready for review/commit and owner readability assessment before publication.
 
 ## Verification and limits
 
-- New timer-warning regression: nine actual timeout/draw timelines; 5,949 parallel ticks; 937 read-only native HUD/snapshot checks across all builds, arenas and five modes; 24 hit-stop/freeze holds. Exact 601/600 and 1/0 boundaries, time-stop clock behavior, deadline outcomes and result cleanup pass. At least 1,876 changed warning pixels, confined to the clock area; 372 ordinary/result HUDs byte-identical to v102. Fixed v102 baseline fails on absent warning; --baseline --preview-only exports it.
-- HUD (75 states), HUD learning (2,115 layouts), eligibility (36 real timelines), guard HUD/recovery, time-stop, watch identity, round results (180 timelines plus 180 consecutive draws), opening banners (210 timelines), feel/input and actual-script runtime/menu/input/results/online lifecycle pass. Source/test syntax, eleven matching v106 URLs and diff whitespace pass.
-- Inspected native courtyard 600-tick before/after: gold clock becomes a broad crimson warning. Also inspected gallery Nell mirror at 60 ticks, observatory at 1 tick and subsequent TIME UP result. Thirty native before/after pairs across two fighter pairs, three arenas and five clock boundaries, plus time-up result retained in codex mailbox. Generated memory rasters, not browser captures or observed motion.
+- New health regression: 90 actual hit/chip/KO timelines across all fifteen builds and both slots; 6,750 parallel ticks; 2,262 read-only native HUD/snapshot checks in five modes; eight pause holds. Exact 30% boundary, differing max HP, almost empty/full ghost, both sides low, stacked statuses and non-fight cleanup pass. Health/ghost fill pixels stay identical. At least 978 changed warning pixels per low-health lane; 1,292 ordinary/result HUDs byte-identical to v103. Fixed v103 baseline fails on absent warning; --baseline --preview-only exports it.
+- HUD (75 states), HUD learning (2,115 layouts), eligibility (36 real timelines), guard HUD/recovery, timer warning (nine deadlines/937 HUD checks), feel/input and actual-script runtime/menu/input/results/online lifecycle pass. Round results (180 KO/timeout/draw timelines plus 180 consecutive draws), source/test syntax, eleven matching v107 URLs and diff whitespace pass.
+- Inspected courtyard native before/after P1 recovered low-health mirror: amber sliver gains a broad crimson/pale frame. Also inspected gallery stacked-status, two-side one-percent fixture with time-stop/Domain and final-ten-second clock warning. Nine native pairs across three arenas, both slots and two fighter pairs retained in codex mailbox. Generated memory rasters, not browser captures or observed motion.
 - No owner play/listening, live browser layout/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC. Browser not retried. Unchanged world/stage/full-match/individual art/audio/performance suites not repeated. Scripts/stills do not count as played.
 
 ## Next priorities
 
-Owner dive feel/readability notes take priority. V97 still gives 44 active warning ticks before tick-46 impact: 250 damage, 310-unit width, unchanged cost. Bram's retreat delayed 8 ticks escapes, 9 is hit; jump-away delayed 15 escapes, 16 is hit. Owner must judge the feel.
+Owner dive feel/readability notes take priority. V97 gives 44 active warning ticks before tick-46 impact: 250 damage, 310-unit width, unchanged cost. Bram's retreat delayed 8 ticks escapes, 9 is hit; jump-away delayed 15 escapes, 16 is hit. Owner must judge the feel.
 
-Otherwise continue first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. Arenas stay closed. No pending decision for v103; leave this one-version run ready for coordinator commit.
+Otherwise continue first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. Arenas stay closed. No pending decision for v104; leave this one-version run ready for coordinator commit.
 
 ## Code and run
 

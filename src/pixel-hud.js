@@ -24,6 +24,19 @@ function pxWrap(text,width) {
 function pxPanel(s,x,y,w,h,base='#263346',edge='#68768a') {
   s.rect(x-2,y-2,w+4,h+4,PX_INK);s.rect(x,y,w,h,base);s.rect(x,y,w,1,edge);s.rect(x,y,1,h,edge);
 }
+// Keep danger visible across the depleted lane, even when only a sliver of HP
+// remains. Serialized HP drives the steady cue; ghost damage is still separate.
+function pxHealthFrame(s,S,f,x,w) {
+  const danger=S.phase==='fight'&&f.hp>0&&f.hp<=maxHp(f)*DOM_HP;
+  pxPanel(s,x,25,w,12,danger?'#502b3d':'#343748',danger?'#f1ad91':'#8b7d80');
+  if(danger) {
+    s.rect(x,22,w,2,'#bd6472');s.rect(x,38,w,2,'#bd6472');
+    for(const side of [0,1]) {
+      const cap=[[x-5,22],[x+2,22],[x+2,25],[x-2,25],[x-2,37],[x+2,37],[x+2,40],[x-5,40]];
+      s.poly(cap.map(([xx,y])=>[side?2*x+w-1-xx:xx,y]),'#f1ad91');
+    }
+  }
+}
 function pxResultRole(labels,i) {
   if(!labels[0]&&!labels[1]&&labels.other==='Computer')return 'CPU'+(i+1);
   if(!labels[0]&&!labels[1]||labels[0]&&labels[1])return 'P'+(i+1);
@@ -71,7 +84,7 @@ function pxHUDSurface(S,labels,F=FX) {
   for(let i=0;i<2;i++) {
     const f=S.f[i],c=CH[f.ch],kit=PX_KITS[f.ch],ac=kit.accent,left=i===0,x=left?52:373,bw=215,lab=labels[i],alt=i===1&&S.f[0].ch===f.ch;
     pxText(s,c.name,x,6,PX_LIGHT);pxText(s,c.tech,x+bw-pxTextWidth(c.tech),15,ac);
-    pxPanel(s,x,25,bw,12,'#343748','#8b7d80');
+    pxHealthFrame(s,S,f,x,bw);
     const fill=(fraction,col,y,h,w=bw,xx=x)=>{const len=Math.round(w*clamp(fraction,0,1));s.rect(left?xx+w-len:xx,y,len,h,col);};
     fill(f.ghost/maxHp(f),'#c4756d',25,12);fill(f.hp/maxHp(f),f.hp<=maxHp(f)*DOM_HP?'#e6b26d':'#87bc94',25,12);
     fill(f.hp/maxHp(f),'#b8d4ad',25,2);s.rect(left?x+bw-bw*DOM_HP:x+bw*DOM_HP,25,1,12,PX_INK);
