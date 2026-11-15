@@ -37,7 +37,7 @@ for(let phase=0;phase<16;phase++) {
     for(let y=0;y<360;y++)for(let x=0;x<640;x++) {
       const p=(y*640+x)*4,delta=different(a,b,p);assert.equal(a.data[p+3],255,'soft/empty stage');
       if(delta) {
-        assert(stage.id==='courtyard'&&y>=160&&y<222&&((x>=68&&x<115)||(x>=538&&x<585)),'changed other scenery/floor');changed++;
+        assert(stage.id==='courtyard'&&y>=160&&y<254&&((x>=68&&x<117)||(x>=538&&x<587)),'changed other scenery/floor');changed++;
       }
     }
     if(stage.id==='courtyard'){assert(changed>700,'cloth change invisible at native size');minChanged=Math.min(minChanged,changed);}
@@ -61,12 +61,12 @@ for(const ch of [0,7,14])for(const dir of [-1,1])for(const pose of ['idle','air'
   scenes++;
 }
 if(output)for(const [label,renderer]of [['before',before],['after',after]]) {
-  const sheet=new PixelSurface(640,240);sheet.rect(0,0,640,240,PX_INK);
+  const sheet=new PixelSurface(640,280);sheet.rect(0,0,640,280,PX_INK);
   for(let n=0;n<16;n++) {
     const cloth=renderer.cloth(n),col=n%8,row=Math.floor(n/8);
-    pxText(sheet,'P'+n,col*80+8,row*120+6,PX_LIGHT);
-    for(let y=0;y<72;y++)for(let x=0;x<55;x++) {
-      const p=((y+155)*640+x+65)*4;if(cloth.data[p+3])sheet.data.set(cloth.data.subarray(p,p+4),((row*120+y+25)*640+col*80+x+8)*4);
+    pxText(sheet,'P'+n,col*80+8,row*140+6,PX_LIGHT);
+    for(let y=0;y<104;y++)for(let x=0;x<55;x++) {
+      const p=((y+155)*640+x+65)*4;if(cloth.data[p+3])sheet.data.set(cloth.data.subarray(p,p+4),((row*140+y+25)*640+col*80+x+8)*4);
     }
   }
   writePNG(output+'/v90-'+label+'-cloth-loop.png',sheet);

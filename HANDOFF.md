@@ -1,23 +1,23 @@
 # Handoff: Ritual Archive: Clash
 
-## Current - version 90, script cache v=93 (2026-11-14)
+## Current - version 91, script cache v=94 (2026-11-14)
 
-Mailbox through 19:06 acted on/acknowledged. V89 committed by coordinator as c048d13, not pushed. Observatory closed by coordinator: do not tune it again. Owner's direct check-in repeats autonomous work/mailbox/report instructions; no new design decision.
+Mailbox through 19:21 acted on/acknowledged; final reread unchanged. V90 committed by coordinator as 32cabff, not pushed. Owner directly repeated autonomous check-in/mailbox/report instructions, with no new design decision. Observatory remains closed. One version this run; Gallery audit next.
 
-V90 is one Courtyard atmosphere change: banners now have a travelling broad shaded fold, pinned tops, visibly swaying free hems and emblems that follow the cloth. Existing sixteen-phase / 128-tick clock and caches retained. No combat/input/audio/AI/network changes. Eleven script URLs v=93.
+V91 corrects the Courtyard banner hem as requested: cloth extends 32 native pixels farther, from y221 to y253, to reach waist height, and ends in two pointed swallowtails with an open notch. Both tips follow the travelling fold; pinned upper cloth/emblems remain byte-identical to v90 through y210. Sixteen-phase/128-tick clock, surface/cache budgets and foreground fighter layering retained. No combat/input/audio/AI/network changes. Eleven script URLs v=94.
 
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-stage.js, tests/courtyard-banners.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base c048d13; never push. Ready for coordinator review/commit and owner motion/readability assessment before publication.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-stage.js, tests/courtyard-banners.cjs, tests/courtyard-hem.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base 32cabff; never push. Ready for coordinator review/commit and owner motion/readability assessment before publication.
 
 ## Verification and limits
 
-- New courtyard-banners regression fails with --baseline (old cloth remains too subtle); final passes 48 stage frames and 72 native mirror scenes (Isolde, Nell and Greta; both directions; idle/air/guard; four phases). At least 1,614 changed cloth pixels per stage frame, 14-pixel hem span, maximum adjacent hem step 3 pixels including wrap. Checks pinned top, hard alpha, fixed floor/other scenery/other arenas, loop/cache identity, read-only state, JSON snapshots and 440,304 unchanged fighter pixels.
-- Stage-motion passes 48 frames, six two-cycle input timelines, snapshots/outcomes, clock/freeze behavior, masked forward rain and bounded caches. Stage suite passes 48 frames/45 Domain combinations; world (308), feel/input and actual-script runtime/menu/selection/results/online lifecycle suites pass. Source/test syntax, eleven v93 URLs and diff whitespace pass.
-- Native 640x360 before/after HUD/fight pairs at phases 0/4/8/12 plus full sixteen-phase cloth sheets are in the codex mailbox. Inspected v90-before/after-courtyard-p4.png and -p12.png and v90-after-cloth-loop.png at 1x. Broad folds and bent hems read beside both costumes; cloth remains behind bodies. These are generated memory rasters, not browser captures or observed motion.
+- New courtyard-hem regression fails with --baseline on v90 (full-length pointed hem missing); final passes 48 stage frames and 72 native mirror scenes (Isolde, Nell and Greta; both directions; idle/air/guard; four phases). At least 1,454 changed cloth pixels per stage frame; pointed hem moves through a 15-pixel span, maximum adjacent step 3 pixels including wrap. Checks two narrow tips/open notch in both banners in all phases, unchanged upper cloth, hard alpha, fixed other scenery/floor/arenas, cache/loop identity, read-only state, JSON snapshots and 440,304 unchanged fighter pixels.
+- Existing courtyard-banners passes after extending its allowed cloth bounds and preview crop to the new hem. Stage-motion passes 48 frames/six two-cycle input timelines/snapshots/outcomes/global-clock pause behavior/rain masking/bounded caches. Stage passes 48 frames/45 Domain combinations. World (308 frames), feel/input (eleven groups and keyboard handlers), actual-script runtime/menu/selection/results/online lifecycle, source/test syntax, eleven v94 script URLs and diff whitespace pass.
+- Native 640x360 v91-before/after-courtyard-p0/p4/p8/p12.png, Greta air/guard pairs in both directions and before/after sixteen-phase cloth sheets are in the codex mailbox. Inspected the exact p4 pair, after p12, after ch14-air-left-p8, after ch14-guard-right-p4 and after-cloth-loop at 1x. Hems reach the requested height and stay behind bodies. Runtime/menu rasters retained. These are generated memory rasters, not browser captures or observed motion.
 - No owner play/listening, live browser/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC check. Browser not retried. Unchanged full-match, individual move/art, audio/contact and performance suites not repeated. Last full-match smoke: 225 matchups/1,169,896 ticks. Neither scripts nor images count as owner play.
 
 ## Next priorities
 
-Owner first-minute readability/feel/listening notes take priority. Continue Gallery or crowded actual-input approaches/close hit exchanges, selecting one reproduced gap visible in full native before/after scenes at 1x. Observatory is finished per 19:06. No speculative balance/audio changes. Known balance question already passed to coordinator: late run/vertical jump cannot escape the locked diving Maximum, while swap escapes and guard reduces damage; leave its rule unchanged.
+Gallery first-minute arena motion/readability audit, as ordered at 19:21; choose one reproduced gap plainly visible in full native before/after scenes at 1x. Owner first-minute readability/feel/listening notes take priority. Observatory is finished per 19:06. No speculative balance/audio changes. Known balance question already passed to coordinator: late run/vertical jump cannot escape the locked diving Maximum, while swap escapes and guard reduces damage; leave its rule unchanged.
 
 ## Code and run
 

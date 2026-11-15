@@ -97,16 +97,22 @@ function pxStageLife(frame) {
   const angle=frame*Math.PI*2/PX_STAGE_FRAMES;
   const s=new PixelSurface(640,360);
   for(const [x,base,light,shade] of [[77,'#365f7f','#75c9d9','#29465f'],[547,'#824856','#df9a88','#633640']]) {
-    for(let j=0;j<62;j++) {
+    for(let j=0;j<94;j++) {
       // The rail pins the top; a travelling fold pulls the free hem farther
       // than the shoulder. Broad light/dark bands read as cloth at play size.
-      const loose=j/61,wave=Math.round(Math.sin(angle-j*.065)*7*loose);
-      const w=32-Math.round((1-Math.cos(angle-j*.09))*2*loose)-(j>50?Math.round((j-50)/2):0);
-      s.rect(x+wave,160+j,w,1,PX_INK);s.rect(x+wave+1,160+j,w-2,1,base);
-      if(j===61)continue;
+      const loose=Math.min(j/61,1),wave=Math.round(Math.sin(angle-j*.065)*7*loose);
+      const w=32-Math.round((1-Math.cos(angle-j*.09))*2*loose);
+      // Full-length cloth ends in two pointed swallowtails. Slice the hem
+      // with the same travelling fold so neither tip is a rigid attachment.
+      const inset=j>76?Math.ceil((j-76)*7/17):0;
+      const notch=j>81?Math.ceil((j-81)*8/12):0;
+      const left=Math.round(inset*(w-1)/31),right=w-1-left;
+      const spans=notch?[[left,Math.floor((15.5-notch)*(w-1)/31)],[Math.ceil((15.5+notch)*(w-1)/31),right]]:[[left,right]];
       const fold=Math.round(Math.sin(angle-j*.07)*3*loose);
-      s.rect(x+wave+4+fold,160+j,3,1,light);
-      s.rect(x+wave+10+fold,160+j,4,1,shade);
+      for(const [a,b]of spans)for(let u=a;u<=b;u++) {
+        const col=u===a||u===b||j===93?PX_INK:u>=4+fold&&u<7+fold?light:u>=10+fold&&u<14+fold?shade:base;
+        s.dot(x+wave+u,160+j,col);
+      }
       if(j>=15&&j<=37) {
         const half=Math.floor(7*(1-Math.abs(j-26)/11)),cx=x+wave+20;
         s.rect(cx-half,160+j,half*2+1,1,light);
