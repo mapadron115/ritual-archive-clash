@@ -96,15 +96,23 @@ function pxStageLife(frame) {
   frame%=PX_STAGE_FRAMES;if(PX_LIFE.has(frame))return PX_LIFE.get(frame);
   const angle=frame*Math.PI*2/PX_STAGE_FRAMES;
   const s=new PixelSurface(640,360);
-  for(const [x,base,light] of [[77,'#365f7f','#75c9d9'],[547,'#824856','#df9a88']]) {
+  for(const [x,base,light,shade] of [[77,'#365f7f','#75c9d9','#29465f'],[547,'#824856','#df9a88','#633640']]) {
     for(let j=0;j<62;j++) {
-      const wave=Math.round(Math.sin(angle+j*.08)*2*j/62),w=j>50?32-Math.round((j-50)/2):32;
+      // The rail pins the top; a travelling fold pulls the free hem farther
+      // than the shoulder. Broad light/dark bands read as cloth at play size.
+      const loose=j/61,wave=Math.round(Math.sin(angle-j*.065)*7*loose);
+      const w=32-Math.round((1-Math.cos(angle-j*.09))*2*loose)-(j>50?Math.round((j-50)/2):0);
       s.rect(x+wave,160+j,w,1,PX_INK);s.rect(x+wave+1,160+j,w-2,1,base);
-      s.rect(x+wave+4,160+j,2,1,light);
+      if(j===61)continue;
+      const fold=Math.round(Math.sin(angle-j*.07)*3*loose);
+      s.rect(x+wave+4+fold,160+j,3,1,light);
+      s.rect(x+wave+10+fold,160+j,4,1,shade);
+      if(j>=15&&j<=37) {
+        const half=Math.floor(7*(1-Math.abs(j-26)/11)),cx=x+wave+20;
+        s.rect(cx-half,160+j,half*2+1,1,light);
+        if(j>=18&&j<=34)s.dot(cx,160+j,base);
+      }
     }
-    const wx=Math.round(Math.sin(angle+1.8));
-    s.poly([[x+16+wx,175],[x+23+wx,186],[x+16+wx,197],[x+9+wx,186]],light);
-    s.line([x+16+wx,178],[x+16+wx,194],base);
   }
   PX_LIFE.set(frame,s);return s;
 }
