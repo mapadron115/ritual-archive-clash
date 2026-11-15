@@ -115,17 +115,20 @@ CH.push({ name: 'Dax Morrow', tech: 'Explosion', tag: 'Blasts that throw him aro
     { id: 'blastdash', name: 'Blast Dash', cost: 10, cd: 50, su: 3, re: 4, air: 1, pose: 'cast1', desc: 'Blast yourself forward through the air. Works in mid-air too', ai: { min: 300, max: 900, p: .5 } },
     { id: 'apshot', name: 'AP Shot', cost: 25, cd: 150, su: 14, re: 18, pose: 'clap', desc: 'A blast squeezed into a thin line across the stage. 85, and a third of it goes through a guard', ai: { min: 200, max: 900, p: .6 } },
   ],
-  dom: { kind: 'howitzer', name: 'Howitzer Impact', maximum: 1, desc: 'Maximum. Leap, spin, and dive on where the foe stood a moment ago: 250 in a wide blast. Guarding takes most of it off' } });
+  dom: { kind: 'howitzer', name: 'Howitzer Impact', maximum: 1, desc: 'Maximum. Leap, spin, and dive on the marked spot. Move or jump clear before impact. 250; guarding takes most of it off' } });
 function sweat(f) { const k = 1 + f.res * 0.08; f.res = 0; return k; }
 ART.blast = (S, f, o) => { const k = sweat(f); ev(S, 'boom', f.x + f.face * 90, f.y - 74, 70); strike(S, f, o, 150, { dmg: 70 * k, kb: 13, lift: 6, stun: 22, guardDmg: 40 }, 150); f.vx = -f.face * 7; };
 ART.blastdash = (S, f) => { ev(S, 'boom', f.x - f.face * 30, f.y - 50, 40); f.vx = f.face * 15; f.vy = f.y >= GROUND ? -10 : -8; f.y = Math.min(f.y, GROUND - 1); f.st = 'jump'; f.move = null; };
 ART.apshot = (S, f, o) => { const k = sweat(f); S.zones.push({ k: 'beam', o: f.i, x: f.x + f.face * 46, y: f.y - 74, face: f.face, t: 0, dur: 12, w: 12, col: '#ff8a2a' }); ev(S, 'beam', f.x, f.y - 74); if (beamHits(f, o, 44)) hit(S, f.i, o, f.x, { dmg: 85 * k, kb: 9, stun: 22, chip: 0.33 }); };
+// Lock just after the opening freeze: 44 active ticks to clear the unchanged
+// 155-unit blast radius. Descent and contact retain their original timing.
+const HOWITZER_LOCK = 2, HOWITZER_IMPACT = 46, HOWITZER_RADIUS = 155;
 DOMAIN.howitzer = { dur: 60, tick(S, d, f, o) {
   d.hold = d.t < 56; if (d.t < 56) f.st = 'cast';
   if (d.t === 1) { f.vy = -24; f.vx = 0; f.y = GROUND - 1; f.inv = 50; ev(S, 'boom', f.x, GROUND, 60); }
-  if (d.t === 20) { d.tx = clamp(o.x, LEFT, RIGHT); S.zones.push({ k: 'target', o: f.i, x: d.tx, y: GROUND, t: 0, dur: 26, r: 150 }); }
+  if (d.t === HOWITZER_LOCK) { d.tx = clamp(o.x, LEFT, RIGHT); S.zones.push({ k: 'target', o: f.i, x: d.tx, y: GROUND, t: 0, dur: HOWITZER_IMPACT - HOWITZER_LOCK, r: HOWITZER_RADIUS }); }
   if (d.t > 20 && d.t < 46) { f.x += (d.tx - f.x) * 0.2; f.vy = Math.max(f.vy, 0) + 1.2; }
-  if (d.t === 46) { f.x = d.tx; f.y = GROUND; f.vy = 0; f.face = o.x >= f.x ? 1 : -1; f.res = 0; ev(S, 'nuke', f.x, GROUND - 40); ev(S, 'boom', f.x, GROUND - 40, 170); if (Math.abs(o.x - f.x) < 155 && o.y > GROUND - 190) hit(S, f.i, o, f.x, { dmg: 250, kb: 18, lift: 12, stun: 30, chip: 0.4, anyGuard: 1, dom: 1, guardDmg: 0.01 }); }
+  if (d.t === HOWITZER_IMPACT) { f.x = d.tx; f.y = GROUND; f.vy = 0; f.face = o.x >= f.x ? 1 : -1; f.res = 0; ev(S, 'nuke', f.x, GROUND - 40); ev(S, 'boom', f.x, GROUND - 40, 170); if (Math.abs(o.x - f.x) < HOWITZER_RADIUS && o.y > GROUND - 190) hit(S, f.i, o, f.x, { dmg: 250, kb: 18, lift: 12, stun: 30, chip: 0.4, anyGuard: 1, dom: 1, guardDmg: 0.01 }); }
 } };
 
 // ---------- Bungee Gum (Hunter x Hunter)
