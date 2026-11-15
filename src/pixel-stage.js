@@ -251,12 +251,14 @@ function pxStageMotion(s,id,frame) {
     // Rain stays outside individual window panes, never across fighter silhouettes or the floor.
     for(const [x,w]of [[97,118],[257,126],[425,118]])for(let n=0;n<20;n++) {
       const rx=x+5+(n*29)%Math.floor(w-12),ry=113+(n*31+Math.floor(frame*148/PX_STAGE_FRAMES))%148;
-      for(let j=0;j<7;j++) {
-        const px=Math.round(rx-j/3),py=ry+j,p=(py*s.w+px)*4;
+      // Broad pale heads and dim tails make the falling rain readable at 1x.
+      // Keep the same drop positions and forward loop as the original rain.
+      for(let j=0;j<11;j++)for(let u=0;u<2;u++) {
+        const px=Math.round(rx-j/3)+u,py=ry+j,p=(py*s.w+px)*4;
         if(py>=261)continue;
         // Keep the stone mullions and crossbars in front of the rain.
         const r=s.data[p],g=s.data[p+1],b=s.data[p+2];
-        if((r===23&&g===43&&b===65)||(r===38&&g===61&&b===80)||(r===48&&g===73&&b===89)||(r===62&&g===88&&b===99)||(r===36&&g===55&&b===71)||(r===68&&g===97&&b===108))s.dot(px,py,n%3?'#526d7c':'#78909a');
+        if((r===23&&g===43&&b===65)||(r===38&&g===61&&b===80)||(r===48&&g===73&&b===89)||(r===62&&g===88&&b===99)||(r===36&&g===55&&b===71)||(r===68&&g===97&&b===108))s.dot(px,py,j<7?(u===0?'#a3b8c2':'#6f8998'):'#526d7c');
       }
     }
     // A soft two-step pulse, not a one-frame flicker at the loop reset.

@@ -77,7 +77,7 @@ if(!previewOnly) {
   const ys=Array.from({length:count},(_,n)=>{
     const s=pxBackdrop(n,'gallery'),ys=[];
     for(let y=113;y<261;y++)for(let x=100;x<104;x++) {
-      const p=(y*640+x)*4;if(s.data[p]===120&&s.data[p+1]===144&&s.data[p+2]===154)ys.push(y);
+      const p=(y*640+x)*4;if(s.data[p]===163&&s.data[p+1]===184&&s.data[p+2]===194)ys.push(y);
     }
     return ys;
   });
