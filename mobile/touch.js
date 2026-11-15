@@ -3,18 +3,55 @@
 // path; simulation, keyboard encoding, AI and host/guest transport stay shared.
 function mobileLayout(width,height,safe={top:0,right:0,bottom:0,left:0}) {
   const x=safe.left,y=safe.top,w=width-x-safe.right,h=height-y-safe.bottom;
-  const deck=112,gap=6,bw=52,bh=48,dy=y+h-deck+6;
-  const sw=Math.floor(Math.min(w,Math.max(0,h-deck)*16/9));
+  const gap=6,bw=52,bh=48;
+  const sw=Math.floor(Math.min(w,h*16/9));
   const sh=Math.floor(sw*9/16),buttons={};
-  const put=(k,bx,by,bwidth=bw)=>buttons[k]={x:bx,y:by,w:bwidth,h:bh};
-  put('U',x+8+bw+gap,dy);put('L',x+8,dy+bh+gap);put('G',x+8+bw+gap,dy+bh+gap);put('R',x+8+2*(bw+gap),dy+bh+gap);
-  const rx=x+w-8-3*bw-2*gap;
-  ['P','K','DOM','A1','A2','A3'].forEach((k,n)=>put(k,rx+(n%3)*(bw+gap),dy+Math.floor(n/3)*(bh+gap)));
-  put('pause',Math.floor(x+w/2)-56,dy+bh+gap);put('mute',Math.floor(x+w/2)+4,dy+bh+gap);
-  return {portrait:height>width,canvas:{x:Math.floor(x+(w-sw)/2),y:Math.floor(y+(h-deck-sh)/2),w:sw,h:sh},buttons};
+  const canvas={x:Math.floor(x+(w-sw)/2),y:Math.floor(y+(h-sh)/2),w:sw,h:sh};
+  const lx=canvas.x+8,bottom=canvas.y+sh-8,dy=bottom-2*bh-gap;
+  const put=(k,bx,by,bwidth=bw,bheight=bh)=>buttons[k]={x:bx,y:by,w:bwidth,h:bheight};
+  put('U',lx+bw+gap,dy);put('L',lx,bottom-bh);put('G',lx+bw+gap,bottom-bh);put('R',lx+2*(bw+gap),bottom-bh);
+  const aw=82,ah=64,rx=canvas.x+sw-8-3*aw-2*gap;
+  ['P','K','DOM','A1','A2','A3'].forEach((k,n)=>put(k,rx+(n%3)*(aw+gap),bottom-2*ah-gap+Math.floor(n/3)*(ah+gap),aw,ah));
+  put('pause',Math.floor(canvas.x+sw/2)-56,bottom-bh);put('mute',Math.floor(canvas.x+sw/2)+4,bottom-bh);
+  return {portrait:height>width,canvas,buttons};
 }
-const MOBILE={pointers:new Map(),portrait:false};
+const MOBILE={pointers:new Map(),portrait:false,views:new Map()};
 const mobileButtons=Array.from(document.querySelectorAll('[data-input]'));
+// Two short display names; full library names stay in the move list and each
+// accessible label. The remaining names fit the two-line button heading whole.
+const MOBILE_SHORT={applause:'Applause',garden:'Shadow Garden'};
+function mobileArtStates(S,me) {
+  const f=S.f[me],c=CH[f.ch],states={};
+  for(let n=0;n<4;n++) {
+    const dom=n===3,a=dom?c.dom:c.arts[n],art=dom?null:pxArtCardState(S,f,n);
+    const ready=dom?domReady(f):art.ready,used=dom&&f.domUsed;
+    const status=dom?(used?'USED 1/1':ready?(f.hp<=maxHp(f)*DOM_HP?'HP READY':'FULL READY'):'OR 30% HP'):
+      art.status==='CE READY'?'READY':art.status;
+    states[dom?'DOM':'A'+(n+1)]={name:a.name,short:MOBILE_SHORT[dom?a.kind:a.id]||a.name,
+      detail:dom?(a.maximum?'MAXIMUM':'DOMAIN')+(used||ready?'':' '+Math.floor(clamp(f.gauge/GAUGE_MAX,0,1)*100)+'%'):art.cost+' CE',
+      status,ready,denied:!!(FX.nope&&FX.nope[me]>0&&!ready),
+      fill:clamp(dom?(used?0:f.gauge/GAUGE_MAX):1-f.cd[n]/a.cd,0,1)};
+  }
+  return states;
+}
+function mobileUpdateControls(S) {
+  const states=mobileArtStates(S,G.mode==='guest'?1:0);
+  for(const [key,state] of Object.entries(states)) {
+    const b=mobileButtons.find(b=>b.dataset.input===key);
+    let view=MOBILE.views.get(key);
+    if(!view) {
+      b.textContent='';view={};
+      for(const part of ['name','detail','status']){const span=document.createElement('span');span.className='art-'+part;b.appendChild(span);view[part]=span;}
+      MOBILE.views.set(key,view);
+    }
+    // No live region: cooldown frames must not flood assistive announcements.
+    for(const part of ['name','detail','status']){const text=part==='name'?state.short:state[part];if(view[part].textContent!==text)view[part].textContent=text;}
+    b.dataset.ready=String(!!state.ready);b.dataset.denied=String(state.denied);
+    b.style.setProperty('--fill',(state.fill*100).toFixed(1)+'%');
+    const label=state.name+', '+state.detail+', '+state.status;
+    if(view.label!==label){b.setAttribute('aria-label',label);view.label=label;}
+  }
+}
 function mobileRelease(id,cancelled=false) {
   const b=MOBILE.pointers.get(id);if(!b)return;
   MOBILE.pointers.delete(id);
@@ -50,27 +87,26 @@ const mobileShowBase=show;
 show=function(id) {
   clearInput();mobileShowBase(id);
   if(id==='none'&&G.S) {
-    const me=G.mode==='guest'?1:0;
-    $('domainButton').textContent=CH[G.S.f[me].ch].dom.maximum?'MAXIMUM':'DOMAIN';
+    mobileUpdateControls(G.S);
   }
 };
 // Labels describe the touch surface in HUD cards and all shared move lists.
 Object.assign(BIND.solo.lab,{move:'L / R',U:'UP',G:'HOLD',P:'P',K:'K',A1:'1',A2:'2',A3:'3',DOM:'D'});
-// Replace the keyboard-only shortcut in the mobile raster, leaving desktop HUD
-// source and pixels untouched. Short card badges map to numbered touch buttons.
-drawHUD=function(c,S,lab) {
+// Mobile has the same upper meters, tags and result panels. Its lower card row
+// and keyboard hints move onto the touch buttons, exposing the arena beneath.
+function mobileHUDSurface(S,lab) {
   const s=pxHUDSurface(S,lab);
-  // The desktop keyboard sentence is wider with touch labels. Keep its row
-  // clear and point at the physical deck instead of letting hints overlap.
-  s.data.fill(0,307*s.w*4,317*s.w*4);
-  for(let i=0;i<2;i++)pxOutlinedText(s,lab[i]?'TOUCH CONTROLS BELOW':G.mode==='watch'?'CPU'+(i+1):G.mode==='ai'?'COMPUTER':'ONLINE FOE',i?331:14,309,'#e2d6bb');
+  s.data.fill(0,307*s.w*4);
   if(S.phase!=='over') {
     s.rect(271,1,98,15,PX_INK);pxPanel(s,273,3,94,11,'#243448','#b1a08a');
     pxText(s,'TAP MOVES',296,5,PX_LIGHT);
   }
-  pxPresent(c,s);
+  return s;
+}
+drawHUD=function(c,S,lab) {
+  mobileUpdateControls(S);pxPresent(c,mobileHUDSurface(S,lab));
 };
-basics=function() {return '<p>Hold LEFT / RIGHT to move, JUMP to jump, GUARD to defend. Tap PUNCH or KICK; tap ART 1, ART 2 or ART 3 for your fighter\'s arts. DOMAIN / MAX is once per round at full gauge or 30% health. MOVES opens this list; MUTE toggles sound. You can hold movement and attack together. Online fights continue while the list is open.</p>';};
+basics=function() {return '<p>Hold LEFT / RIGHT to move, JUMP to jump, GUARD to defend. Tap PUNCH or KICK; your three named arts are along the bottom right. Each art shows its CE cost, readiness and cooldown fill. DOMAIN / MAXIMUM is above them, once per round at full gauge or 30% health. MOVES opens this list; MUTE toggles sound. You can hold movement and attack together. Online fights continue while the list is open.</p>';};
 const mobilePauseBase=togglePause;
 togglePause=function() {
   mobilePauseBase();

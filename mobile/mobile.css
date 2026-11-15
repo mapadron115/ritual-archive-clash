@@ -29,9 +29,17 @@ footer p { flex: 1; } #start, #rematchBtn { background: #793b37; border-color: #
 details { margin: 8px 0; } summary { display: flex; align-items: center; cursor: pointer; }
 table { width: 100%; border-collapse: collapse; } td { padding: 8px 4px; border-bottom: 1px solid #536577; } kbd { color: #b5dce5; }
 #touchControls { display: none; } #stage[data-screen="none"] #touchControls { display: block; }
-#touchControls button { position: absolute; padding: 0 2px; font-size: 11px; touch-action: none; }
+#touchControls button { position: absolute; padding: 3px 2px 5px; font-size: 11px; touch-action: none; background: rgb(38 51 70 / .4); border-color: rgb(104 118 138 / .6); }
+#touchControls button[data-ready] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 10px; line-height: 11px; }
+#touchControls .art-name { width: 100%; min-height: 22px; display: flex; align-items: center; justify-content: center; overflow-wrap: anywhere; text-transform: uppercase; }
+#touchControls .art-detail { color: #b5dce5; font-size: 9px; }
+#touchControls .art-status { color: #f1ad91; font-size: 9px; }
+#touchControls button[data-ready="true"] { border-color: #b5dce5; }
+#touchControls button[data-ready="true"] .art-status { color: #c3e4b7; }
+#touchControls button[data-ready]::after { content: ""; position: absolute; left: 2px; right: 2px; bottom: 1px; height: 3px; background: linear-gradient(to right, #b5dce5 var(--fill), #070f1c var(--fill)); }
+#touchControls button[data-denied="true"] { background: rgb(96 51 70 / .9); border-color: #f1ad91; }
 #touchControls [data-input="DOM"] { color: #ecd3a0; border-color: #d5a567; }
-#touchControls button.held { background: #b5dce5; color: #070f1c; border-color: #f1e5cd; }
+#touchControls button.held, #touchControls button:active { background: rgb(52 73 95 / .95); border-color: #f1e5cd; }
 #rotate { display: none; position: fixed; inset: 0; z-index: 10; padding: 24px; background: #101927; align-items: center; justify-content: center; flex-direction: column; gap: 16px; text-align: center; }
 #safeArea { position: fixed; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
 @media (orientation: portrait) { #rotate { display: flex; } }
