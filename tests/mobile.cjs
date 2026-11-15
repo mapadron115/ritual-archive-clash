@@ -4,7 +4,8 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const writePNG=require('./png.cjs'),root=path.join(__dirname,'..');
 const baseline=process.argv.includes('--baseline');
 const feedbackBaseline=process.argv.includes('--feedback-baseline');
-const baselineTouch=baseline||feedbackBaseline?require('node:child_process').execFileSync('git',['show',(feedbackBaseline?'921f7f1':'55a25d1')+':mobile/touch.js'],{cwd:root,encoding:'utf8'}):null;
+const domainBaseline=process.argv.includes('--domain-baseline');
+const baselineTouch=baseline||feedbackBaseline||domainBaseline?require('node:child_process').execFileSync('git',['show',(domainBaseline?'3c95ebc':feedbackBaseline?'921f7f1':'55a25d1')+':mobile/touch.js'],{cwd:root,encoding:'utf8'}):null;
 class Canvas {
   constructor(w=300,h=150){this.width=w;this.height=h;this.buffer=null;this.style={};this.context=new Context(this);}
   getContext(){return this.context;}setAttribute(){}
@@ -128,12 +129,13 @@ globalThis.makePreview=(w,h,safe={top:0,right:0,bottom:0,left:0},ch=0,ce=100,fee
   if(h>w){pxText(out,'TURN YOUR PHONE',Math.floor((w-pxTextWidth('TURN YOUR PHONE',2))/2),h/2-30,PX_LIGHT,2);pxText(out,'SIDEWAYS',Math.floor((w-pxTextWidth('SIDEWAYS',2))/2),h/2-8,PX_LIGHT,2);pxText(out,'GENERATED LAYOUT MODEL',12,h-20,'#68768a');return out;}
   innerWidth=w;innerHeight=h;mobileResize();fresh('ai',ch);G.S=newMatch(ch,1,106);G.S.f[0].ce=ce;G.S.phase='fight';G.S.intro=0;FX.banner=null;FX.nope=[0,0];
   if(feedback){
+    if(feedback.prepare)feedback.prepare(G.S);
     mobileUpdateControls(G.S);pointer('pointerdown',feedback.key);
     if(!feedback.held)pointer('pointerup',feedback.key);
     // Freeze the preview's random CPU choice and frame origin so only the
     // control presentation differs between the two actual adapters.
     const random=Math.random;Math.random=()=>.99;G.last=now;G.acc=0;
-    try{advance(2);}finally{Math.random=random;}now+=feedback.wait||0;
+    try{if(feedback.run)feedback.run();else advance(2);}finally{Math.random=random;}now+=feedback.wait||0;
   }
   drawWorld(ctx,G.S);drawHUD(ctx,G.S,labels());const l=mobileLayout(w,h,safe),r=l.canvas;
   const pixels=cv.pixels();for(let y=0;y<r.h;y++)for(let x=0;x<r.w;x++){const a=(Math.floor(y*cv.height/r.h)*cv.width+Math.floor(x*cv.width/r.w))*4,b=((y+r.y)*w+x+r.x)*4;out.data.set(pixels.subarray(a,a+4),b);}

@@ -94,9 +94,13 @@ function mobileArtStates(S,me) {
     const status=dom?(used?'USED 1/1':domReady(f)&&f.y<GROUND?'LAND FIRST':ready?(f.hp<=maxHp(f)*DOM_HP?'HP READY':'FULL READY'):'OR 30% HP'):
       art.status==='CE READY'?'READY':art.status;
     const key=dom?'DOM':'A'+(n+1),feedback=MOBILE.feedback.get(key);
+    // A buffered landing/cast (or guest snapshot) can skip the ready display.
+    // Never carry that earlier availability warning onto the consumed move.
+    const cue=feedback&&feedback.domain,scope=!dom||cue&&S.phase==='fight'&&
+      cue.round===S.round&&cue.ch===f.ch&&cue.me===me&&cue.status===status;
     states[key]={name:a.name,short:MOBILE_SHORT[dom?a.kind:a.id]||a.name,
       detail:dom?(a.maximum?'MAXIMUM':'DOMAIN')+(used||ready?'':' '+Math.floor(clamp(f.gauge/GAUGE_MAX,0,1)*100)+'%'):art.cost+' CE',
-      status,ready,denied:!!(feedback&&feedback.denyUntil>performance.now()&&!ready),
+      status,ready,denied:!!(scope&&feedback&&feedback.denyUntil>performance.now()&&!ready),
       fill:clamp(dom?(used?0:f.gauge/GAUGE_MAX):1-f.cd[n]/a.cd,0,1)};
   }
   return states;
@@ -108,7 +112,7 @@ function mobileSyncFeedback(states) {
   const now=performance.now(),held=new Set(MOBILE.pointers.values());
   for(const b of mobileButtons) {
     const key=b.dataset.input,feedback=MOBILE.feedback.get(key),state=states[key];
-    if(feedback&&state&&state.ready)feedback.denyUntil=0;
+    if(feedback&&state&&(state.ready||key==='DOM'&&!state.denied))feedback.denyUntil=0;
     b.dataset.pressed=String(held.has(b)||!!(feedback&&feedback.pressUntil>now));
     b.dataset.denied=String(!!(state&&state.denied));
     if(feedback&&feedback.pressUntil<=now&&feedback.denyUntil<=now)MOBILE.feedback.delete(key);
@@ -166,8 +170,9 @@ for(const button of mobileButtons) {
     const code=BIND.solo[button.dataset.input][0];
     if(!G.keys[code])G.taps[code]=true;
     G.keys[code]=true;MOBILE.pointers.set(e.pointerId,button);
-    const state=mobileArtStates(G.S,G.mode==='guest'?1:0)[button.dataset.input],now=performance.now();
-    MOBILE.feedback.set(button.dataset.input,{pressUntil:now+120,denyUntil:state&&!state.ready?now+300:0});
+    const me=G.mode==='guest'?1:0,state=mobileArtStates(G.S,me)[button.dataset.input],now=performance.now();
+    const domain=button.dataset.input==='DOM'?{round:G.S.round,ch:G.S.f[me].ch,me,status:state.status}:null;
+    MOBILE.feedback.set(button.dataset.input,{pressUntil:now+120,denyUntil:state&&!state.ready?now+300:0,domain});
     mobileUpdateControls(G.S);
     button.classList.add('held');button.setPointerCapture(e.pointerId);initAudio();
   });
