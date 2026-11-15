@@ -5,6 +5,8 @@ An original pixel-art 2D fighting game demo: fifteen original fighters, each wit
 ## Run
 Double-click `index.html`. Nothing to install. (Online play needs an internet connection on both computers.)
 
+The separate phone-browser edition starts at `mobile/index.html` (v106). Turn the phone sideways. It has 52×48 px touch buttons for movement, jump, guard, punch, kick, three arts and Domain/Maximum, plus Moves and Mute. Multiple fingers can hold movement and attack together. The complete arena sits above the controls, with notch safe areas respected. Portrait pauses an offline fight; online fights continue. CPU, watch and online modes use the shared game code; desktop remains unchanged. Installability is a later milestone. This first mobile version is script-tested with generated layout models; no real phone or browser layout has been verified.
+
 ## Modes
 - 1 Player vs Computer, 2 Players on one keyboard, Watch (computer vs computer)
 - Watch identifies the fighters as CPU1 and CPU2 above their heads, in time-stop notices and in round and match results. These numbers follow each fighter through position swaps, including mirror matches. Time-stop notices use the same YOU/CPU, P1/P2 or YOU/FOE identities as the actor tags in other modes.

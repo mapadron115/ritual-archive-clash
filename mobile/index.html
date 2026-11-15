@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#070f1c">
+<title>Ritual Archive: Clash — Mobile</title>
+<link rel="stylesheet" href="mobile.css?v=109">
+</head>
+<body>
+<main id="stage">
+  <canvas id="cv" width="1280" height="720" aria-label="Clash arena"></canvas>
+  <section class="screen" id="title">
+    <div id="titleLogo" aria-label="Ritual Archive: Clash"></div>
+    <p>Mobile / touch to fight</p>
+    <nav class="row"><button onclick="pickMode('ai')">Fight the CPU</button><button onclick="show('online')">Online friend</button><button onclick="pickMode('watch')">Watch CPU</button></nav>
+    <p id="attractNames"></p><p id="attractStage"></p>
+  </section>
+  <section class="screen" id="select">
+    <header><h2>Choose your fighters</h2></header>
+    <div class="selectBody">
+      <div class="matchup"><section><figure id="preview0"></figure><div id="col0" class="col"></div></section><section><figure id="preview1"></figure><div id="col1" class="col"></div></section></div>
+      <div id="stageChoices" class="row"></div><div id="quickControls"></div>
+      <details><summary>Fighter move lists</summary><div id="detail"></div></details>
+      <details><summary>Controls and rules</summary><div id="selBasics"></div></details>
+    </div>
+    <footer class="row"><button onclick="toMenu()">Back</button><p id="selNote" role="status"></p><button id="start" onclick="startFight()">Fight</button></footer>
+  </section>
+  <section class="screen" id="online">
+    <h2>Online friend</h2><p>Host a room or enter your friend's four-letter code. Both players need an internet connection.</p>
+    <div class="row"><button onclick="hostGame()">Host a room</button><input id="code" maxlength="4" placeholder="CODE" aria-label="Room code" autocapitalize="characters" autocomplete="off" spellcheck="false"><button onclick="joinGame()">Join</button></div>
+    <p id="netStatus" role="status"></p><button onclick="netClose();show('title')">Back</button>
+  </section>
+  <section class="screen" id="pause" aria-labelledby="pauseTitle">
+    <h2 id="pauseTitle"></h2><p id="pauseNote"></p>
+    <div class="row"><button id="resumeBtn" onclick="togglePause()">Resume</button><button onclick="toSelect()">Change fighters</button><button onclick="toMenu()">Main menu</button></div>
+    <div id="pauseList" class="selectBody"></div>
+  </section>
+  <section class="screen" id="over" aria-labelledby="overTitle">
+    <h2>Match complete</h2><h1 id="overTitle" tabindex="-1"></h1><p id="overFighters"></p><p id="overScore"></p><p id="overNote"></p>
+    <div id="overBtns" class="row"><button id="rematchBtn" onclick="rematch()">Rematch</button><button onclick="toSelect()">Change fighters</button><button onclick="toMenu()">Main menu</button></div>
+  </section>
+  <div id="touchControls" aria-label="Fight controls">
+    <button data-input="U" aria-label="Jump">JUMP</button><button data-input="L" aria-label="Move left">LEFT</button><button data-input="G" aria-label="Hold guard">GUARD</button><button data-input="R" aria-label="Move right">RIGHT</button>
+    <button data-input="P">PUNCH</button><button data-input="K">KICK</button><button data-input="DOM" id="domainButton">DOMAIN</button>
+    <button data-input="A1">1 ART</button><button data-input="A2">2 ART</button><button data-input="A3">3 ART</button>
+    <button id="touchPause" onclick="togglePause()">MOVES</button><button id="touchMute" onclick="setMute(!AUDIO.mute);this.setAttribute('aria-pressed',String(AUDIO.mute))" aria-label="Mute sound" aria-pressed="false">MUTE</button>
+  </div>
+</main>
+<aside id="rotate" role="status"><h1>Turn your phone sideways</h1><p>Clash Mobile plays in landscape.</p><p id="rotateNote"></p></aside>
+<div id="safeArea" aria-hidden="true"></div>
+<script src="../src/sim.js?v=109"></script>
+<script src="../src/fighters.js?v=109"></script>
+<script src="../src/fighters2.js?v=109"></script>
+<script src="../src/pixel.js?v=109"></script>
+<script src="../src/pixel-stage.js?v=109"></script>
+<script src="../src/pixel-domain.js?v=109"></script>
+<script src="../src/pixel-world.js?v=109"></script>
+<script src="../src/pixel-hud.js?v=109"></script>
+<script src="../src/ai.js?v=109"></script>
+<script src="../src/render.js?v=109"></script>
+<script src="../src/main.js?v=109"></script>
+<script src="touch.js?v=109"></script>
+</body>
+</html>
