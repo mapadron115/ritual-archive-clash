@@ -1,25 +1,25 @@
 # Handoff: Ritual Archive: Clash
 
-## Current - version 102, script cache v=105 (2026-11-15)
+## Current - version 103, script cache v=106 (2026-11-15)
 
-Mailbox through 16:11 acted on; final reread unchanged. V101 committed by coordinator as bbf19d0 (not pushed); coordinator reports owner published through v97 (53f628d). Owner directly repeated autonomous check-in/report instructions; no other decision. All arenas remain closed. Earlier implementation orders remain acted on. Rapid Slash's optional visibility note is deferred as directed.
+Mailbox through 16:18 acted on; final reread unchanged. V102 committed by coordinator as 5472545 (not pushed); coordinator reports owner published through v97 (53f628d). Owner directly repeated autonomous check-in/report instructions; no other decision. All arenas remain closed. Earlier implementation orders remain acted on. Rapid Slash's optional visibility note is deferred as directed.
 
-V102 makes ordinary jump takeoffs register at native size. Two tiny floor wedges/specks become low, outlined pale dust plumes with rounded caps that spread, shrink and dim on the existing twelve-tick FX clock, behind both bodies. Narrower than the unchanged landing cloud. No simulation, event, damage, cost, movement, input, AI, audio, roster, style or network changes. Eleven script URLs v=105.
+V103 makes the final ten seconds conspicuous: a wider crimson clock panel, pale digits and inward warning markers replace the ordinary gold/navy clock from 600 ticks through 1. Steady, state-derived cue holds during hit-stop/freeze, agrees with snapshots and clears when the fight ends. Other HUD pixels and ordinary/result clocks stay identical. No simulation, event, damage, cost, movement, input, AI, audio, roster, style or network changes. Eleven script URLs v=106.
 
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-world.js, tests/takeoff-dust.cjs (new), tests/landing-dust.cjs, tests/floor-impact.cjs. The older suites defer takeoff appearance to its new dedicated regression; their landing/thud assertions remain. No add/commit attempt per 01:34/03:00; HEAD/base bbf19d0; never pushed. Ready for coordinator review/commit and owner motion/readability assessment before publication.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-hud.js, tests/timer-warning.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base 5472545; never pushed. Ready for coordinator review/commit and owner readability assessment before publication.
 
 ## Verification and limits
 
-- New takeoff-dust regression: 90 actual straight/left/right jump-to-landing timelines across all fifteen builds, both slots/mirror costumes; 3,420 ticks exactly matching fixed v101 bbf19d0; 570 native scene/snapshot checks. Read-only state/effects, clear bodies, hard alpha, exact symmetry, outward travel, contraction/expiry, 60 fractional/edge crops and 126 byte-identical landing/thud scenes pass. Minimum early visibility 276 pixels; baseline fails at 104. --baseline --preview-only exports fixed v101.
-- Landing dust (90 timelines, 684 native checks), floor impact (60 timelines, 420 native checks), airborne reactions (54 dust frames plus actual input/freeze/coalescing/expiry), world (308 frames), feel/input (eleven groups + keyboard handlers), actual-script runtime/menu/input/results and online lifecycle pass. Source/test syntax, eleven matching v105 URLs and diff whitespace pass.
-- Inspected native courtyard Isolde P1 takeoff t1 before/after and gallery Greta P2 t3 before/after: nearly invisible wedges/specks become distinct low pale plumes. Also inspected observatory Isolde t6 and courtyard t11; they spread, dim and disperse. Forty-eight native pairs across two builds, all three stages, both slots and ages 1/3/6/11 retained in codex mailbox, plus runtime/menu assets. Generated memory rasters, not browser captures or observed motion.
-- No owner play/listening, live browser layout/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC. Browser not retried. Unchanged stage, full-match, individual art/beam/HUD/audio and performance suites not repeated. Scripts/stills do not count as played.
+- New timer-warning regression: nine actual timeout/draw timelines; 5,949 parallel ticks; 937 read-only native HUD/snapshot checks across all builds, arenas and five modes; 24 hit-stop/freeze holds. Exact 601/600 and 1/0 boundaries, time-stop clock behavior, deadline outcomes and result cleanup pass. At least 1,876 changed warning pixels, confined to the clock area; 372 ordinary/result HUDs byte-identical to v102. Fixed v102 baseline fails on absent warning; --baseline --preview-only exports it.
+- HUD (75 states), HUD learning (2,115 layouts), eligibility (36 real timelines), guard HUD/recovery, time-stop, watch identity, round results (180 timelines plus 180 consecutive draws), opening banners (210 timelines), feel/input and actual-script runtime/menu/input/results/online lifecycle pass. Source/test syntax, eleven matching v106 URLs and diff whitespace pass.
+- Inspected native courtyard 600-tick before/after: gold clock becomes a broad crimson warning. Also inspected gallery Nell mirror at 60 ticks, observatory at 1 tick and subsequent TIME UP result. Thirty native before/after pairs across two fighter pairs, three arenas and five clock boundaries, plus time-up result retained in codex mailbox. Generated memory rasters, not browser captures or observed motion.
+- No owner play/listening, live browser layout/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC. Browser not retried. Unchanged world/stage/full-match/individual art/audio/performance suites not repeated. Scripts/stills do not count as played.
 
 ## Next priorities
 
 Owner dive feel/readability notes take priority. V97 still gives 44 active warning ticks before tick-46 impact: 250 damage, 310-unit width, unchanged cost. Bram's retreat delayed 8 ticks escapes, 9 is hit; jump-away delayed 15 escapes, 16 is hit. Owner must judge the feel.
 
-Otherwise continue first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. Arenas stay closed. No pending decision for v102; leave this one-version run ready for coordinator commit.
+Otherwise continue first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. Arenas stay closed. No pending decision for v103; leave this one-version run ready for coordinator commit.
 
 ## Code and run
 

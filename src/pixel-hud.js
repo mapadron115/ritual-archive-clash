@@ -116,7 +116,15 @@ function pxHUDSurface(S,labels,F=FX) {
     s.rect(275,4,21,9,'#ecd3a0');pxText(s,'ESC',277,5,PX_INK);
     pxText(s,'MOVE LIST',301,5,PX_LIGHT);
   }
-  pxPanel(s,299,19,42,29,'#243448','#b1a08a');const timer=String(Math.ceil(S.timer/60));pxText(s,timer,320-pxTextWidth(timer,2)/2,25,'#ecd3a0',2);
+  // Warn from the remaining match clock, so pauses and remote snapshots agree.
+  // Keep this steady: the urgency must stay visible between second boundaries.
+  const hurry=S.phase==='fight'&&S.timer>0&&S.timer<=600;
+  if(hurry) {
+    pxPanel(s,293,19,54,29,'#843e50','#f1ad91');
+    s.poly([[282,25],[289,33],[282,41]],'#f1ad91',PX_INK);
+    s.poly([[358,25],[351,33],[358,41]],'#f1ad91',PX_INK);
+  }else pxPanel(s,299,19,42,29,'#243448','#b1a08a');
+  const timer=String(Math.ceil(S.timer/60));pxText(s,timer,320-pxTextWidth(timer,2)/2,25,hurry?'#fff1ce':'#ecd3a0',2);
   const round='ROUND '+S.round;pxText(s,round,320-pxTextWidth(round)/2,53,PX_LIGHT);
   pxTimeStopHUD(s,S,labels);
   if(S.dom&&!S.freeze){const name=CH[S.f[S.dom.o].ch].dom.name;pxOutlinedText(s,name,320-pxTextWidth(name)/2,76,PX_KITS[S.f[S.dom.o].ch].accent);}

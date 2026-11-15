@@ -30,6 +30,7 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 - During hit, stun and knockdown recovery, that meter says GUARD LOCKED in gold above a dimmed strength bar. This stays visible after the brief GUARD BREAK announcement ends; the normal meter returns when recovery ends. Ordinary block stun can still block and keeps its strength label.
 - A bright ESC keycap and MOVE LIST label stay above the timer during rounds, so the full controls and move explanations remain discoverable after selection. Final match results hide the shortcut because their buttons take over. The selection controls reference and in-match help say whether opening the list pauses the match or lets the online fight continue. Online uses Close list (Esc); offline uses Resume (Esc).
 - ROUND and FIGHT announcements use compact upper plaques with large type, leaving the opening jump and approach visible. Their timing is unchanged.
+- During the final ten seconds of a fight, the clock uses a wider crimson panel, pale digits and inward warning markers. The steady warning follows the remaining round clock through pauses and online snapshots and clears when the round ends.
 - Third-punch wind-up, contact and return poses keep calf outlines inside the boots, with both soles on the fighting floor across all builds and costumes. Punch timing and hitboxes stay the same.
 - Both fighters' floor shadows draw beneath the bodies and floor effects. A nearby opponent's shadow no longer erases boot soles during close movement, crossings or knockdowns.
 - The first two punches leave compact, muted wakes from elbow to just behind the fist during their three active ticks. Their height is about half the earlier cue, leaving the shoulder and face clear; the fist stays brighter than the wake. The third punch keeps its rising arc. Wakes follow build and facing behind both bodies, hold during pauses and clear on recovery or interruption. Combat timing and damage stay the same.
@@ -75,6 +76,8 @@ Double-click `index.html`. Nothing to install. (Online play needs an internet co
 ## Code
 
 `src/sim.js` contains deterministic fight rules; `src/fighters.js` and `src/fighters2.js` define the fifteen techniques. `src/ai.js` controls the computer. `src/pixel.js`, `pixel-stage.js`, `pixel-domain.js`, `pixel-world.js` and `pixel-hud.js` draw original pixel art; `src/render.js` manages impact events; `src/main.js` handles menus, input, synthesized sound and online play. See `ART_DIRECTION.md` for the art rules.
+
+`node tests/timer-warning.cjs` checks nine actual timeout/draw timelines, 5,949 parallel ticks, 937 read-only HUD/snapshot states in five modes, all builds and arenas, 24 pause holds and 372 byte-identical ordinary/result HUDs. The final-ten-second warning stays within the clock area and adds at least 1,876 changed pixels at native size. An output directory/prefix exports native scene pairs; `--baseline --preview-only` uses fixed v102 HUD (5472545). These are script/raster checks, not play.
 
 ## Script checks
 
