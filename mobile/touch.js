@@ -15,7 +15,7 @@ function mobileLayout(width,height,safe={top:0,right:0,bottom:0,left:0}) {
   put('pause',Math.floor(canvas.x+sw/2)-56,bottom-bh);put('mute',Math.floor(canvas.x+sw/2)+4,bottom-bh);
   return {portrait:height>width,canvas,buttons};
 }
-const MOBILE={pointers:new Map(),portrait:false,views:new Map(),selectTab:0,away:false,remoteAt:null};
+const MOBILE={pointers:new Map(),feedback:new Map(),portrait:false,views:new Map(),selectTab:0,away:false,remoteAt:null};
 // Retry inside release/click gestures as well as fight presses. Menu-only
 // players (including Watch) must be able to unlock audio after returning.
 const mobileAudioSources=new Map(),mobileAudioContexts=new WeakSet();
@@ -90,18 +90,33 @@ function mobileArtStates(S,me) {
   const f=S.f[me],c=CH[f.ch],states={};
   for(let n=0;n<4;n++) {
     const dom=n===3,a=dom?c.dom:c.arts[n],art=dom?null:pxArtCardState(S,f,n);
-    const ready=dom?domReady(f):art.ready,used=dom&&f.domUsed;
-    const status=dom?(used?'USED 1/1':ready?(f.hp<=maxHp(f)*DOM_HP?'HP READY':'FULL READY'):'OR 30% HP'):
+    const ready=dom?domReady(f)&&f.y>=GROUND:art.ready,used=dom&&f.domUsed;
+    const status=dom?(used?'USED 1/1':domReady(f)&&f.y<GROUND?'LAND FIRST':ready?(f.hp<=maxHp(f)*DOM_HP?'HP READY':'FULL READY'):'OR 30% HP'):
       art.status==='CE READY'?'READY':art.status;
-    states[dom?'DOM':'A'+(n+1)]={name:a.name,short:MOBILE_SHORT[dom?a.kind:a.id]||a.name,
+    const key=dom?'DOM':'A'+(n+1),feedback=MOBILE.feedback.get(key);
+    states[key]={name:a.name,short:MOBILE_SHORT[dom?a.kind:a.id]||a.name,
       detail:dom?(a.maximum?'MAXIMUM':'DOMAIN')+(used||ready?'':' '+Math.floor(clamp(f.gauge/GAUGE_MAX,0,1)*100)+'%'):art.cost+' CE',
-      status,ready,denied:!!(FX.nope&&FX.nope[me]>0&&!ready),
+      status,ready,denied:!!(feedback&&feedback.denyUntil>performance.now()&&!ready),
       fill:clamp(dom?(used?0:f.gauge/GAUGE_MAX):1-f.cd[n]/a.cd,0,1)};
   }
   return states;
 }
+// A touch acknowledgement is presentation only, never an extra held input or
+// a server-confirmed cast. Highlight just this button's current unavailable
+// reason; shared nope events identify a fighter, not which art was pressed.
+function mobileSyncFeedback(states) {
+  const now=performance.now(),held=new Set(MOBILE.pointers.values());
+  for(const b of mobileButtons) {
+    const key=b.dataset.input,feedback=MOBILE.feedback.get(key),state=states[key];
+    if(feedback&&state&&state.ready)feedback.denyUntil=0;
+    b.dataset.pressed=String(held.has(b)||!!(feedback&&feedback.pressUntil>now));
+    b.dataset.denied=String(!!(state&&state.denied));
+    if(feedback&&feedback.pressUntil<=now&&feedback.denyUntil<=now)MOBILE.feedback.delete(key);
+  }
+}
 function mobileUpdateControls(S) {
   const states=mobileArtStates(S,G.mode==='guest'?1:0);
+  mobileSyncFeedback(states);
   for(const [key,state] of Object.entries(states)) {
     const b=mobileButtons.find(b=>b.dataset.input===key);
     let view=MOBILE.views.get(key);
@@ -112,7 +127,7 @@ function mobileUpdateControls(S) {
     }
     // No live region: cooldown frames must not flood assistive announcements.
     for(const part of ['name','detail','status']){const text=part==='name'?state.short:state[part];if(view[part].textContent!==text)view[part].textContent=text;}
-    b.dataset.ready=String(!!state.ready);b.dataset.denied=String(state.denied);
+    b.dataset.ready=String(!!state.ready);
     b.style.setProperty('--fill',(state.fill*100).toFixed(1)+'%');
     const label=state.name+', '+state.detail+', '+state.status;
     if(view.label!==label){b.setAttribute('aria-label',label);view.label=label;}
@@ -127,12 +142,16 @@ function mobileRelease(id,cancelled=false) {
     const code=BIND.solo[b.dataset.input][0];G.keys[code]=false;
     if(cancelled)delete G.taps[code];
     b.classList.remove('held');
+    if(cancelled)MOBILE.feedback.delete(b.dataset.input);
   }
+  if(G.S)mobileUpdateControls(G.S);
 }
 const mobileClearBase=clearInput;
 clearInput=function() {
   for(const id of Array.from(MOBILE.pointers.keys()))mobileRelease(id);
   mobileClearBase();
+  MOBILE.feedback.clear();
+  for(const b of mobileButtons){b.dataset.pressed='false';b.dataset.denied='false';}
   // A hidden phone may never get another animation frame. Release the host's
   // copy now, including when opening a list, rotating or changing fighters.
   if(G.mode==='guest'&&NET.conn&&NET.conn.open) {
@@ -147,6 +166,9 @@ for(const button of mobileButtons) {
     const code=BIND.solo[button.dataset.input][0];
     if(!G.keys[code])G.taps[code]=true;
     G.keys[code]=true;MOBILE.pointers.set(e.pointerId,button);
+    const state=mobileArtStates(G.S,G.mode==='guest'?1:0)[button.dataset.input],now=performance.now();
+    MOBILE.feedback.set(button.dataset.input,{pressUntil:now+120,denyUntil:state&&!state.ready?now+300:0});
+    mobileUpdateControls(G.S);
     button.classList.add('held');button.setPointerCapture(e.pointerId);initAudio();
   });
   for(const name of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(name,e=>{

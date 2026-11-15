@@ -3,7 +3,8 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const writePNG=require('./png.cjs'),root=path.join(__dirname,'..');
 const baseline=process.argv.includes('--baseline');
-const baselineTouch=baseline?require('node:child_process').execFileSync('git',['show','55a25d1:mobile/touch.js'],{cwd:root,encoding:'utf8'}):null;
+const feedbackBaseline=process.argv.includes('--feedback-baseline');
+const baselineTouch=baseline||feedbackBaseline?require('node:child_process').execFileSync('git',['show',(feedbackBaseline?'921f7f1':'55a25d1')+':mobile/touch.js'],{cwd:root,encoding:'utf8'}):null;
 class Canvas {
   constructor(w=300,h=150){this.width=w;this.height=h;this.buffer=null;this.style={};this.context=new Context(this);}
   getContext(){return this.context;}setAttribute(){}
@@ -23,10 +24,10 @@ for(const b of buttons)if(b.dataset.input==='DOM')nodes.set('domainButton',b);
 const cv=new Canvas(1280,720);nodes.set('cv',cv);
 const document=Object.assign(doc,{visibilityState:'visible',getElementById(id){if(!nodes.has(id))nodes.set(id,target(id));return nodes.get(id);},querySelectorAll(s){return s==='[data-input]'?buttons:['title','select','online','pause','over'].map(id=>this.getElementById(id));},createElement(tag){return tag==='canvas'?new Canvas():target(tag);},head:target('head')});
 const context=vm.createContext({console,assert,document,window:{},performance:{now:()=>0},innerWidth:844,innerHeight:390,getComputedStyle(){return {};},requestAnimationFrame(){},addEventListener:(k,f)=>win.addEventListener(k,f),setTimeout(f,ms){timeouts.push({f,ms});}});
-Object.assign(context,{win,buttons,timeouts,baseline});
+Object.assign(context,{win,buttons,timeouts,baseline,feedbackBaseline});
 const scripts=[...html.matchAll(/<script src="([^?]+)\?v=(\d+)"><\/script>/g)];
 assert.equal(scripts.length,12);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
-for(const m of scripts)vm.runInContext(baseline&&m[1]==='touch.js'?baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});
+for(const m of scripts)vm.runInContext(baselineTouch&&m[1]==='touch.js'?baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});
 vm.runInContext(`
 let now=0;
 performance.now=()=>now;
@@ -122,15 +123,27 @@ for(const [w,h,safe] of [[844,390,{top:0,right:0,bottom:0,left:0}],[667,375,{top
   if(!baseline){assert(l.canvas.h>=h-safe.top-safe.bottom-1);console.log('Arena',w+'x'+h,JSON.stringify(l.canvas));}
 }
 console.log('PASS mobile: ten real pointer commands, multi-touch/duplicate contacts, main-loop move+attack, jump/guard/arts/Domain, freeze tap, cleanup, CPU/watch, host/guest encoding, rotation, fifteen Domain labels, 36 safe-area target bounds');
-globalThis.makePreview=(w,h,safe={top:0,right:0,bottom:0,left:0},ch=0,ce=100)=>{
+globalThis.makePreview=(w,h,safe={top:0,right:0,bottom:0,left:0},ch=0,ce=100,feedback=null)=>{
   const out=new PixelSurface(w,h);out.rect(0,0,w,h,PX_INK);
   if(h>w){pxText(out,'TURN YOUR PHONE',Math.floor((w-pxTextWidth('TURN YOUR PHONE',2))/2),h/2-30,PX_LIGHT,2);pxText(out,'SIDEWAYS',Math.floor((w-pxTextWidth('SIDEWAYS',2))/2),h/2-8,PX_LIGHT,2);pxText(out,'GENERATED LAYOUT MODEL',12,h-20,'#68768a');return out;}
-  innerWidth=w;innerHeight=h;mobileResize();fresh('ai',ch);G.S=newMatch(ch,1,106);G.S.f[0].ce=ce;G.S.phase='fight';G.S.intro=0;FX.banner=null;FX.nope=[0,0];drawWorld(ctx,G.S);drawHUD(ctx,G.S,labels());const l=mobileLayout(w,h,safe),r=l.canvas;
+  innerWidth=w;innerHeight=h;mobileResize();fresh('ai',ch);G.S=newMatch(ch,1,106);G.S.f[0].ce=ce;G.S.phase='fight';G.S.intro=0;FX.banner=null;FX.nope=[0,0];
+  if(feedback){
+    mobileUpdateControls(G.S);pointer('pointerdown',feedback.key);
+    if(!feedback.held)pointer('pointerup',feedback.key);
+    // Freeze the preview's random CPU choice and frame origin so only the
+    // control presentation differs between the two actual adapters.
+    const random=Math.random;Math.random=()=>.99;G.last=now;G.acc=0;
+    try{advance(2);}finally{Math.random=random;}now+=feedback.wait||0;
+  }
+  drawWorld(ctx,G.S);drawHUD(ctx,G.S,labels());const l=mobileLayout(w,h,safe),r=l.canvas;
   const pixels=cv.pixels();for(let y=0;y<r.h;y++)for(let x=0;x<r.w;x++){const a=(Math.floor(y*cv.height/r.h)*cv.width+Math.floor(x*cv.width/r.w))*4,b=((y+r.y)*w+x+r.x)*4;out.data.set(pixels.subarray(a,a+4),b);}
   const states=baseline?{}:mobileArtStates(G.S,0);
   for(const [key,b] of Object.entries(l.buttons)) {
     const layer=new PixelSurface(b.w,b.h),state=states[key];
-    for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){const d=((b.y+y)*w+b.x+x)*4,border=x<2||x>=b.w-2||y<2||y>=b.h-2,col=border?[104,118,138]:[38,51,70],alpha=baseline?1:border?.6:.4;for(let k=0;k<3;k++)out.data[d+k]=Math.round(col[k]*alpha+out.data[d+k]*(1-alpha));out.data[d+3]=255;}
+    const node=button(key),pressed=node&&(Array.from(MOBILE.pointers.values()).includes(node)||node.dataset.pressed==='true'),denied=node&&node.dataset.denied==='true'&&(!feedbackBaseline||!pressed);
+    const edge=denied?[241,173,145]:pressed?[241,229,205]:state&&state.ready?[181,220,229]:key==='DOM'?[213,165,103]:[104,118,138];
+    for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){const d=((b.y+y)*w+b.x+x)*4,border=x<2||x>=b.w-2||y<2||y>=b.h-2,col=border?edge:denied?[96,51,70]:pressed?[52,73,95]:[38,51,70],alpha=baseline?1:border?(pressed||denied||state&&state.ready||key==='DOM'?1:.6):denied?.9:pressed?.95:.4;for(let k=0;k<3;k++)out.data[d+k]=Math.round(col[k]*alpha+out.data[d+k]*(1-alpha));out.data[d+3]=255;}
+    if(denied&&!feedbackBaseline){layer.rect(2,2,b.w-4,4,'#bd6472');layer.rect(2,b.h-6,b.w-4,4,'#bd6472');}
     if(state){pxWrap(state.short,b.w-8).forEach((t,j)=>pxText(layer,t,(b.w-pxTextWidth(t))/2,5+j*9,PX_LIGHT));pxText(layer,state.detail,(b.w-pxTextWidth(state.detail))/2,31,'#b5dce5');pxText(layer,state.status,(b.w-pxTextWidth(state.status))/2,43,state.ready?'#c3e4b7':'#f1ad91');layer.rect(2,b.h-4,(b.w-4)*state.fill,3,'#b5dce5');}
     else {const text=key==='pause'?'MOVES':key==='mute'?($('touchMute').textContent||'MUTE'):button(key).textContent;pxText(layer,text,(b.w-pxTextWidth(text))/2,(b.h-7)/2,PX_LIGHT);}
     for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){const a=(y*b.w+x)*4,d=((b.y+y)*w+b.x+x)*4;if(layer.data[a+3])out.data.set(layer.data.subarray(a,a+4),d);}
