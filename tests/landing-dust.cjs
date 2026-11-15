@@ -50,7 +50,8 @@ if(!previewOnly) {
   let previousOuter=0;
   for(const kind of ['jump','land','thud'])for(let t=0;t<(kind==='jump'?12:kind==='land'?18:24);t++) {
     const e={x:192,y:160,kind,t},s=new PixelSurface(192,96);pxDust(s,e);
-    if(kind!=='land')assert.deepEqual(s.data,oldDust(e),'unrelated floor effect changed');
+    // Takeoff has its own v102 regression; retain the fixed v95 thud check.
+    if(kind==='thud')assert.deepEqual(s.data,oldDust(e),'unrelated floor effect changed');
     let bright=0,area=0,outer=0;
     for(let y=0;y<s.h;y++)for(let x=0;x<s.w;x++) {
       const p=(y*s.w+x)*4,a=s.data[p+3];assert(a===0||a===255);
@@ -69,5 +70,5 @@ if(!previewOnly) {
   }
 }
 if(previewOnly)console.log('PREVIEW',timelines,'actual jump/landing timelines; native scenes exported; full assertions skipped');
-else console.log('PASS',timelines,'actual jump/landing timelines;',ticks,'parallel-state ticks;',rasters,'native scene/snapshot checks; minimum initial visible dust',minVisible,'pixels; hard alpha, floor bounds, body clearance, outward travel, expiry, 90 edge/fractional crops and unchanged takeoff/thud');
+else console.log('PASS',timelines,'actual jump/landing timelines;',ticks,'parallel-state ticks;',rasters,'native scene/snapshot checks; minimum initial visible dust',minVisible,'pixels; hard alpha, floor bounds, body clearance, outward travel, expiry, 90 edge/fractional crops and unchanged thud');
 `)(assert,writePNG,output,prefix,previewOnly,oldDust);

@@ -1,25 +1,25 @@
 # Handoff: Ritual Archive: Clash
 
-## Current - version 101, script cache v=104 (2026-11-15)
+## Current - version 102, script cache v=105 (2026-11-15)
 
-Mailbox through 16:04 acted on; final reread unchanged. V100 committed by coordinator as 04be1ca (not pushed); coordinator reports owner published through v97 (53f628d). Owner directly repeated autonomous check-in/report instructions; no other decision. All arenas remain closed. Earlier implementation orders remain acted on. Rapid Slash's optional visibility note is deferred as directed.
+Mailbox through 16:11 acted on; final reread unchanged. V101 committed by coordinator as bbf19d0 (not pushed); coordinator reports owner published through v97 (53f628d). Owner directly repeated autonomous check-in/report instructions; no other decision. All arenas remain closed. Earlier implementation orders remain acted on. Rapid Slash's optional visibility note is deferred as directed.
 
-V101 moves the beam draw pass immediately before both fighter bodies. Reproduced Nuclear Shell hiding almost the entire launched or guarding defender at 1x; the full reaction now stays readable inside its cone. Applies to Granite Blast, Piercing Blood, AP Shot, Nuclear Shell and Convergence. Beam geometry, materials, clocks and contact effects stay unchanged. Outside occupied fighter pixels, scenes remain byte-identical to v100. No simulation, event, damage, cost, movement, input, AI, audio, roster, style or network changes. Eleven script URLs v=104.
+V102 makes ordinary jump takeoffs register at native size. Two tiny floor wedges/specks become low, outlined pale dust plumes with rounded caps that spread, shrink and dim on the existing twelve-tick FX clock, behind both bodies. Narrower than the unchanged landing cloud. No simulation, event, damage, cost, movement, input, AI, audio, roster, style or network changes. Eleven script URLs v=105.
 
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-world.js, tests/beam-layering.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base 04be1ca; never pushed. Ready for coordinator review/commit and owner motion/readability assessment before publication.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-world.js, tests/takeoff-dust.cjs (new), tests/landing-dust.cjs, tests/floor-impact.cjs. The older suites defer takeoff appearance to its new dedicated regression; their landing/thud assertions remain. No add/commit attempt per 01:34/03:00; HEAD/base bbf19d0; never pushed. Ready for coordinator review/commit and owner motion/readability assessment before publication.
 
 ## Verification and limits
 
-- New beam-layering regression: 60 actual hit/guard/wall timelines across five beam families, both slots/facings/mirror costumes; 4,856 ticks exactly matching fixed v100 04be1ca; 720 native scene/snapshot checks. Clear occupied body pixels, unchanged pixels outside bodies, read-only state/effects, full lifecycle/expiry, visible lanes (minimum 1,276 pixels), 809,676 revealed body pixels across sampled scenes and 18 byte-identical non-beam scenes pass. --baseline fails on reproduced occlusion; --baseline --preview-only exports fixed v100 presentation.
-- Contact-readability (240 actual timelines, 3,480 native scenes/snapshots), beams (184 hard-alpha mirrored frames, ten real timelines, 60 freeze holds), Maximum charge and Convergence charge (six real timelines and 156 freeze holds each), world (308 frames), feel/input (eleven groups + keyboard handlers), actual-script runtime/menu/input/results and online lifecycle pass. Source/test syntax, eleven matching v104 URLs and diff whitespace pass.
-- Inspected native courtyard P1 right Nuclear Shell hit t4 before/after: an almost invisible defender becomes a complete launched silhouette inside the unchanged cone. Also inspected gallery P2 left Nuclear Shell guard t8 before/after: the hidden defender now visibly guards. Inspected gallery P2 left Piercing Blood guard t4 pair for the narrower ribbons. Native pairs for all five beams, three stages, P1 right hits and P2 left guards, ages 1/4/8/final retained in codex mailbox. Generated memory rasters, not browser captures or observed motion.
-- No owner play/listening, live browser layout/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC. Browser not retried. Unchanged stage, full-match, unrelated art/HUD/audio and performance suites not repeated. Scripts/stills do not count as played.
+- New takeoff-dust regression: 90 actual straight/left/right jump-to-landing timelines across all fifteen builds, both slots/mirror costumes; 3,420 ticks exactly matching fixed v101 bbf19d0; 570 native scene/snapshot checks. Read-only state/effects, clear bodies, hard alpha, exact symmetry, outward travel, contraction/expiry, 60 fractional/edge crops and 126 byte-identical landing/thud scenes pass. Minimum early visibility 276 pixels; baseline fails at 104. --baseline --preview-only exports fixed v101.
+- Landing dust (90 timelines, 684 native checks), floor impact (60 timelines, 420 native checks), airborne reactions (54 dust frames plus actual input/freeze/coalescing/expiry), world (308 frames), feel/input (eleven groups + keyboard handlers), actual-script runtime/menu/input/results and online lifecycle pass. Source/test syntax, eleven matching v105 URLs and diff whitespace pass.
+- Inspected native courtyard Isolde P1 takeoff t1 before/after and gallery Greta P2 t3 before/after: nearly invisible wedges/specks become distinct low pale plumes. Also inspected observatory Isolde t6 and courtyard t11; they spread, dim and disperse. Forty-eight native pairs across two builds, all three stages, both slots and ages 1/3/6/11 retained in codex mailbox, plus runtime/menu assets. Generated memory rasters, not browser captures or observed motion.
+- No owner play/listening, live browser layout/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC. Browser not retried. Unchanged stage, full-match, individual art/beam/HUD/audio and performance suites not repeated. Scripts/stills do not count as played.
 
 ## Next priorities
 
 Owner dive feel/readability notes take priority. V97 still gives 44 active warning ticks before tick-46 impact: 250 damage, 310-unit width, unchanged cost. Bram's retreat delayed 8 ticks escapes, 9 is hit; jump-away delayed 15 escapes, 16 is hit. Owner must judge the feel.
 
-Otherwise continue first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. Arenas stay closed. No pending decision for v101; leave this one-version run ready for coordinator commit.
+Otherwise continue first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. Arenas stay closed. No pending decision for v102; leave this one-version run ready for coordinator commit.
 
 ## Code and run
 

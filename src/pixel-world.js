@@ -222,7 +222,17 @@ function pxDust(s,e) {
   if(!PX_DUST.has(key)) {
     const cell=new PixelSurface(192,96),t=e.t,heavy=e.kind==='thud',jump=e.kind==='jump';
     const x=96,y=80,u=Math.floor(t/3),spread=(heavy?13:jump?8:10)+u*(heavy?5:3);
-    if(e.kind==='land') {
+    if(jump) {
+      // Two low plumes register the push off without borrowing the wider
+      // four-puff landing cloud. Spread and disperse on the existing FX age.
+      for(const dir of [-1,1]) {
+        const cx=x+dir*(15+t*2.1),cy=y-5-t*.18;
+        const lobes=[[0,0,12-t*.9,4-t*.23],[3,-3-t*.12,8-t*.6,5-t*.35]];
+        for(const [a,b,rx,ry] of lobes)cell.ellipse(cx+dir*a,cy+b,Math.max(1,rx),Math.max(1,ry),PX_INK);
+        for(const [a,b,rx,ry] of lobes)cell.ellipse(cx+dir*a,cy+b,Math.max(1,rx-1),Math.max(1,ry-1),'#857e73');
+        if(t<9)for(const [a,b,rx,ry] of lobes)cell.ellipse(cx+dir*a,cy+b-1,Math.max(1,rx-2),Math.max(1,ry-2),t<5?'#e6d5b2':'#a99a83');
+      }
+    } else if(e.kind==='land') {
       // A low pair of rolling puffs makes an ordinary landing read without
       // borrowing the much taller body-impact cloud. The existing FX age
       // carries them outward, then breaks them into small dim remnants.
