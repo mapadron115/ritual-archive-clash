@@ -143,4 +143,6 @@ if(output) {
   writePNG(path.join(output,`v107-${baseline?'before':'after'}-844x390-safe.png`),context.makePreview(844,390,{top:0,right:44,bottom:21,left:44}));
   if(!baseline)for(const [ch,ce] of [[0,0],[3,100],[7,100],[10,100]])writePNG(path.join(output,`v107-after-667x375-ch${ch}-ce${ce}.png`),context.makePreview(667,375,undefined,ch,ce));
 }
+// Reuse this real-script-order shell for the mobile menu route audit.
+module.exports={context,html,root};
 

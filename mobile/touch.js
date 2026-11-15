@@ -15,7 +15,7 @@ function mobileLayout(width,height,safe={top:0,right:0,bottom:0,left:0}) {
   put('pause',Math.floor(canvas.x+sw/2)-56,bottom-bh);put('mute',Math.floor(canvas.x+sw/2)+4,bottom-bh);
   return {portrait:height>width,canvas,buttons};
 }
-const MOBILE={pointers:new Map(),portrait:false,views:new Map()};
+const MOBILE={pointers:new Map(),portrait:false,views:new Map(),selectTab:0};
 const mobileButtons=Array.from(document.querySelectorAll('[data-input]'));
 // Two short display names; full library names stay in the move list and each
 // accessible label. The remaining names fit the two-line button heading whole.
@@ -106,12 +106,65 @@ function mobileHUDSurface(S,lab) {
 drawHUD=function(c,S,lab) {
   mobileUpdateControls(S);pxPresent(c,mobileHUDSurface(S,lab));
 };
-basics=function() {return '<p>Hold LEFT / RIGHT to move, JUMP to jump, GUARD to defend. Tap PUNCH or KICK; your three named arts are along the bottom right. Each art shows its CE cost, readiness and cooldown fill. DOMAIN / MAXIMUM is above them, once per round at full gauge or 30% health. MOVES opens this list; MUTE toggles sound. You can hold movement and attack together. Online fights continue while the list is open.</p>';};
+// Phone lists use the same names and descriptions as the shared fighters, in
+// vertical entries rather than four narrow table columns or keyboard badges.
+moveList=function(ch) {
+  const c=CH[ch];
+  const entry=(a,detail,desc)=>'<div class="moveEntry"><div class="moveHeading"><b>'+a.name+'</b><span>'+detail+'</span></div><p>'+desc+'</p></div>';
+  return '<section class="moveList"><h3 style="color:'+c.look.accent+'">'+c.name+' / '+c.tech+'</h3><p>'+c.tag+(c.passive?'. '+c.passive+'.':'')+'</p>'+c.arts.map(a=>entry(a,a.cost+' CE / '+(a.cd/60).toFixed(1)+'s',a.desc)).join('')+
+    entry(c.dom,c.dom.maximum?'MAXIMUM':'DOMAIN',c.dom.desc+'. Once per round, at full gauge or 30% health or less.')+'</section>';
+};
+basics=function() {return '<div class="mobileRules"><p>Hold LEFT / RIGHT to move, JUMP to jump, GUARD to defend (faces the foe). Hold movement and tap an attack together. Tap PUNCH three times for a combo; KICK wears guard down.</p><p>The three named arts are along the bottom right. Each shows its CE cost, readiness and cooldown fill. DOMAIN / MAXIMUM is above them: once per round at full gauge or 30% health or less. Two Domains cancel each other.</p><p>MOVES opens this list; MUTE toggles sound. Offline matches pause here; online matches continue with your controls released. First to two round wins, 99 seconds per round. A draw awards neither fighter a win.</p><p>Black Flash: a landed punch or kick has a 6% chance to deal 2.2 times the damage, launch the foe and give 25 CE. It grants eight seconds in the Zone, with a 20% chance.</p></div>';};
+function mobileSelectTab(tab) {
+  MOBILE.selectTab=tab;
+  for(let i=0;i<3;i++) {
+    $('selectPanel'+i).hidden=i!==tab;
+    $('selectTab'+i).setAttribute('aria-pressed',String(i===tab));
+  }
+  $('selectionScroll').scrollTop=0;
+}
+const mobileSelectionBase=refreshSelection;
+refreshSelection=function() {
+  mobileSelectionBase();
+  const names=selectionNames();
+  for(let i=0;i<2;i++)$('selectTab'+i).textContent=names[i]+'\n'+CH[G.pick[i]].name;
+  $('selectTab2').textContent='Arena / moves\n'+PX_STAGES.find(s=>s.id===G.stage).name;
+};
+const mobileBuildSelectBase=buildSelect;
+buildSelect=function() {
+  mobileBuildSelectBase();
+  // Keep optional keyboard browsing aligned with the mobile grid as well.
+  for(let i=0;i<2;i++) {
+    const choices=Array.from($('col'+i).children).filter(b=>b.className.startsWith('fighter'));
+    choices.forEach((b,n)=>{
+      const base=b.onkeydown;
+      b.onkeydown=e=>{
+        if(e.code==='ArrowUp'||e.code==='ArrowDown') {
+          e.preventDefault();const delta=(innerWidth<=599?3:5)*(e.code==='ArrowUp'?-1:1);
+          choices[(n+delta+choices.length)%choices.length].focus();
+        } else base(e);
+      };
+    });
+  }
+  mobileSelectTab(G.mode==='guest'?1:0);
+  $('selectionMoves').open=false;$('selectionRules').open=false;
+};
 const mobilePauseBase=togglePause;
 togglePause=function() {
   mobilePauseBase();
-  if(G.paused)$('resumeBtn').textContent=G.mode==='host'||G.mode==='guest'?'Close list':'Resume';
+  if(G.paused){$('resumeBtn').textContent=G.mode==='host'||G.mode==='guest'?'Close list':'Resume';$('pauseList').scrollTop=0;}
 };
+// The guest waits for the host to rematch, but can still change fighters or
+// leave the room by touch. The shared desktop result behavior stays intact.
+const mobileEndMatchBase=endMatch;
+endMatch=function() {
+  mobileEndMatchBase();
+  $('overBtns').style.display='';$('rematchBtn').hidden=G.mode==='guest';
+  if(G.mode==='guest')$('overNote').textContent='Waiting for the host to rematch. You can change fighters or return to the main menu.';
+};
+// Typing a room code must not toggle MUTE on the letter M or latch fight keys.
+$('code').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();joinGame();}});
+$('code').addEventListener('keyup',e=>e.stopPropagation());
 function mobileResize() {
   clearInput();
   const cs=getComputedStyle($('safeArea')),num=k=>parseFloat(cs[k])||0;
