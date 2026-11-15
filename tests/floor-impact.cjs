@@ -49,7 +49,8 @@ for(let ch=0;ch<15;ch++)for(const owner of [0,1])for(const dir of [-1,1]) {
 if(!previewOnly){
   for(const kind of ['jump','land','thud'])for(let t=0;t<(kind==='jump'?12:kind==='land'?18:24);t++) {
     const e={x:192,y:160,kind,t},s=new PixelSurface(192,96);pxDust(s,e);
-    if(kind!=='thud'||t>=6)assert.deepEqual(s.data,oldDust(e),'unrelated dust frame changed');
+    // Ordinary landing dust has its own v96 readability regression.
+    if(kind==='jump'||kind==='thud'&&t>=6)assert.deepEqual(s.data,oldDust(e),'unrelated dust frame changed');
     let bright=0;for(let y=0;y<s.h;y++)for(let x=0;x<s.w;x++){
       const p=(y*s.w+x)*4,a=s.data[p+3];assert(a===0||a===255);
       if(a){assert(x>0&&x<s.w-1&&y>0&&y<=80,'dust clipped/below floor');if(s.data[p]>200&&s.data[p+1]>180)bright++;}
@@ -73,6 +74,6 @@ if(!previewOnly){
     pxDust(actual,{x,y:GROUND,kind:'thud',t});expected.blit(cell,Math.round(x/2)-96,GROUND/2-80);
     assert.deepEqual(actual.data,expected.data,'fractional/edge root changes the floor burst');
   }
-  console.log('PASS',timelines,'actual punch-chain knockdowns;',ticks,'parallel-state ticks;',rasters,'native scene/snapshot checks; minimum initial visible floor burst',minVisible,'pixels; rounded symmetric caps, both bodies intact, 120 edge/fractional crops; hard alpha, coalescing, expiry and unchanged jump/land/late thud');
+  console.log('PASS',timelines,'actual punch-chain knockdowns;',ticks,'parallel-state ticks;',rasters,'native scene/snapshot checks; minimum initial visible floor burst',minVisible,'pixels; rounded symmetric caps, both bodies intact, 120 edge/fractional crops; hard alpha, coalescing, expiry and unchanged jump/late thud');
 }
 `)(assert,writePNG,output,prefix,previewOnly,oldDust);

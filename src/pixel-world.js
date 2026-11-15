@@ -222,7 +222,20 @@ function pxDust(s,e) {
   if(!PX_DUST.has(key)) {
     const cell=new PixelSurface(192,96),t=e.t,heavy=e.kind==='thud',jump=e.kind==='jump';
     const x=96,y=80,u=Math.floor(t/3),spread=(heavy?13:jump?8:10)+u*(heavy?5:3);
-    if(heavy&&t<6) {
+    if(e.kind==='land') {
+      // A low pair of rolling puffs makes an ordinary landing read without
+      // borrowing the much taller body-impact cloud. The existing FX age
+      // carries them outward, then breaks them into small dim remnants.
+      const late=t>=9,col=late?'#a99a83':'#e6d5b2';
+      for(const dir of [-1,1])for(let n=0;n<2;n++) {
+        const rx=Math.max(1,(n?10:12)-t*(n?.6:.65));
+        const ry=Math.max(1,(n?6:7)-t*.38);
+        const cx=x+dir*((n?38:18)+t*1.6),cy=y-ry-1-t*.35;
+        cell.ellipse(cx,cy,rx,ry,PX_INK);
+        cell.ellipse(cx,cy,Math.max(1,rx-1),Math.max(1,ry-1),'#857e73');
+        if(t<14)cell.ellipse(cx-dir,cy-1,Math.max(1,rx-2),Math.max(1,ry-2),col);
+      }
+    } else if(heavy&&t<6) {
       // Broad overlapping billows roll outward and flatten before the existing
       // debris phase. Paint their shared outline first so internal seams do not
       // turn the cloud into a row of stones. Both bodies remain in front.
