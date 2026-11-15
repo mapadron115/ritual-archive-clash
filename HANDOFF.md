@@ -1,24 +1,23 @@
 # Handoff: Ritual Archive: Clash
 
-## Current - version 94, script cache v=97 (2026-11-15)
+## Current - version 95, script cache v=98 (2026-11-15)
 
-Mailbox through 20:31 acted on/acknowledged; final reread unchanged. Coordinator committed v93 as a5e8059, not pushed. Owner directly repeated autonomous check-in/mailbox/report instructions; no new design decision. One change this run: the requested brighter air-punch trail. All three arenas remain closed.
+Mailbox through 01:56 acted on/acknowledged; final reread unchanged. Coordinator committed v94 as 7c83acc, not pushed. Owner directly repeated autonomous check-in/mailbox/report instructions; no new design decision. One change this run: a readable, head-following stun crown. All three arenas remain closed.
 
-V94 raises the air-punch wake's interior tones toward the grounded punch family: value cap 165 to 185, fist-relative value .85 to .92, shaded fill .76 to .84. Its shape, outline, layering, contraction and lifetime remain identical. The fist highlight stays brighter across all fifteen builds. Eleven script URLs v=97. No combat/input/audio/AI/network changes.
+V95 replaces the three fixed-height pale diamonds with outlined gold five-point stars. They follow the authored folded/rising head through guard-break or shock recovery, orbit on the existing stT clock (holding during impact/global/time-stop pauses), and paint behind both bodies. The crown clears outside stun and is suppressed during impact silhouettes or invulnerability blinks. No combat/input/audio/AI/network changes. Eleven script URLs v=98.
 
-Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-world.js. No add/commit attempt per 01:34/03:00; HEAD/base a5e8059; never pushed. Ready for coordinator review/commit and owner motion/readability assessment before publication.
+Files for coordinator commit: HANDOFF.md, README.md, index.html, src/pixel-world.js, tests/stun-crown.cjs (new). No add/commit attempt per 01:34/03:00; HEAD/base 7c83acc; never pushed. Ready for coordinator review/commit and owner motion/readability assessment before publication.
 
 ## Verification and limits
 
-- Existing air-punch-wake regression passes 300 early/crest/late/hit/block input timelines, 12,128 parallel-state ticks, 2,940 native frame/snapshot checks, 120 contacts, 288 freeze holds and 240 normal/enlarged hard-alpha shapes. Minimum opening-active whiff visibility remains 105 pixels. Checks unchanged bodies/state/effects, snapshots, reflection, contraction, edge crops, interruption, landing and impact silhouettes.
-- One-off comparison against a5e8059: 240 all-build/facing/active-age wake shapes have identical alpha. All 18,290 changed interior pixels are brighter by 10-30 luminance units; minimum fist-highlight margin 12.7 units. No new test file for this small palette correction.
-- World (308 frames), feel/input (eleven groups and actual keyboard handlers), actual-script runtime/title/selection/move list/results/input and online lifecycle suites pass. Source syntax, eleven v97 URLs and diff whitespace pass.
-- Inspected native 640x360 v94-before/after-ch0-whiff-d0-courtyard-right-t4.png at 1x: the lower trail separates more clearly from the coat/gate, with the face and fist clear. Also inspected Greta gallery-left-t6 and Isolde late-t11 after frames. Additional native early/crest/hit/block/mirror before/after scenes across all stages and v94-runtime-frame/selection-assets/title-mark/attract-frame retained in the codex mailbox. Generated memory rasters, not browser captures or observed motion.
+- New stun-crown regression passes 120 direct-hit guard-break/shock recovery timelines across all fifteen builds, both costumes/slots and directions; 720 native/snapshot checks and 6,480 pause holds. Minimum visible crown area after HUD/body occlusion: 171 pixels. Checks hard alpha, read-only simulation, clear body pixels, unchanged parallel-state recovery outcomes, cleanup, ordinary-hit exclusion and enlarged edge rendering. Fixed v94 baseline exports before scenes; baseline assertion rejects the old fixed-height cue.
+- Existing guard-animation (90 block/break/shock timelines, 300 silhouette comparisons), world (308 frames), HUD (75 states), feel/input (eleven groups and actual keyboard handlers), actual-script runtime/title/selection/move list/results/input and online lifecycle suites pass. Source/new-test syntax, eleven v98 URLs and diff whitespace pass.
+- Inspected native 640x360 v95-before/after-ch0-courtyard-left-remaining40.png at 1x: the old pale diamonds float high above the folded head; the gold stars sit close to it and separate from the gate. Also inspected Greta gallery-left-remaining30 and Isolde courtyard-left-remaining5 after frames. Native pairs across all stages, both directions, Isolde/Greta and three recovery moments, plus v95-runtime-frame/selection-assets/title-mark/attract-frame, retained in the codex mailbox. Generated memory rasters, not browser captures or observed motion.
 - No owner play/listening, live browser layout/focus/activation, motion/FPS, keyboard rollover or real two-computer WebRTC check. Browser not retried. Unchanged stage, full-match, individual move/art, audio/contact and performance suites not repeated. Last full-match smoke: 225 matchups/1,169,896 ticks. Scripts and stills do not count as owner play.
 
 ## Next priorities
 
-Continue the first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. All arenas stay closed; owner play/readability/listening notes take priority. No pending decision for v94. Known balance question already passed to coordinator: late run/vertical jump cannot escape the locked diving Maximum, while swap escapes and guard reduces damage; leave its rule unchanged.
+Continue the first-minute fighter/hit/HUD/round-flow audit, one reproduced visible change and native before/after pair per version. All arenas stay closed; owner play/readability/listening notes take priority. No pending decision for v95. Known balance question already passed to coordinator: late run/vertical jump cannot escape the locked diving Maximum, while swap escapes and guard reduces damage; leave its rule unchanged.
 
 ## Code and run
 

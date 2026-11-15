@@ -485,6 +485,20 @@ function pxHookSweep(s,f) {
   poly([[19+tail*.4,-37-tail],[32,-45],[44,-61],[47,-75],[43,-89],[38,-96],[44,-83],[44,-69],[36,-51],[23,-40]],'#f1e5cd');
   s.blit(cell,Math.round(f.x/2)-(f.face<0?79:64)*scale,Math.round(f.y/2)-120*scale,scale,f.face<0);
 }
+// Stun belongs to the folded/rising head, not a fixed height above the feet.
+// Its existing recovery clock holds the orbit through impact/time-stop pauses.
+// Paint before both bodies so the crown cannot erase either fighter's face.
+function pxStunCrown(s,S,f) {
+  if(f.st!=='stun'||f.inv>0&&S.t%4<2)return;
+  const head=PX_POSES[pxPose(S,f)].h,h=PX_KITS[f.ch].height||1,scale=f.big>0?1.3:1;
+  const x=Math.round(f.x/2)+head[0]*f.face*scale,y=Math.round(f.y/2)+(head[1]*h-25)*scale;
+  for(let n=0;n<3;n++) {
+    const a=-f.stT*.12+n*Math.PI*2/3,cx=Math.round(x+Math.cos(a)*24*scale),cy=Math.round(y+Math.sin(a)*5*scale);
+    const points=Array.from({length:10},(_,i)=>{const t=-Math.PI/2+i*Math.PI/5,r=(i%2?3:7)*scale;return [cx+Math.cos(t)*r,cy+Math.sin(t)*r];});
+    s.poly(points,'#edc16e',PX_INK);
+    s.poly([[cx,cy-4*scale],[cx+2*scale,cy],[cx,cy+2*scale],[cx-3*scale,cy]],'#fff0ba');
+  }
+}
 function pxPaintFighter(s,S,f,impact) {
   const x=Math.round(f.x/2),y=Math.round(f.y/2),scale=f.big>0?1.3:1,alt=f.i===1&&S.f[0].ch===f.ch;
   if(f.inv>0 && S.t%4<2)return;
@@ -495,7 +509,6 @@ function pxPaintFighter(s,S,f,impact) {
   if(f.inf>0)pxStatusEffect(s,S,f,'infinity');
   if(f.abs>0)pxStatusEffect(s,S,f,'absolute');
   else if(f.counter>0)pxStatusEffect(s,S,f,'counter');
-  if(f.st==='stun')for(let n=0;n<3;n++){const a=S.t*.12+n*2.1;pxBurst(s,x+Math.cos(a)*14,y-97+Math.sin(a)*3,3,'#eed790');}
   if(f.nails>0)for(let n=0;n<f.nails;n++)s.line([x-5+n*6,y-43+n%2*5],[x-2+n*6,y-50+n%2*5],'#e8d7bc',2);
   pxChargeCue(s,f);
   pxMaximumCharge(s,S,f);
@@ -1122,6 +1135,7 @@ function pxWorldSurface(S,F=FX) {
   pxGumTether(s,S);
   if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2)){pxStraightPunchWake(s,f);pxKickSweep(s,f);pxAirPunchWake(s,f);pxAirKickSweep(s,f);pxHookSweep(s,f);}
   if(F.bf)pxBlackFlash(s,F.bf);
+  if(!impact)for(const f of S.f)pxStunCrown(s,S,f);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
   for(const p of S.proj)pxProjectile(s,p);
