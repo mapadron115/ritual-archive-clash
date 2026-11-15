@@ -444,6 +444,21 @@ function pxKickSweep(s,f) {
   poly([[tail+4,-8-tail*.35],[24,-11],[40,-22],[54,-41],[60,-50],[59,-43],[51,-27],[37,-16],[21,-9]],'#f1e5cd');
   s.blit(cell,Math.round(f.x/2)-(f.face<0?79:64)*scale,Math.round(f.y/2)-120*scale,scale,f.face<0);
 }
+// A compact air-punch wake trails below the forearm. Keep the fist leading,
+// and contract toward it through the existing active ticks without FX state.
+function pxAirPunchWake(s,f) {
+  if(f.st!=='atk'||f.move!=='jp'||f.y>=GROUND||f.mt<BASIC.jp.su||f.mt>=BASIC.jp.su+BASIC.jp.ac)return;
+  const age=f.mt-BASIC.jp.su,kit=PX_KITS[f.ch],h=kit.height||1,scale=f.big>0?1.3:1;
+  const cell=new PixelSurface(144,128),tail=22+Math.min(age,3);
+  const shrink=age<4?1:1-(age-3)*.17;
+  const fist=pxRGB(kit.skin[2]),value=Math.min(165,(fist[0]*.2126+fist[1]*.7152+fist[2]*.0722)*.85);
+  const tone=factor=>'rgb('+[value*factor-5,value*factor,value*factor-2].map(Math.round).join(',')+')';
+  const poly=(pts,col)=>cell.poly(pts.map(([a,b])=>[64+44+(a-44)*shrink,120+(-60+(b+60)*shrink)*h]),col);
+  poly([[tail,-55],[34,-57],[44,-62],[44,-55],[36,-47],[tail,-44],[tail-2,-49]],PX_INK);
+  poly([[tail+1,-54],[35,-55],[42,-59],[42,-55],[35,-49],[tail+1,-46]],tone(.76));
+  poly([[tail+2,-49],[35,-51],[42,-57],[36,-49],[tail+2,-46]],tone(1));
+  s.blit(cell,Math.round(f.x/2)-(f.face<0?79:64)*scale,Math.round(f.y/2)-120*scale,scale,f.face<0);
+}
 // A horizontal air-kick wake runs below the extended shin, leaving the boot
 // leading and the face clear. Its tail contracts through the eight active ticks;
 // landing, interruption and recovery clear it without retaining any FX state.
@@ -1105,7 +1120,7 @@ function pxWorldSurface(S,F=FX) {
   pxJceRhythm(s,S);
   pxOvationRhythm(s,S);
   pxGumTether(s,S);
-  if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2)){pxStraightPunchWake(s,f);pxKickSweep(s,f);pxAirKickSweep(s,f);pxHookSweep(s,f);}
+  if(!impact)for(const f of S.f)if(!(f.inv>0&&S.t%4<2)){pxStraightPunchWake(s,f);pxKickSweep(s,f);pxAirPunchWake(s,f);pxAirKickSweep(s,f);pxHookSweep(s,f);}
   if(F.bf)pxBlackFlash(s,F.bf);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
