@@ -1176,6 +1176,33 @@ function pxSlashCue(s,l) {
   const mirror=l.dir<0;
   s.blit(PX_SLASH_CUES.get(key),Math.round((l.x1+l.x2)/4)-(mirror?63:64),Math.round((l.y1+l.y2)/4)-64,1,mirror);
 }
+// Transfers leave opposing gold wakes rather than a cable across the bodies.
+// Both paths shorten toward their endpoints on the existing twelve-tick clock.
+function pxSwapCue(s,l) {
+  if(l.t>=l.life)return;
+  let a=[l.x1/2,l.y1/2],b=[l.x2/2,l.y2/2];
+  if(a[0]>b[0]||(a[0]===b[0]&&a[1]>b[1]))[a,b]=[b,a];
+  const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);if(len<1)return;
+  const age=clamp(l.t/l.life,0,1),ox=40,oy=40+Math.ceil(Math.max(0,-dy));
+  const cell=new PixelSurface(Math.ceil(dx)+81,Math.ceil(Math.abs(dy))+81);
+  const bend=Math.min(25,len*.16),start=.04+age*.83,end=.96,steps=24;
+  for(const side of [-1,1]) {
+    const band=(gain,pad,col)=>{
+      const points=[];
+      for(const edge of [1,-1])for(let n=0;n<=steps;n++) {
+        const v=(edge>0?n:steps-n)/steps,u=start+(end-start)*v,t=side>0?u:1-u;
+        const width=(.25+Math.sin(v*Math.PI)*4*(1-age*.65))*gain+pad;
+        const across=side*Math.sin(t*Math.PI)*bend+edge*width;
+        points.push([ox+dx*t-dy/len*across,oy+dy*t+dx/len*across]);
+      }
+      cell.poly(points,col);
+    };
+    band(1,1,PX_INK);band(1,0,l.t<8?'#b88746':'#927344');
+    band(.65,0,l.t<8?'#f1ce81':'#bda06b');
+    if(l.t<8)band(.22,0,'#fff0c2');
+  }
+  s.blit(cell,Math.round(a[0])-ox,Math.round(a[1])-oy);
+}
 function pxWorldSurface(S,F=FX) {
   const s=new PixelSurface(640,360);s.data.set(pxBackdrop(Math.floor(S.t/8),S.stage).data);
   pxDomain(s,S);
@@ -1199,10 +1226,11 @@ function pxWorldSurface(S,F=FX) {
   if(!impact)for(const f of S.f)pxStunCrown(s,S,f);
   for(const l of F.lines||[])if(l.kind==='dash')pxRapidTrail(s,l);
   for(const l of F.lines||[])if(l.kind==='slash')pxSlashCue(s,l);
+  for(const l of F.lines||[])if(l.kind==='swap')pxSwapCue(s,l);
   for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
   for(const p of S.proj)pxProjectile(s,p);
-  for(const l of F.lines||[])if(l.kind!=='dash'&&l.kind!=='slash') {s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],PX_INK,Math.max(3,l.w/2+2));s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],l.col,Math.max(1,l.w/2));}
+  for(const l of F.lines||[])if(!['dash','slash','swap'].includes(l.kind)) {s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],PX_INK,Math.max(3,l.w/2+2));s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],l.col,Math.max(1,l.w/2));}
   for(const r of F.rings||[])pxRing(s,r.x/2,r.y/2,r.r/2,r.r/2,r.col,1,Math.floor(r.t/3));
   for(const p of F.parts||[]) {const r=Math.max(1,p.s/2*(1-p.t/p.life));s.rect(p.x/2-r,p.y/2-r,r*2,r*2,p.col);}
   for(const e of F.stars||[])pxBurst(s,e.x/2,e.y/2,e.r/2*(1-e.t/e.life*.7),e.col,e.t);

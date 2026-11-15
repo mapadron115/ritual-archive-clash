@@ -84,6 +84,8 @@ if(!previewOnly) {
   reset();const S=newMatch(1,1,999);S.phase='fight';S.t=140;
   for(const kind of ['slash','dash','rain','cuts','swap']) {
     reset();fxEvent(S,{k:kind,x:450,y:500,a:700,b:480});
+    // V100 gives current transfers their own cue; preserve old untagged FX here.
+    if(kind==='swap')delete FX.lines.at(-1).kind;
     for(const stage of PX_STAGES){S.stage=stage.id;assert.deepEqual(pxWorldSurface(S,FX).data,oldWorld(S,FX).data,'unrelated effect changed');}
   }
   // Every other real slash-event consumer keeps its original raster.

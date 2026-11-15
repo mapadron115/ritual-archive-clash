@@ -34,7 +34,7 @@ function fxEvent(S, e) {
     case 'break': contact(S,e,'break'); FX.shake = 12; FX.banner = { txt: 'GUARD BREAK', t: 0, life: 40, small: 1 }; break;
     case 'inf': FX.rings.push({ x: e.x, y: e.y, r: 40, vr: 2, t: 0, life: 14, col: '#7fd6ff' }); break;
     case 'clap': star(e.x, e.y, 34, '#ffe9a0', 8); FX.rings.push({ x: e.x, y: e.y, r: 6, vr: 9, t: 0, life: 12, col: '#ffe9a0' }); break;
-    case 'swap': FX.lines.push({ x1: e.x, y1: e.y, x2: e.a, y2: e.b, t: 0, life: 12, col: '#ffe9a0', w: 7 }); puff(e.x, e.y + 40, 5); puff(e.a, e.b + 40, 5); burst(e.x, e.y, 8, '#ffd866', 4); burst(e.a, e.b, 8, '#ffd866', 4); FX.flash = .15; FX.flashCol = '#ffe9a0'; break;
+    case 'swap': FX.lines.push({ kind: 'swap', x1: e.x, y1: e.y, x2: e.a, y2: e.b, t: 0, life: 12, col: '#ffe9a0', w: 7 }); puff(e.x, e.y + 40, 5); puff(e.a, e.b + 40, 5); burst(e.x, e.y, 8, '#ffd866', 4); burst(e.a, e.b, 8, '#ffd866', 4); FX.flash = .15; FX.flashCol = '#ffe9a0'; break;
     case 'slash': {
       // Only Dismantle/Cleave supply a facing. Other users of this legacy
       // event (including Web's target cuts) retain their own presentation.
