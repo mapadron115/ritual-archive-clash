@@ -1227,8 +1227,10 @@ function pxWorldSurface(S,F=FX) {
   for(const l of F.lines||[])if(l.kind==='dash')pxRapidTrail(s,l);
   for(const l of F.lines||[])if(l.kind==='slash')pxSlashCue(s,l);
   for(const l of F.lines||[])if(l.kind==='swap')pxSwapCue(s,l);
-  for(const f of S.f)pxPaintFighter(s,S,f,impact);
+  // Keep the struck fighter's reaction readable inside even the widest cone.
+  // Contacts still paint above both bodies; beam material/geometry is unchanged.
   for(const z of S.zones)if(z.k==='beam')pxZone(s,S,z);
+  for(const f of S.f)pxPaintFighter(s,S,f,impact);
   for(const p of S.proj)pxProjectile(s,p);
   for(const l of F.lines||[])if(!['dash','slash','swap'].includes(l.kind)) {s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],PX_INK,Math.max(3,l.w/2+2));s.line([l.x1/2,l.y1/2],[l.x2/2,l.y2/2],l.col,Math.max(1,l.w/2));}
   for(const r of F.rings||[])pxRing(s,r.x/2,r.y/2,r.r/2,r.r/2,r.col,1,Math.floor(r.t/3));
