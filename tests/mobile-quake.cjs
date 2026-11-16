@@ -4,16 +4,18 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {context,root}=require('./mobile.cjs');
 const out=process.argv.find(a=>a.startsWith('--out='))?.slice(6);
 if(out)fs.mkdirSync(out,{recursive:true});
-const names=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render','desktop-animation','desktop-maximum','desktop-convergence'];
+const names=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render','desktop-animation','desktop-maximum','desktop-convergence','desktop-quake','desktop-ordinary'];
 const source=names.map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n');
-context.prior=Function(source+'\nreturn {pose:pxPose,world:pxWorldSurface,paint:pxPaintFighter};')();
-context.desktop=Function(source+'\n'+fs.readFileSync(path.join(root,'src/desktop-quake.js'),'utf8')+'\nreturn {pose:pxPose,world:pxWorldSurface};')();
+// Isolate the Quake chain while retaining Thunder Clap and other current poses.
+// The new mobile-ordinary audit separately compares just the v134 adapter.
+context.prior=Function(source+'\nconst complete=pxPose;pxPose=function(S,f){return moveDef(f)?.id==="quake"?desktopQuakePoseBase(S,f):complete(S,f);};return {pose:pxPose,world:pxWorldSurface,paint:pxPaintFighter};')();
+context.desktop=Function(source+'\nreturn {pose:pxPose,world:pxWorldSurface};')();
 Object.assign(context,{out,writePNG:require('./png.cjs'),previewOnly:process.argv.includes('--preview-only')});
 vm.runInContext(`
 const quakePose=pxPose;
 const quiet={parts:[],rings:[],lines:[],contacts:[],dust:[],ghosts:[],stars:[],puffs:[],nums:[],words:[],flash:0};
 const ch=CH.findIndex(c=>c.arts.some(a=>a.id==='quake')),art=CH[ch].arts.findIndex(a=>a.id==='quake'),key='A'+(art+1),bit=BTN[key];
-const times=[9,10,19,20,22,23,34,35,41],expected=['hookw','quakecoil','quakecoil','quakeimpact','quakeimpact','quakepull','quakepull','quakerise','quakerise'];
+const times=[9,10,19,20,22,23,34,35,41],expected=['hookw','quakeopen','quakeopen','quakeimpact','quakeimpact','quakepull','quakepull','quakerise','quakerise'];
 let passed=0,failed=0,ticks=0,rasters=0,holds=0,snapshots=0,defaults=0,changed=0;
 function audit(name,fn){try{fn();passed++;console.log('PASS mobile Quake:',name);}catch(e){failed++;console.log('FAIL mobile Quake:',name,e.message);}}
 function resetFX(){for(const k of Object.keys(quiet))if(Array.isArray(quiet[k]))FX[k]=[];FX.banner=FX.impact=FX.bf=null;FX.flash=FX.shake=0;FX.nope=[0,0];FX.silent=true;FX.clock=0;}

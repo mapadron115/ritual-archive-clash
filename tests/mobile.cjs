@@ -31,15 +31,16 @@ const document=Object.assign(doc,{visibilityState:'visible',getElementById(id){i
 const context=vm.createContext({console,assert,document,window:{},performance:{now:()=>0},innerWidth:844,innerHeight:390,getComputedStyle(){return {};},requestAnimationFrame(){},addEventListener:(k,f)=>win.addEventListener(k,f),setTimeout(f,ms){timeouts.push({f,ms});}});
 Object.assign(context,{win,buttons,timeouts,baseline,feedbackBaseline});
 const scripts=[...html.matchAll(/<script src="([^?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,19);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,20);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 assert.equal(scripts[0][1],'diagnostics.js');
 assert.equal(scripts[scripts.findIndex(m=>m[1]==='../src/pixel-world.js')+1][1],'present.js');
 assert(scripts.findIndex(m=>m[1]==='../src/desktop-animation.js')>scripts.findIndex(m=>m[1]==='../src/pixel.js'));
 assert(scripts.findIndex(m=>m[1]==='../src/desktop-maximum.js')>scripts.findIndex(m=>m[1]==='../src/desktop-animation.js'));
 assert(scripts.findIndex(m=>m[1]==='../src/desktop-convergence.js')>scripts.findIndex(m=>m[1]==='../src/desktop-maximum.js'));
 assert(scripts.findIndex(m=>m[1]==='../src/desktop-quake.js')>scripts.findIndex(m=>m[1]==='../src/desktop-convergence.js'));
-assert(scripts.findIndex(m=>m[1]==='touch.js')>scripts.findIndex(m=>m[1]==='../src/desktop-quake.js'));
-for(const m of scripts){if(process.argv.includes('--quake-baseline')&&m[1]==='../src/desktop-quake.js'||process.argv.includes('--convergence-baseline')&&m[1]==='../src/desktop-convergence.js'||process.argv.includes('--maximum-baseline')&&m[1]==='../src/desktop-maximum.js'||animationBaseline&&m[1]==='../src/desktop-animation.js'||baselineTouch&&m[1]==='present.js')continue;vm.runInContext(m[1]==='touch.js'&&(slideTouch||baselineTouch)?slideTouch||baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});}
+assert(scripts.findIndex(m=>m[1]==='../src/desktop-ordinary.js')>scripts.findIndex(m=>m[1]==='../src/desktop-quake.js'));
+assert(scripts.findIndex(m=>m[1]==='touch.js')>scripts.findIndex(m=>m[1]==='../src/desktop-ordinary.js'));
+for(const m of scripts){if(process.argv.includes('--ordinary-baseline')&&m[1]==='../src/desktop-ordinary.js'||process.argv.includes('--quake-baseline')&&m[1]==='../src/desktop-quake.js'||process.argv.includes('--convergence-baseline')&&m[1]==='../src/desktop-convergence.js'||process.argv.includes('--maximum-baseline')&&m[1]==='../src/desktop-maximum.js'||animationBaseline&&m[1]==='../src/desktop-animation.js'||baselineTouch&&m[1]==='present.js')continue;vm.runInContext(m[1]==='touch.js'&&(slideTouch||baselineTouch)?slideTouch||baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});}
 vm.runInContext(`
 let now=0;
 performance.now=()=>now;
