@@ -6,6 +6,7 @@ const baseline=process.argv.includes('--baseline');
 const feedbackBaseline=process.argv.includes('--feedback-baseline');
 const domainBaseline=process.argv.includes('--domain-baseline');
 const guardBaseline=process.argv.includes('--guard-baseline');
+const animationBaseline=process.argv.includes('--animation-baseline');
 const baselineTouch=baseline||feedbackBaseline||domainBaseline||guardBaseline?require('node:child_process').execFileSync('git',['show',(guardBaseline?'8d53f71':domainBaseline?'3c95ebc':feedbackBaseline?'921f7f1':'55a25d1')+':mobile/touch.js'],{cwd:root,encoding:'utf8'}):null;
 class Canvas {
   constructor(w=300,h=150){this.width=w;this.height=h;this.buffer=null;this.style={};this.context=new Context(this);}
@@ -28,8 +29,9 @@ const document=Object.assign(doc,{visibilityState:'visible',getElementById(id){i
 const context=vm.createContext({console,assert,document,window:{},performance:{now:()=>0},innerWidth:844,innerHeight:390,getComputedStyle(){return {};},requestAnimationFrame(){},addEventListener:(k,f)=>win.addEventListener(k,f),setTimeout(f,ms){timeouts.push({f,ms});}});
 Object.assign(context,{win,buttons,timeouts,baseline,feedbackBaseline});
 const scripts=[...html.matchAll(/<script src="([^?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,13);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
-for(const m of scripts)vm.runInContext(baselineTouch&&m[1]==='touch.js'?baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});
+assert.equal(scripts.length,14);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert(scripts.findIndex(m=>m[1]==='../src/desktop-animation.js')>scripts.findIndex(m=>m[1]==='../src/pixel.js'));
+for(const m of scripts){if(animationBaseline&&m[1]==='../src/desktop-animation.js')continue;vm.runInContext(baselineTouch&&m[1]==='touch.js'?baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});}
 vm.runInContext(`
 let now=0;
 performance.now=()=>now;

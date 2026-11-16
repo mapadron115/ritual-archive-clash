@@ -4,6 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const {performance}=require('node:perf_hooks'),os=require('node:os');
 const root=path.join(__dirname,'..'),html=fs.readFileSync(path.join(root,'mobile/index.html'),'utf8');
 const baseline=process.argv.includes('--baseline'),out=process.argv.find(a=>a.startsWith('--out='))?.slice(6);
+const animationCost=process.argv.includes('--animation-cost');
 if(out)fs.mkdirSync(out,{recursive:true});
 function node(id){return {id,style:{setProperty(k,v){this[k]=v;}},dataset:{},children:[],attributes:{},textContent:'',classList:{add(){},remove(){}},set innerHTML(v){this._html=v;this.children=[];},get innerHTML(){return this._html||'';},setAttribute(k,v){this.attributes[k]=v;},appendChild(n){this.children.push(n);},addEventListener(){},focus(){},setPointerCapture(){},hasPointerCapture(){return false;}};}
 let uploads=0,draws=0;
@@ -13,11 +14,13 @@ nodes.set('domainButton',buttons.find(b=>b.dataset.input==='DOM'));nodes.set('cv
 const document=Object.assign(node('document'),{visibilityState:'visible',getElementById(id){if(!nodes.has(id))nodes.set(id,node(id));return nodes.get(id);},querySelectorAll(s){return s==='[data-input]'?buttons:['title','select','online','pause','over'].map(id=>this.getElementById(id));},createElement(tag){return tag==='canvas'?canvas():node(tag);},head:node('head')});
 const scripts=[...html.matchAll(/<script src="([^?]+)\?v=(\d+)"><\/script>/g)];
 let source='';
-for(const m of scripts){if(baseline&&m[1]==='raster.js')continue;source+=fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8')+'\n';if(m[1]==='../src/pixel.js')source+='const originalRect=PixelSurface.prototype.rect;\n';}
+for(const m of scripts){if(baseline&&m[1]==='raster.js')continue;source+=fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8')+'\n';if(m[1]==='../src/pixel.js')source+='const originalRect=PixelSurface.prototype.rect,unadaptedPose=pxPose;\n';}
 const run=Function('document','performance','assert','writePNG','out','report',`
 const window={},innerWidth=844,innerHeight=390,getComputedStyle=()=>({}),requestAnimationFrame=()=>{},addEventListener=()=>{},setTimeout=()=>{};
 ${source}
-const candidateRect=PixelSurface.prototype.rect;
+const candidateRect=PixelSurface.prototype.rect,adaptedPose=pxPose;
+const animationCost=${animationCost};let reaction=null;
+const artifactPrefix=animationCost?'v120':'v118';
 G.mode='host';G.running=true;FX.silent=true;
 let randomSeed=118;Math.random=()=>{randomSeed=(Math.imul(randomSeed,1664525)+1013904223)>>>0;return randomSeed/4294967296;};
 function setup(ch=0,owner=0,clash=false,busy=true,domain=true){
@@ -41,20 +44,27 @@ function setup(ch=0,owner=0,clash=false,busy=true,domain=true){
 }
 function percent(times){times.sort((a,b)=>a-b);return {medianMs:+times[Math.floor(times.length*.5)].toFixed(3),p95Ms:+times[Math.floor(times.length*.95)].toFixed(3)};}
 function render(){drawWorld(ctx,G.S);drawHUD(ctx,G.S,labels());}
-function age(n){G.S.t=136+n;if(G.S.dom)G.S.dom.t=48+n;for(const key of ['parts','rings','lines','contacts','dust','stars','puffs','nums','words'])for(const e of FX[key])e.t=n%6;}
+function age(n){G.S.t=136+n;if(G.S.dom)G.S.dom.t=48+n;for(const key of ['parts','rings','lines','contacts','dust','stars','puffs','nums','words'])for(const e of FX[key])e.t=n%6;
+  if(reaction==='hit'){G.S.f[0].st='hit';G.S.f[0].stT=15-n%15;}
+  if(reaction==='summon'){G.S.f[0].ch=3;startMove(G.S.f[0],'a0');G.S.f[0].mt=[1,6,11,12,14,15,20][n%7];}
+}
 // Measure the complete mobile renderer CPU path, with both presentations per
 // frame. Interleave baseline/candidate blocks to reduce ordering bias.
 const scenarios=[{name:'quiet-fight',ch:0,busy:false,domain:false},{name:'p1-domain-busy',ch:0,owner:0},{name:'p2-domain-busy',ch:1,owner:1},{name:'both-domain-clash-busy',ch:0,clash:true}];
+if(animationCost)scenarios.push({name:'busy-ground-hit',ch:0,reaction:'hit'},{name:'busy-summon',ch:3,reaction:'summon'});
 for(const scenario of scenarios){
+  reaction=scenario.reaction;
   setup(scenario.ch,scenario.owner||0,scenario.clash,scenario.busy!==false,scenario.domain!==false);
   const times={before:[],after:[]};
   for(let block=0;block<6;block++)for(const kind of block%2?['after','before']:['before','after']){
-    PixelSurface.prototype.rect=kind==='before'?originalRect:candidateRect;
+    PixelSurface.prototype.rect=animationCost?candidateRect:kind==='before'?originalRect:candidateRect;
+    pxPose=animationCost&&kind==='before'?unadaptedPose:adaptedPose;
     for(let n=0;n<24;n++){age(n);render();}
     for(let n=0;n<20;n++){age(n);const t=performance.now();render();times[kind].push(performance.now()-t);}
   }
   report({scenario:scenario.name,framesPerVariant:120,before:percent(times.before),after:percent(times.after)});
 }
+pxPose=adaptedPose;reaction=null;
 // Instrument only the profiling pass; nested dot work is included in rect.
 PixelSurface.prototype.rect=originalRect;
 setup(0);const profile={};
@@ -91,7 +101,7 @@ for(let ch=0;ch<15;ch++)for(const owner of [0,1])for(const clash of [false,true]
   for(const t of [0,2,5,8,16,32]){
     age(t);
     const world=same(()=>pxWorldSurface(G.S)),hud=same(()=>mobileHUDSurface(G.S,labels()));
-    if(out&&ch<2&&owner===0&&t===2){world.blit(hud,0,0);writePNG(out+'/v118-'+(clash?'clash':'domain')+'-ch'+ch+'.png',world);}
+    if(out&&ch<2&&owner===0&&t===2){world.blit(hud,0,0);writePNG(out+'/'+artifactPrefix+'-'+(clash?'clash':'domain')+'-ch'+ch+'.png',world);}
     scenes++;
   }
   // Rendering is read-only; only the explicit snapshot-age sweep changes ticks.
@@ -110,7 +120,8 @@ const reports=[],savedRandom=Math.random;let methods;
 try{methods=run(document,performance,assert,require('./png.cjs'),out,r=>{reports.push(r);console.log(JSON.stringify(r));});}finally{Math.random=savedRandom;}
 console.log(JSON.stringify({environment:{node:process.version,platform:process.platform,arch:process.arch,cpu:os.cpus()[0].model},uploads,draws,note:'Node CPU raster/control work; no browser layout, canvas upload, GPU, phone FPS or input latency measured'}));
 if(out){
-  fs.writeFileSync(path.join(out,'v118-'+(baseline?'baseline':'candidate')+'-timings.json'),JSON.stringify(reports,null,2)+'\n');
+  fs.writeFileSync(path.join(out,(animationCost?'v120-animation':'v118-'+(baseline?'baseline':'candidate'))+'-timings.json'),JSON.stringify(reports,null,2)+'\n');
+  if(animationCost){console.log('Animation cost: both variants keep the v118 fast raster; only fighter pose selection differs.');process.exit(0);}
   // Existing real-pointer harness supplies its phone layout model. Compare
   // the complete models, including touch labels, using each rectangle method.
   const vm=require('node:vm'),{context}=require('./mobile.cjs'),png=require('./png.cjs');
