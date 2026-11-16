@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,30);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,31);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -1017,6 +1017,30 @@ for(const owner of [0,1])for(const [mt,pose] of [[2,'castw'],[4,'castw'],[5,'pap
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS desktop Paper palm gather/drive/follow-through/return through AI/local/host keys and twenty-four event-free guest snapshots');
+
+// Bungee Gum coils low and flicks along the original strand lane.
+aiInput=()=>0;const gumPaints=[];
+pxPaintFighter=function(s,S,f,impact){if(f.st==='atk'&&moveDef(f)?.id==='gum')gumPaints.push({t:f.mt,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+const gumCh=CH.findIndex(c=>c.arts.some(a=>a.id==='gum'));
+for(const mode of ['ai','local','host']) {
+ G.mode=mode;G.pick=[gumCh,gumCh];startFight();G.S.phase='fight';G.S.t=121;G.last=1000;G.acc=0;
+ const slot=mode==='local'?1:0;G.S.f[0].x=420;G.S.f[1].x=640;G.S.f[slot].ce=100;gumPaints.length=0;
+ const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.A1[0];
+ events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+ for(let n=1;n<=65;n++)frame(1000+n*17);
+ for(const [a,b,pose] of [[1,4,'throww'],[4,8,'gumcoil'],[8,11,'gumflick'],[11,14,'gumfollow'],[14,17,'gumpull'],[17,20,'gumsettle']])
+  assert(gumPaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' Bungee Gum missed '+pose);
+ assert.equal(G.S.f[slot].hp,CH[gumCh].hp);assert(Math.abs(G.S.f[1-slot].hp-(CH[gumCh].hp-15))<1e-9);toMenu();
+}
+G.mode='guest';const gumConn=mockConnection();netWire(gumConn,'guest');gumConn.events.open();G.pick=[gumCh,gumCh];startFight();
+for(const owner of [0,1])for(const [mt,pose] of [[2,'throww'],[3,'throww'],[4,'gumcoil'],[7,'gumcoil'],[8,'gumflick'],[10,'gumflick'],[11,'gumfollow'],[13,'gumfollow'],[14,'gumpull'],[16,'gumpull'],[17,'gumsettle'],[19,'gumsettle']]) {
+ const snapshot=newMatch(gumCh,gumCh,161);snapshot.phase='fight';startMove(snapshot.f[owner],'a0');snapshot.f[owner].mt=mt;snapshot.ev=[];
+ gumPaints.length=0;gumConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+ assert(gumPaints.some(p=>p.t===mt&&p.pose===pose));
+}
+pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop Bungee Gum low coil/flick/follow-through/return through AI/local/host keys and twenty-four event-free guest snapshots');
+
 
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);

@@ -1,5 +1,7 @@
 # Ritual Archive: Clash (demo)
 
+Desktop v161 gives Pim Larkspur's Bungee Gum a low wrist coil at move ticks 4-7, an open-hand flick on the existing tick-8 strand release, follow-through at 11-13, withdrawal at 14-16 and a return to guard at 17-19. Previously the art used an overhead throw and dropped its hand during recovery. `src/desktop-gum.js` selects bodies from serialized move age through freezes and event-free snapshots. All 31 desktop script URLs use cache v=164; mobile stays v160/cache v=163. Strand timing, speed, lifetime, damage, attachment, costs and physics stay unchanged. `node tests/gum-body.cjs` checks actual inputs, independent simulation parity, hand/strand alignment, freezes, snapshots, other moves and body-only scene changes on all stages. `--baseline --preview-only` reproduces the generic throw; `--out=PATH` exports twelve-frame native scene/body strips in both costumes/facings, including unobscured distant casts. These are generated stills and script checks, not browser motion or human play.
+
 An original pixel-art 2D fighting game demo: fifteen original fighters, each with one technique from the Ritual Archive library. No feats, no levels.
 
 ## Run
