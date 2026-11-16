@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,29);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,30);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -994,6 +994,29 @@ for(const owner of [0,1])for(const [mt,pose] of [[4,'throww'],[5,'nailraise'],[8
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS desktop Nail Projectile hammer load/drive/follow-through/return through AI/local/host keys and twenty-two event-free guest snapshots');
+
+// Paper gathers, thrusts and follows through on the existing orb release.
+aiInput=()=>0;const paperPaints=[];
+pxPaintFighter=function(s,S,f,impact){if(f.st==='atk'&&moveDef(f)?.id==='paper')paperPaints.push({t:f.mt,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+const paperCh=CH.findIndex(c=>c.arts.some(a=>a.id==='paper'));
+for(const mode of ['ai','local','host']) {
+ G.mode=mode;G.pick=[paperCh,paperCh];startFight();G.S.phase='fight';G.S.t=121;G.last=1000;G.acc=0;
+ const slot=mode==='local'?1:0;G.S.f[0].x=420;G.S.f[1].x=640;G.S.f[slot].ce=100;paperPaints.length=0;
+ const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.A2[0];
+ events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+ for(let n=1;n<=65;n++)frame(1000+n*17);
+ for(const [a,b,pose] of [[1,5,'castw'],[5,10,'papergather'],[10,13,'paperdrive'],[13,17,'paperfollow'],[17,21,'paperpull'],[21,24,'papersettle']])
+  assert(paperPaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' Paper missed '+pose);
+ assert.equal(G.S.f[slot].hp,CH[paperCh].hp);assert(Math.abs(G.S.f[1-slot].hp-(CH[paperCh].hp-72))<1e-9);toMenu();
+}
+G.mode='guest';const paperConn=mockConnection();netWire(paperConn,'guest');paperConn.events.open();G.pick=[paperCh,paperCh];startFight();
+for(const owner of [0,1])for(const [mt,pose] of [[2,'castw'],[4,'castw'],[5,'papergather'],[9,'papergather'],[10,'paperdrive'],[12,'paperdrive'],[13,'paperfollow'],[16,'paperfollow'],[17,'paperpull'],[20,'paperpull'],[21,'papersettle'],[23,'papersettle']]) {
+ const snapshot=newMatch(paperCh,paperCh,159);snapshot.phase='fight';startMove(snapshot.f[owner],'a1');snapshot.f[owner].mt=mt;snapshot.ev=[];
+ paperPaints.length=0;paperConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+ assert(paperPaints.some(p=>p.t===mt&&p.pose===pose));
+}
+pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop Paper palm gather/drive/follow-through/return through AI/local/host keys and twenty-four event-free guest snapshots');
 
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
