@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,13);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,14);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -582,6 +582,28 @@ for(const n of [0,1,2])for(const mt of [6,11,12,14,15]) {
 }
 pxPaintFighter=summonPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS all three summon animations through real AI/local/host keyboard frames and fifteen event-free guest snapshots');
+// The separate desktop Maximum adapter must reach the real loop and first guest snapshot.
+const maximumPaintBase=pxPaintFighter,maximumPaints=[];
+pxPaintFighter=function(s,S,f,impact){if(S.dom&&S.dom.o===f.i&&f.st==='cast')maximumPaints.push({t:S.dom.t,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+aiInput=()=>0;
+for(const mode of ['ai','local','host']) {
+  G.mode=mode;G.pick=[4,4];startFight();G.S.phase='fight';G.acc=0;G.last=1000;
+  const slot=mode==='local'?1:0;G.S.f[slot].gauge=100;G.S.f[0].x=360;G.S.f[1].x=920;maximumPaints.length=0;
+  const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.DOM[0];
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+  for(let n=1;n<=180;n++)frame(1000+n*17);
+  for(const [t,pose] of [[36,'nuclearcoil'],[59,'nuclearcoil'],[60,'nuclearbrace'],[71,'nuclearbrace'],[72,'cannon'],[77,'cannonre']])
+    assert(maximumPaints.some(p=>p.t===t&&p.pose===pose),mode+' Maximum missed '+t+' '+pose);
+  assert.equal(G.S.f[slot].domUsed,1);toMenu();
+}
+G.mode='guest';const maximumConn=mockConnection();netWire(maximumConn,'guest');maximumConn.events.open();G.pick=[4,4];startFight();
+for(const owner of [0,1])for(const t of [35,36,59,60,71,72,77,85]) {
+  const snapshot=newMatch(4,4,123);snapshot.phase='fight';snapshot.f[owner].gauge=100;startDomain(snapshot,snapshot.f[owner],snapshot.f[1-owner]);snapshot.freeze=0;snapshot.dom.t=t;snapshot.ev=[];
+  maximumPaints.length=0;maximumConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+  assert(maximumPaints.some(p=>p.t===t&&p.pose===(t<36?'cannonw':t<60?'nuclearcoil':t<72?'nuclearbrace':t<77?'cannon':t<85?'cannonre':'cannonsettle')));
+}
+pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop Nuclear Shell coil/brace/release through actual AI/local/host keys and sixteen event-free guest snapshots');
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
