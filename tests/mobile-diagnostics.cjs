@@ -71,17 +71,21 @@ function compareFrame(S,worldOnly=false) {
       throw new Error('stale world/tag pixel at '+x+','+y);
   }
   assert.equal(cv.width,1280);assert.equal(cv.height,720);
-  assert.equal(PX_SCREEN.width,640);assert.equal(PX_SCREEN.height,360);
-  assert.equal(PX_SCREEN_IMAGE.data.byteLength,640*360*4);
+  for(const upload of MOBILE_PRESENT.values()) {
+    assert.equal(upload.canvas.width,640);assert.equal(upload.canvas.height,360);
+    assert.equal(upload.image.data.byteLength,640*360*4);
+  }
   const saved=JSON.stringify(S);pxWorldSurface(S);mobileHUDSurface(S,labels());assert.equal(JSON.stringify(S),saved);
   auditedFrames++;
 }
 // Native upload dimensions never depend on the CSS viewport or DPR.
-advance();const uploadContext=PX_SCREEN.getContext('2d'),nativeUpload=uploadContext.putImageData;
-uploadContext.putImageData=function(image,x,y){
+FX.shake=3;advance();FX.shake=0;advance();
+const uploadHooks=Array.from(MOBILE_PRESENT.values(),upload=>({context:upload.context,native:upload.context.putImageData}));
+for(const hook of uploadHooks)hook.context.putImageData=function(image,x,y){
   assert.equal(image.width,640);assert.equal(image.height,360);assert.equal(image.data.byteLength,921600);
-  uploaded++;return nativeUpload.call(this,image,x,y);
+  uploaded++;return hook.native.call(this,image,x,y);
 };
+const uploadContext=MOBILE_PRESENT.get('world').context,nativeUpload=uploadContext.putImageData;
 for(const [width,height] of [[812,375],[375,812],[812,375]]) {
   innerWidth=width;innerHeight=height;win.dispatch('resize');
   toMenu();G.last=now;advance();compareFrame(G.demo,true);
@@ -110,19 +114,20 @@ for(let ch=0;ch<15;ch++) {
   advance();compareFrame(G.S);
 }
 assert.equal($('mobileErrorText').textContent,'','clean game must not reveal diagnostics');
-ctx.drawImage=nativeDraw;uploadContext.putImageData=nativeUpload;document.createElement=beforeCreate;
+ctx.drawImage=nativeDraw;for(const hook of uploadHooks)hook.context.putImageData=hook.native;document.createElement=beforeCreate;
 console.log('PASS mobile phone frame audit:',auditedFrames,'complete 1280x720 pixel comparisons;',uploaded,'native uploads;',painted,'world/HUD draws; DPR 3, 812x375 / 375x812, menus, new poses, fifteen Domains, moving CPU tags, touch, rotate and visibility, no per-frame canvases');
 
-// Deliberately ignore only world uploads while retaining actual HUD uploads.
+// Deliberately ignore only world arena copies while retaining actual HUD uploads.
 // This models the reported symptoms and validates the pixel oracle; it is
 // NOT a reproduction of the phone's cause or evidence of a WebKit defect.
-G.paused=true;advance();let ignoredUploads=0;
-uploadContext.putImageData=function(...args){if(++ignoredUploads%2===0)return nativeUpload.apply(this,args);};
+G.paused=true;FX.shake=0;advance();
+const faultDraw=ctx.drawImage,worldCanvas=MOBILE_PRESENT.get('world').canvas;
+ctx.drawImage=function(image,...args){if(image!==worldCanvas)return faultDraw.call(this,image,...args);};
 G.S.f[1].x-=100;G.S.f[1].hp-=10;advance();
 assert.throws(()=>compareFrame(G.S),/stale world/);
 assert.equal($('mobileErrorText').textContent,'','silent native upload failure cannot produce a JS error overlay');
-uploadContext.putImageData=nativeUpload;advance();compareFrame(G.S);
-console.log('PASS deliberate silent-world-upload model: stale world/moving HUD detected by pixel oracle; clean error overlay stays hidden; restored upload repaints correctly (not a device reproduction)');
+ctx.drawImage=faultDraw;advance();compareFrame(G.S);
+console.log('PASS deliberate silent-world-upload model: missing world/moving HUD detected by pixel oracle; clean error overlay stays hidden; restored copy repaints correctly (not a device reproduction)');
 
 // Inject a real throw into the actual world upload. Browser event dispatch is
 // explicitly modeled; it proves diagnostics wiring, not an iPhone failure.

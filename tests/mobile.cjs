@@ -17,6 +17,7 @@ class Context {
   constructor(canvas){this.canvas=canvas;}save(){}restore(){}
   createImageData(w,h){return {width:w,height:h,data:new Uint8ClampedArray(w*h*4)};}
   putImageData(im,x,y){for(let j=0;j<im.height;j++)this.canvas.pixels().set(im.data.subarray(j*im.width*4,(j+1)*im.width*4),((y+j)*this.canvas.width+x)*4);}
+  fillRect(x,y,w,h){const col=this.fillStyle.match(/\w\w/g).map(v=>parseInt(v,16)),out=new Uint32Array(this.canvas.pixels().buffer),color=(255<<24)|(col[2]<<16)|(col[1]<<8)|col[0];for(let j=y;j<y+h;j++)out.fill(color,j*this.canvas.width+x,j*this.canvas.width+x+w);}
   drawImage(im,x,y,w=im.width,h=im.height){const out=this.canvas.pixels(),src=im.pixels();for(let j=0;j<h;j++)for(let i=0;i<w;i++){const a=(Math.floor(j*im.height/h)*im.width+Math.floor(i*im.width/w))*4,b=((y+j)*this.canvas.width+x+i)*4;if(src[a+3])for(let k=0;k<4;k++)out[b+k]=src[a+k];}}
 }
 function target(id){const handlers={},captures=new Set();return {id,handlers,style:{setProperty(k,v){this[k]=v;}},dataset:{},children:[],attributes:{},textContent:'',className:'',_html:'',classList:{add(){},remove(){}},set innerHTML(v){this._html=v;this.children=[];},get innerHTML(){return this._html;},setAttribute(k,v){this.attributes[k]=v;},appendChild(n){this.children.push(n);},focus(){document.activeElement=this;},setPointerCapture(id){captures.add(id);},hasPointerCapture(id){return captures.has(id);},releasePointerCapture(id){captures.delete(id);this.dispatch('lostpointercapture',{pointerId:id,preventDefault(){}});},addEventListener(k,fn){(handlers[k]??=[]).push(fn);},dispatch(k,e={}){for(const f of handlers[k]||[])f(e);}};}
@@ -29,10 +30,11 @@ const document=Object.assign(doc,{visibilityState:'visible',getElementById(id){i
 const context=vm.createContext({console,assert,document,window:{},performance:{now:()=>0},innerWidth:844,innerHeight:390,getComputedStyle(){return {};},requestAnimationFrame(){},addEventListener:(k,f)=>win.addEventListener(k,f),setTimeout(f,ms){timeouts.push({f,ms});}});
 Object.assign(context,{win,buttons,timeouts,baseline,feedbackBaseline});
 const scripts=[...html.matchAll(/<script src="([^?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,15);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,16);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 assert.equal(scripts[0][1],'diagnostics.js');
+assert.equal(scripts[scripts.findIndex(m=>m[1]==='../src/pixel-world.js')+1][1],'present.js');
 assert(scripts.findIndex(m=>m[1]==='../src/desktop-animation.js')>scripts.findIndex(m=>m[1]==='../src/pixel.js'));
-for(const m of scripts){if(animationBaseline&&m[1]==='../src/desktop-animation.js')continue;vm.runInContext(baselineTouch&&m[1]==='touch.js'?baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});}
+for(const m of scripts){if(animationBaseline&&m[1]==='../src/desktop-animation.js'||baselineTouch&&m[1]==='present.js')continue;vm.runInContext(baselineTouch&&m[1]==='touch.js'?baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});}
 vm.runInContext(`
 let now=0;
 performance.now=()=>now;

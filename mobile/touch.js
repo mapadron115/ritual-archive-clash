@@ -302,7 +302,7 @@ function mobileHUDSurface(S,lab) {
   return s;
 }
 drawHUD=function(c,S,lab) {
-  mobileUpdateControls(S);pxPresent(c,mobileHUDSurface(S,lab));
+  mobileUpdateControls(S);pxPresent(c,mobileHUDSurface(S,lab),'hud');
 };
 // Phone lists use the same names and descriptions as the shared fighters, in
 // vertical entries rather than four narrow table columns or keyboard badges.

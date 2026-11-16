@@ -8,7 +8,7 @@ const animationCost=process.argv.includes('--animation-cost');
 if(out)fs.mkdirSync(out,{recursive:true});
 function node(id){return {id,style:{setProperty(k,v){this[k]=v;}},dataset:{},children:[],attributes:{},textContent:'',classList:{add(){},remove(){}},set innerHTML(v){this._html=v;this.children=[];},get innerHTML(){return this._html||'';},setAttribute(k,v){this.attributes[k]=v;},appendChild(n){this.children.push(n);},addEventListener(){},focus(){},setPointerCapture(){},hasPointerCapture(){return false;}};}
 let uploads=0,draws=0;
-function canvas(){const c=node('canvas');c.width=1280;c.height=720;c.getContext=()=>ctx;const ctx={canvas:c,save(){},restore(){},createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};},putImageData(){uploads++;},drawImage(){draws++;}};return c;}
+function canvas(){const c=node('canvas');c.width=1280;c.height=720;c.getContext=()=>ctx;const ctx={canvas:c,save(){},restore(){},fillRect(){},createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};},putImageData(){uploads++;},drawImage(){draws++;}};return c;}
 const nodes=new Map(),buttons=[...html.matchAll(/<button data-input="(\w+)"[^>]*>/g)].map(m=>Object.assign(node(m[1]),{dataset:{input:m[1]}}));
 nodes.set('domainButton',buttons.find(b=>b.dataset.input==='DOM'));nodes.set('cv',canvas());
 const document=Object.assign(node('document'),{visibilityState:'visible',getElementById(id){if(!nodes.has(id))nodes.set(id,node(id));return nodes.get(id);},querySelectorAll(s){return s==='[data-input]'?buttons:['title','select','online','pause','over'].map(id=>this.getElementById(id));},createElement(tag){return tag==='canvas'?canvas():node(tag);},head:node('head')});
