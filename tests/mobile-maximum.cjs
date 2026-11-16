@@ -5,7 +5,7 @@ const {context,root,html}=require('./mobile.cjs');
 const out=process.argv.find(a=>a.startsWith('--out='))?.slice(6);
 if(out)fs.mkdirSync(out,{recursive:true});
 const shared=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render','desktop-animation'];
-const source=shared.map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n');
+const source=shared.map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n')+'\n'+fs.readFileSync(path.join(root,'src/desktop-quake.js'),'utf8');
 const convergence=fs.readFileSync(path.join(root,'src/desktop-convergence.js'),'utf8');
 context.prior=Function(source+'\n'+convergence+'\nreturn {pose:pxPose,domain:pxDomainPose,world:pxWorldSurface};')();
 context.desktop=Function(source+'\n'+fs.readFileSync(path.join(root,'src/desktop-maximum.js'),'utf8')+'\n'+convergence+'\nreturn {pose:pxPose,world:pxWorldSurface};')();

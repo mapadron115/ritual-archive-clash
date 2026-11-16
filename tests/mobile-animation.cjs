@@ -5,13 +5,14 @@ const {context,root,html}=require('./mobile.cjs'),png=require('./png.cjs');
 const baseline=process.argv.includes('--animation-baseline'),previewOnly=process.argv.includes('--preview-only');
 const out=process.argv.find(a=>a.startsWith('--out='))?.slice(6);
 if(out)fs.mkdirSync(out,{recursive:true});
-const files=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render','desktop-animation'];
+const files=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render','desktop-animation','desktop-maximum','desktop-convergence','desktop-quake'];
 context.desktop=Function(files.map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n')+'\nreturn {pose:pxPose,world:pxWorldSurface};')();
+context.animationPrior=Function(files.filter(n=>n!=='desktop-animation').map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n')+'\nreturn {pose:pxPose};')();
 Object.assign(context,{out,writePNG:png,animationBaseline:baseline,previewOnly});
 assert(!html.includes('desktop-feedback.js'),'desktop HUD/input adapter must stay separate');
 vm.runInContext(`
 const mobileAnimationPose=pxPose;
-const mobileOriginalPose=typeof desktopPoseBase==='function'?desktopPoseBase:pxPose;
+const mobileOriginalPose=animationPrior.pose;
 let animationPassed=0,animationFailed=0,animationTicks=0,animationRasters=0,animationHolds=0,animationDefaults=0;
 function audit(name,fn){try{fn();animationPassed++;console.log('PASS mobile animation:',name);}catch(e){animationFailed++;console.log('FAIL mobile animation:',name,e.message);}}
 function samePixels(a,b){assert.equal(a.data.length,b.data.length);assert(a.data.every((v,i)=>v===b.data[i]),'raster differs');animationRasters++;}
