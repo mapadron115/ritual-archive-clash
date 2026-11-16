@@ -7,6 +7,7 @@ const feedbackBaseline=process.argv.includes('--feedback-baseline');
 const domainBaseline=process.argv.includes('--domain-baseline');
 const guardBaseline=process.argv.includes('--guard-baseline');
 const animationBaseline=process.argv.includes('--animation-baseline');
+const slideTouch=process.argv.includes('--slide-baseline')?require('node:child_process').execFileSync('git',['show','cdd2b050:mobile/touch.js'],{cwd:root,encoding:'utf8'}):null;
 const baselineTouch=baseline||feedbackBaseline||domainBaseline||guardBaseline?require('node:child_process').execFileSync('git',['show',(guardBaseline?'8d53f71':domainBaseline?'3c95ebc':feedbackBaseline?'921f7f1':'55a25d1')+':mobile/touch.js'],{cwd:root,encoding:'utf8'}):null;
 class Canvas {
   constructor(w=300,h=150){this.width=w;this.height=h;this.buffer=null;this.style={};this.context=new Context(this);}
@@ -34,7 +35,7 @@ assert.equal(scripts.length,16);assert.equal(new Set(scripts.map(m=>m[2])).size,
 assert.equal(scripts[0][1],'diagnostics.js');
 assert.equal(scripts[scripts.findIndex(m=>m[1]==='../src/pixel-world.js')+1][1],'present.js');
 assert(scripts.findIndex(m=>m[1]==='../src/desktop-animation.js')>scripts.findIndex(m=>m[1]==='../src/pixel.js'));
-for(const m of scripts){if(animationBaseline&&m[1]==='../src/desktop-animation.js'||baselineTouch&&m[1]==='present.js')continue;vm.runInContext(baselineTouch&&m[1]==='touch.js'?baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});}
+for(const m of scripts){if(animationBaseline&&m[1]==='../src/desktop-animation.js'||baselineTouch&&m[1]==='present.js')continue;vm.runInContext(m[1]==='touch.js'&&(slideTouch||baselineTouch)?slideTouch||baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});}
 vm.runInContext(`
 let now=0;
 performance.now=()=>now;

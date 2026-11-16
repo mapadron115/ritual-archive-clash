@@ -15,7 +15,7 @@ function mobileLayout(width,height,safe={top:0,right:0,bottom:0,left:0}) {
   put('pause',Math.floor(canvas.x+sw/2)-56,bottom-bh);put('mute',Math.floor(canvas.x+sw/2)+4,bottom-bh);
   return {portrait:height>width,canvas,buttons};
 }
-const MOBILE={pointers:new Map(),feedback:new Map(),portrait:false,views:new Map(),selectTab:0,away:false,remoteAt:null};
+const MOBILE={pointers:new Map(),slides:new Map(),feedback:new Map(),portrait:false,views:new Map(),selectTab:0,away:false,remoteAt:null};
 // Retry inside release/click gestures as well as fight presses. Menu-only
 // players (including Watch) must be able to unlock audio after returning.
 const mobileAudioSources=new Map(),mobileAudioContexts=new WeakSet();
@@ -161,17 +161,23 @@ function mobileUpdateControls(S) {
     if(view.label!==label){b.setAttribute('aria-label',label);view.label=label;}
   }
 }
-function mobileRelease(id,cancelled=false) {
-  const b=MOBILE.pointers.get(id);if(!b)return;
+function mobileUnhold(id,cancelled) {
+  const b=MOBILE.pointers.get(id);
   MOBILE.pointers.delete(id);
-  // Remove the contact first: releasing capture can synchronously notify us.
-  if(b.hasPointerCapture&&b.hasPointerCapture(id))b.releasePointerCapture(id);
-  if(!Array.from(MOBILE.pointers.values()).includes(b)) {
+  if(b&&!Array.from(MOBILE.pointers.values()).includes(b)) {
     const code=BIND.solo[b.dataset.input][0];G.keys[code]=false;
     if(cancelled)delete G.taps[code];
     b.classList.remove('held');
     if(cancelled)MOBILE.feedback.delete(b.dataset.input);
   }
+}
+function mobileRelease(id,cancelled=false) {
+  if(!MOBILE.pointers.has(id))return;
+  const owner=MOBILE.slides.get(id)||MOBILE.pointers.get(id);
+  mobileUnhold(id,cancelled);MOBILE.slides.delete(id);
+  // Keep capture on the original button throughout a slide. Remove the contact
+  // first: releasing capture can synchronously notify us, even from neutral.
+  if(owner&&owner.hasPointerCapture&&owner.hasPointerCapture(id))owner.releasePointerCapture(id);
   if(G.S)mobileUpdateControls(G.S);
 }
 const mobileClearBase=clearInput;
@@ -194,15 +200,35 @@ for(const button of mobileButtons) {
     const code=BIND.solo[button.dataset.input][0];
     if(!G.keys[code])G.taps[code]=true;
     G.keys[code]=true;MOBILE.pointers.set(e.pointerId,button);
+    if(['L','G','R'].includes(button.dataset.input)&&e.pointerType!=='mouse')MOBILE.slides.set(e.pointerId,button);
     const me=G.mode==='guest'?1:0,state=mobileArtStates(G.S,me)[button.dataset.input],now=performance.now();
     const domain=button.dataset.input==='DOM'?{round:G.S.round,ch:G.S.f[me].ch,me,status:state.status}:null;
     MOBILE.feedback.set(button.dataset.input,{pressUntil:now+120,denyUntil:state&&!state.ready?now+300:0,domain});
     mobileUpdateControls(G.S);
     button.classList.add('held');button.setPointerCapture(e.pointerId);initAudio();
   });
+  button.addEventListener('pointermove',e=>{
+    if(MOBILE.slides.get(e.pointerId)!==button)return;
+    e.preventDefault();
+    // Only this row slides. Jump and attacks remain independent contacts, and
+    // a gap/outside the row releases the thumb until it reenters a button.
+    const next=mobileButtons.find(b=>{
+      if(!['L','G','R'].includes(b.dataset.input))return false;
+      const r=b.getBoundingClientRect();
+      return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom;
+    })||null;
+    if(MOBILE.pointers.get(e.pointerId)===next)return;
+    mobileUnhold(e.pointerId,true);MOBILE.pointers.set(e.pointerId,next);
+    if(next) {
+      const code=BIND.solo[next.dataset.input][0];
+      if(!G.keys[code])G.taps[code]=true;
+      G.keys[code]=true;next.classList.add('held');
+    }
+    mobileUpdateControls(G.S);
+  });
   for(const name of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(name,e=>{
     e.preventDefault();
-    if(MOBILE.pointers.get(e.pointerId)!==button)return;
+    if((MOBILE.slides.get(e.pointerId)||MOBILE.pointers.get(e.pointerId))!==button)return;
     // An old capture-loss notification can arrive after a fresh capture.
     if(name==='lostpointercapture'&&button.hasPointerCapture&&button.hasPointerCapture(e.pointerId))return;
     mobileRelease(e.pointerId,name!=='pointerup');
@@ -312,7 +338,7 @@ moveList=function(ch) {
   return '<section class="moveList"><h3 style="color:'+c.look.accent+'">'+c.name+' / '+c.tech+'</h3><p>'+c.tag+(c.passive?'. '+c.passive+'.':'')+'</p>'+c.arts.map(a=>entry(a,a.cost+' CE / '+(a.cd/60).toFixed(1)+'s',a.desc)).join('')+
     entry(c.dom,c.dom.maximum?'MAXIMUM':'DOMAIN',c.dom.desc+'. Once per round, at full gauge or 30% health or less.')+'</section>';
 };
-basics=function() {return '<div class="mobileRules"><p>Hold LEFT / RIGHT to move, JUMP to jump, GUARD to defend (faces the foe). Hold movement and tap an attack together. Tap PUNCH three times for a combo; KICK wears guard down.</p><p>The three named arts are along the bottom right. Each shows its CE cost, readiness and cooldown fill. DOMAIN / MAXIMUM is above them: once per round at full gauge or 30% health or less. Two Domains cancel each other.</p><p>MOVES opens this list; MUTE toggles sound. Offline matches pause here; online matches continue with your controls released. First to two round wins, 99 seconds per round. A draw awards neither fighter a win.</p><p>Black Flash: a landed punch or kick has a 6% chance to deal 2.2 times the damage, launch the foe and give 25 CE. It grants eight seconds in the Zone, with a 20% chance.</p></div>';};
+basics=function() {return '<div class="mobileRules"><p>Hold LEFT / RIGHT to move, JUMP to jump, GUARD to defend (faces the foe). Slide your thumb across LEFT / GUARD / RIGHT to change without lifting; gaps and leaving the row release it. Jump and attacks need their own touch. Hold movement and tap an attack together. Tap PUNCH three times for a combo; KICK wears guard down.</p><p>The three named arts are along the bottom right. Each shows its CE cost, readiness and cooldown fill. DOMAIN / MAXIMUM is above them: once per round at full gauge or 30% health or less. Two Domains cancel each other.</p><p>MOVES opens this list; MUTE toggles sound. Offline matches pause here; online matches continue with your controls released. First to two round wins, 99 seconds per round. A draw awards neither fighter a win.</p><p>Black Flash: a landed punch or kick has a 6% chance to deal 2.2 times the damage, launch the foe and give 25 CE. It grants eight seconds in the Zone, with a 20% chance.</p></div>';};
 function mobileSelectTab(tab) {
   MOBILE.selectTab=tab;
   for(let i=0;i<3;i++) {
