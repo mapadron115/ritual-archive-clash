@@ -627,6 +627,26 @@ for(const owner of [0,1])for(const [t,done,pose] of [[11,0,'hookw'],[12,0,'allou
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS desktop allout coil/rush/contact through actual AI/local/host keys and sixteen event-free guest snapshots');
+// The word's inhale and brace must also reach real keyboard and guest frames.
+aiInput=()=>0;pxPaintFighter=function(s,S,f,impact){if(S.dom&&S.dom.o===f.i&&f.st==='cast')maximumPaints.push({t:S.dom.t,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+for(const mode of ['ai','local','host']) {
+  G.mode=mode;G.pick=[6,6];startFight();G.S.phase='fight';G.acc=0;G.last=1000;
+  const slot=mode==='local'?1:0;G.S.f[slot].gauge=100;G.S.f[0].x=400;G.S.f[1].x=880;maximumPaints.length=0;
+  const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.DOM[0];
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+  for(let n=1;n<=140;n++)frame(1000+n*17);
+  for(const [a,b,pose] of [[12,20,'voiceinhale'],[20,24,'voicebrace'],[24,29,'speech'],[29,42,'speechre']])
+    assert(maximumPaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' voice missed '+pose);
+  assert.equal(G.S.f[slot].domUsed,1);assert.equal(G.S.f[slot].hp,CH[6].hp-40);toMenu();
+}
+G.mode='guest';const voiceConn=mockConnection();netWire(voiceConn,'guest');voiceConn.events.open();G.pick=[6,6];startFight();
+for(const owner of [0,1])for(const [t,pose] of [[11,'speechw'],[12,'voiceinhale'],[19,'voiceinhale'],[20,'voicebrace'],[23,'voicebrace'],[24,'speech'],[29,'speechre'],[42,'speechsettle']]) {
+  const snapshot=newMatch(6,6,127);snapshot.phase='fight';snapshot.f[owner].gauge=100;startDomain(snapshot,snapshot.f[owner],snapshot.f[1-owner]);snapshot.freeze=0;snapshot.dom.t=t;snapshot.ev=[];
+  maximumPaints.length=0;voiceConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+  assert(maximumPaints.some(p=>p.t===t&&p.pose===pose));
+}
+pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop Resounding Voice inhale/brace/word through AI/local/host keys and sixteen event-free guest snapshots');
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
