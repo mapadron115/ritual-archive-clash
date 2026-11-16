@@ -10,7 +10,7 @@ const files=[...html.matchAll(/<script src="([^"?]+)\?v=\d+"><\/script>/g)].map(
 const nodes=new Map(),events={};
 function element(){return {style:{setProperty(){}},children:[],set innerHTML(v){this.children=[];this._html=v;},get innerHTML(){return this._html;},appendChild(c){this.children.push(c);},setAttribute(){},focus(){},getContext(){return {drawImage(){},createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};},putImageData(){}};}};}
 const document={visibilityState:'visible',createElement:element,getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},querySelectorAll(){return [];}};
-const source=read=>files.filter(p=>read!==old||!p.endsWith('/desktop-animation.js')&&!p.endsWith('/desktop-maximum.js')&&!p.endsWith('/desktop-convergence.js')&&!p.endsWith('/desktop-quake.js')&&!p.endsWith('/desktop-ordinary.js')).map(p=>read(p).split('// ---------- boot')[0]).join('\n');
+const source=read=>files.filter(p=>read!==old||!p.endsWith('/desktop-animation.js')&&!p.endsWith('/desktop-maximum.js')&&!p.endsWith('/desktop-convergence.js')&&!p.endsWith('/desktop-quake.js')&&!p.endsWith('/desktop-ordinary.js')&&!p.endsWith('/desktop-apshot.js')).map(p=>read(p).split('// ---------- boot')[0]).join('\n');
 const priorHUD=Function('addEventListener','document','window',source(old)+'\nreturn pxHUDSurface;')(()=>{},document,{});
 Function('assert','writePNG','output','baseline','previewOnly','filter','priorHUD','events','addEventListener','document','window',source(baseline?old:p=>fs.readFileSync(path.join(root,p),'utf8'))+'\n'+`
 let passed=0,failed=0,checks=0,ticks=0,changed=0,identical=0;

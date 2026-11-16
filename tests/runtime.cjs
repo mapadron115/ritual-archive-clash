@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,17);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,18);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -713,6 +713,29 @@ for(const owner of [0,1])for(const [mt,pose] of [[5,'clapw'],[6,'thunderopen'],[
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS desktop Thunder Clap anticipation/contact/recoil through AI/local/host keys and eighteen event-free guest snapshots');
+
+// AP Shot must paint from actual keyboard input and transported state, without FX events.
+aiInput=()=>0;const shotPaints=[];
+pxPaintFighter=function(s,S,f,impact){if(f.st==='atk'&&moveDef(f)?.id==='apshot')shotPaints.push({t:f.mt,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+const shotCh=CH.findIndex(c=>c.arts.some(a=>a.id==='apshot'));
+for(const mode of ['ai','local','host']) {
+  G.mode=mode;G.pick=[shotCh,shotCh];startFight();G.S.phase='fight';G.S.t=121;G.last=1000;G.acc=0;
+  const slot=mode==='local'?1:0;G.S.f[0].x=420;G.S.f[1].x=640;G.S.f[slot].ce=100;G.S.f[slot].res=0;shotPaints.length=0;
+  const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.A3[0];
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+  for(let n=1;n<=100;n++)frame(1000+n*17);
+  for(const [a,b,pose] of [[7,11,'apcompress'],[11,14,'apaim'],[14,17,'apfire'],[17,26,'aprecoil'],[26,32,'clapseparate']])
+    assert(shotPaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' AP Shot missed '+pose);
+  assert.equal(G.S.f[slot].hp,CH[shotCh].hp);assert.equal(G.S.f[1-slot].hp,CH[shotCh].hp-85);toMenu();
+}
+G.mode='guest';const shotConn=mockConnection();netWire(shotConn,'guest');shotConn.events.open();G.pick=[shotCh,shotCh];startFight();
+for(const owner of [0,1])for(const [mt,pose] of [[6,'clapw'],[7,'apcompress'],[10,'apcompress'],[11,'apaim'],[13,'apaim'],[14,'apfire'],[16,'apfire'],[17,'aprecoil'],[25,'aprecoil'],[26,'clapseparate'],[31,'clapseparate']]) {
+  const snapshot=newMatch(shotCh,shotCh,135);snapshot.phase='fight';startMove(snapshot.f[owner],'a2');snapshot.f[owner].mt=mt;snapshot.ev=[];
+  shotPaints.length=0;shotConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+  assert(shotPaints.some(p=>p.t===mt&&p.pose===pose));
+}
+pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop AP Shot compression/aim/fire/recoil through AI/local/host keys and twenty-two event-free guest snapshots');
 
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
