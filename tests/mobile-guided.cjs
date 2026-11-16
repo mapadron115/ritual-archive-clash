@@ -4,10 +4,12 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {context,root}=require('./mobile.cjs');
 const out=process.argv.find(a=>a.startsWith('--out='))?.slice(6);
 if(out)fs.mkdirSync(out,{recursive:true});
-const names=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render','desktop-animation','desktop-maximum','desktop-convergence','desktop-quake','desktop-ordinary','desktop-apshot','desktop-piercing','desktop-contract','desktop-blast','desktop-granite','desktop-red','desktop-blue','desktop-flame','desktop-grape'];
+const names=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render','desktop-animation','desktop-maximum','desktop-convergence','desktop-quake','desktop-ordinary','desktop-apshot','desktop-piercing','desktop-contract','desktop-blast','desktop-granite','desktop-red','desktop-blue','desktop-flame','desktop-grape','desktop-applause'];
 const source=names.map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n');
 context.prior=Function(source+'\nreturn {step,pose:pxPose,world:pxWorldSurface};')();
 context.desktop=Function(source+'\n'+fs.readFileSync(path.join(root,'src/desktop-guided.js'),'utf8')+'\nreturn {pose:pxPose,world:pxWorldSurface};')();
+// Compare typed-array bytes in Node to keep the VM audit inexpensive.
+context.pixelsEqual=(a,b)=>Buffer.from(a.buffer,a.byteOffset,a.byteLength).equals(Buffer.from(b.buffer,b.byteOffset,b.byteLength));
 Object.assign(context,{out,writePNG:require('./png.cjs'),previewOnly:process.argv.includes('--preview-only')});
 vm.runInContext(`
 const guidedPose=pxPose;
@@ -24,10 +26,15 @@ function setup(slot,face,mode='hit',low=false){
  if(mode==='wall'){o.x=face>0?RIGHT-1:LEFT+1;f.x=o.x-face*100;}
  if(mode==='rear')f.dis=300;G.last=now;G.acc=0;return {S,f,o};
 }
-function equalPixels(a,b){assert.equal(a.data.length,b.data.length);assert(a.data.every((v,i)=>v===b.data[i]),'raster differs');rasters++;}
+function equalPixels(a,b){assert.equal(a.data.length,b.data.length);assert(pixelsEqual(a.data,b.data),'raster differs');rasters++;}
 function checkFrame(S,slot){const saved=JSON.stringify(S),f=S.f[slot];assert.equal(pxPose(S,f),desktop.pose(S,f),'phone missing '+desktop.pose(S,f));equalPixels(pxWorldSurface(S,quiet),desktop.world(S,quiet));assert.equal(JSON.stringify(S),saved,'drawing changed sim');}
 function host(){netClose();const callbacks={},events=[],conn={open:true,on(k,fn){callbacks[k]=fn;},send(p){if(p.t==='s')events.push(...p.e);}};netWire(conn,'host');callbacks.open();show('none');return {callbacks,events};}
 
+// mobile.cjs above covers canvas upload end-to-end. This longer input sweep
+// renders each frame but omits redundant memory-canvas uploads; checkFrame
+// compares the exact world raster directly at the sampled move ages.
+const sweepPresent=pxPresent;
+pxPresent=()=>{};
 audit('touch/remote homing shell retains tick-16 release, flight, costs, damage and recovery',()=>{
  for(const slot of [0,1])for(const face of [-1,1])for(const mode of ['hit','rear','guard','jump','far','wall'])for(const low of [false,true]){
   const {callbacks,events}=host(),{S,f,o}=setup(slot,face,mode,low),control=JSON.parse(JSON.stringify(S)),seen=new Map();let releases=0;
@@ -52,6 +59,8 @@ audit('touch/remote homing shell retains tick-16 release, flight, costs, damage 
   if(slot===1&&mode==='guard')pointer('pointerup','G',2);
  }
 });
+
+pxPresent=sweepPresent;
 
 audit('serialized bodies hold through freezes and event-free guest snapshots',()=>{
  for(const slot of [0,1])for(const face of [-1,1])for(const age of ages){
