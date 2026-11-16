@@ -62,7 +62,8 @@ group('other Domains, all arts, interruptions and all old sprites remain exact',
     const {S,f,o}=setup(slot,1,ch);startDomain(S,f,o);
     for(const freeze of [60,40,20,0])for(const t of [1,12,35,36,59,60,71,72,77,85,99]) {
       S.freeze=freeze;S.dom.t=t;f.st='cast';
-      if(ch!==4||t<36||t>=72||t<=1&&freeze>0){assert.equal(pxPose(S,f),prior.pose(S,f),'unrelated Domain changed');defaults++;}
+      const allout=ch===12&&t>=12&&t<40&&!S.dom.done;
+      if(!allout&&(ch!==4||t<36||t>=72||t<=1&&freeze>0)){assert.equal(pxPose(S,f),prior.pose(S,f),'unrelated Domain changed');defaults++;}
     }
     for(const st of ['idle','walk','jump','guard','block','hit','down','stun','ko']) {
       f.st=st;f.stT=20;assert.equal(pxPose(S,f),prior.pose(S,f),'cast covers interruption');defaults++;

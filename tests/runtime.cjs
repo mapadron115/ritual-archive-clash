@@ -604,6 +604,29 @@ for(const owner of [0,1])for(const t of [35,36,59,60,71,72,77,85]) {
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS desktop Nuclear Shell coil/brace/release through actual AI/local/host keys and sixteen event-free guest snapshots');
+// Everything I Have must load, travel and hit through the same real input path.
+aiInput=()=>0;pxPaintFighter=function(s,S,f,impact){if(S.dom&&S.dom.o===f.i&&f.st==='cast')maximumPaints.push({t:S.dom.t,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+for(const mode of ['ai','local','host']) {
+  G.mode=mode;G.pick=[12,12];startFight();G.S.phase='fight';G.acc=0;G.last=1000;
+  const slot=mode==='local'?1:0;G.S.f[slot].gauge=100;G.S.f[0].x=100;G.S.f[1].x=600;maximumPaints.length=0;
+  const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.DOM[0];
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+  for(let n=1;n<=150;n++)frame(1000+n*17);
+  for(const [t,pose] of [[12,'alloutcoil'],[23,'alloutcoil'],[24,'alloutdrive'],[34,'alloutdrive'],[35,'punch']])
+    assert(maximumPaints.some(p=>p.t===t&&p.pose===pose),mode+' allout missed '+t+' '+pose);
+  // A 17-ms display frame occasionally advances two 60-Hz ticks. The focused
+  // audit owns the exact tick-40 boundary; require its recovery window here.
+  assert(maximumPaints.some(p=>p.t>=40&&p.t<48&&p.pose==='punchre'),mode+' allout recovery not painted');
+  assert.equal(G.S.f[slot].domUsed,1);toMenu();
+}
+G.mode='guest';const alloutConn=mockConnection();netWire(alloutConn,'guest');alloutConn.events.open();G.pick=[12,12];startFight();
+for(const owner of [0,1])for(const [t,done,pose] of [[11,0,'hookw'],[12,0,'alloutcoil'],[23,0,'alloutcoil'],[24,0,'alloutdrive'],[34,0,'alloutdrive'],[24,1,'punch'],[35,1,'punch'],[40,0,'punchre']]) {
+  const snapshot=newMatch(12,12,125);snapshot.phase='fight';snapshot.f[owner].gauge=100;startDomain(snapshot,snapshot.f[owner],snapshot.f[1-owner]);snapshot.freeze=0;snapshot.dom.t=t;snapshot.dom.done=done;snapshot.ev=[];
+  maximumPaints.length=0;alloutConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+  assert(maximumPaints.some(p=>p.t===t&&p.pose===pose));
+}
+pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop allout coil/rush/contact through actual AI/local/host keys and sixteen event-free guest snapshots');
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
