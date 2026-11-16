@@ -561,6 +561,27 @@ for(const remaining of [14,10,5]) {
 }
 pxPaintFighter=hitPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS desktop ground-hit poses through real keyboard/AI/local/host frames and event-free guest snapshot painting');
+// Summon-only animation reaches the same painter from real input and snapshots.
+const summonPaintBase=pxPaintFighter,summonPaints=[];
+pxPaintFighter=function(s,S,f,impact){if(f.ch===3&&f.st==='atk')summonPaints.push(pxPose(S,f));return summonPaintBase(s,S,f,impact);};
+aiInput=()=>0;
+for(const mode of ['ai','local','host'])for(const art of ['A1','A2','A3']) {
+  G.mode=mode;G.pick=[3,3];startFight();G.S.phase='fight';G.acc=0;G.last=1000;
+  const slot=mode==='local'?1:0,f=G.S.f[slot];f.ce=100;G.S.f[0].x=360;G.S.f[1].x=920;summonPaints.length=0;
+  const binding=mode==='local'?BIND.p2:BIND.solo,code=binding[art][0];
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+  for(let n=1;n<=48;n++)frame(1000+n*17);
+  for(const pose of ['summoncoil','summonseal','signre','signsettle'])assert(summonPaints.includes(pose),mode+' '+art+' missed '+pose);
+  toMenu();
+}
+G.mode='guest';const summonConn=mockConnection();netWire(summonConn,'guest');summonConn.events.open();G.pick=[3,3];startFight();
+for(const n of [0,1,2])for(const mt of [6,11,12,14,15]) {
+  const snapshot=newMatch(3,3,119);snapshot.phase='fight';startMove(snapshot.f[1],'a'+n);snapshot.f[1].mt=mt;snapshot.ev=[];
+  summonPaints.length=0;summonConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+  assert(summonPaints.includes(mt<12?'summoncoil':mt<15?'summonseal':'signre'));
+}
+pxPaintFighter=summonPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS all three summon animations through real AI/local/host keyboard frames and fifteen event-free guest snapshots');
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
