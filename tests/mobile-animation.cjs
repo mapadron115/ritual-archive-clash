@@ -5,7 +5,7 @@ const {context,root,html}=require('./mobile.cjs'),png=require('./png.cjs');
 const baseline=process.argv.includes('--animation-baseline'),previewOnly=process.argv.includes('--preview-only');
 const out=process.argv.find(a=>a.startsWith('--out='))?.slice(6);
 if(out)fs.mkdirSync(out,{recursive:true});
-const files=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render','desktop-animation','desktop-maximum','desktop-convergence','desktop-quake','desktop-ordinary','desktop-apshot','desktop-piercing','desktop-contract'];
+const files=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render','desktop-animation','desktop-maximum','desktop-convergence','desktop-quake','desktop-ordinary','desktop-apshot','desktop-piercing','desktop-contract','desktop-blast'];
 context.desktop=Function(files.map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n')+'\nreturn {pose:pxPose,world:pxWorldSurface};')();
 context.animationPrior=Function(files.filter(n=>n!=='desktop-animation').map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n')+'\nreturn {pose:pxPose};')();
 Object.assign(context,{out,writePNG:png,animationBaseline:baseline,previewOnly});
