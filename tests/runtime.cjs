@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,24);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,25);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -878,6 +878,29 @@ for(const owner of [0,1])for(const [mt,pose] of [[5,'castw'],[6,'bluereach'],[11
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS desktop Lapse Blue reach/close/draw/recovery through AI/local/host keys and twenty-two event-free guest snapshots');
+
+// Divine Flame follows keyboard taps and the first event-free guest snapshot.
+aiInput=()=>0;const flamePaints=[];
+pxPaintFighter=function(s,S,f,impact){if(f.st==='atk'&&moveDef(f)?.id==='flame')flamePaints.push({t:f.mt,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+const flameCh=CH.findIndex(c=>c.arts.some(a=>a.id==='flame'));
+for(const mode of ['ai','local','host']) {
+  G.mode=mode;G.pick=[flameCh,flameCh];startFight();G.S.phase='fight';G.S.t=121;G.last=1000;G.acc=0;
+  const slot=mode==='local'?1:0;G.S.f[0].x=420;G.S.f[1].x=640;G.S.f[slot].ce=100;flamePaints.length=0;
+  const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.A3[0];
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+  for(let n=1;n<=100;n++)frame(1000+n*17);
+  for(const [a,b,pose] of [[17,26,'flamegather'],[26,34,'flameaim'],[34,37,'flameloose'],[37,42,'flamefollow'],[42,49,'flamerecover'],[49,56,'bowsettle']])
+    assert(flamePaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' Divine Flame missed '+pose);
+  assert.equal(G.S.f[slot].hp,CH[flameCh].hp);assert.equal(G.S.f[1-slot].hp,CH[flameCh].hp-140);toMenu();
+}
+G.mode='guest';const flameConn=mockConnection();netWire(flameConn,'guest');flameConn.events.open();G.pick=[flameCh,flameCh];startFight();
+for(const owner of [0,1])for(const [mt,pose] of [[16,'boww'],[17,'flamegather'],[25,'flamegather'],[26,'flameaim'],[33,'flameaim'],[34,'flameloose'],[36,'flameloose'],[37,'flamefollow'],[41,'flamefollow'],[42,'flamerecover'],[48,'flamerecover'],[49,'bowsettle'],[55,'bowsettle']]) {
+  const snapshot=newMatch(flameCh,flameCh,149);snapshot.phase='fight';startMove(snapshot.f[owner],'a2');snapshot.f[owner].mt=mt;snapshot.ev=[];
+  flamePaints.length=0;flameConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+  assert(flamePaints.some(p=>p.t===mt&&p.pose===pose));
+}
+pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop Divine Flame gather/aim/release/follow-through through AI/local/host keys and twenty-six event-free guest snapshots');
 
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
