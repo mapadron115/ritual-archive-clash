@@ -7,6 +7,7 @@ const root=path.join(__dirname,'..'),html=fs.readFileSync(path.join(root,'mobile
 const baseline=process.argv.includes('--baseline'),out=process.argv.find(a=>a.startsWith('--out='))?.slice(6);
 const animationCost=process.argv.includes('--animation-cost');
 const quakeCost=process.argv.includes('--quake-cost');
+const beamCost=process.argv.includes('--beam-cost');
 const ordinaryCost=process.argv.includes('--ordinary-cost');
 const convergenceCost=process.argv.includes('--convergence-cost');
 const maximumCost=process.argv.includes('--maximum-cost');
@@ -20,15 +21,15 @@ nodes.set('domainButton',buttons.find(b=>b.dataset.input==='DOM'));nodes.set('cv
 const document=Object.assign(node('document'),{visibilityState:'visible',getElementById(id){if(!nodes.has(id))nodes.set(id,node(id));return nodes.get(id);},querySelectorAll(s){return s==='[data-input]'?buttons:['title','select','online','pause','over'].map(id=>this.getElementById(id));},createElement(tag){return tag==='canvas'?canvas():node(tag);},head:node('head')});
 const scripts=[...html.matchAll(/<script src="([^?]+)\?v=(\d+)"><\/script>/g)];
 let source='';
-for(const m of scripts){if(m[1]==='../src/desktop-ordinary.js')source+='const preOrdinaryPose=pxPose;\n';if(baseline&&m[1]==='raster.js')continue;if(m[1]==='../src/desktop-quake.js')source+='const preQuakePose=pxPose;\n';if(m[1]==='../src/desktop-convergence.js')source+='const preConvergenceDomainPose=pxDomainPose;\n';if(m[1]==='../src/desktop-maximum.js')source+='const unadaptedDomainPose=pxDomainPose;\n';source+=fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8')+'\n';if(m[1]==='../src/pixel.js')source+='const originalRect=PixelSurface.prototype.rect,originalBlit=PixelSurface.prototype.blit,unadaptedPose=pxPose;\n';}
+for(const m of scripts){if(m[1]==='../src/desktop-apshot.js')source+='const preBeamPose=pxPose;\n';if(m[1]==='../src/desktop-ordinary.js')source+='const preOrdinaryPose=pxPose;\n';if(baseline&&m[1]==='raster.js')continue;if(m[1]==='../src/desktop-quake.js')source+='const preQuakePose=pxPose;\n';if(m[1]==='../src/desktop-convergence.js')source+='const preConvergenceDomainPose=pxDomainPose;\n';if(m[1]==='../src/desktop-maximum.js')source+='const unadaptedDomainPose=pxDomainPose;\n';source+=fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8')+'\n';if(m[1]==='../src/pixel.js')source+='const originalRect=PixelSurface.prototype.rect,originalBlit=PixelSurface.prototype.blit,unadaptedPose=pxPose;\n';}
 const run=Function('document','performance','assert','writePNG','out','report',`
 const window={},innerWidth=844,innerHeight=390,getComputedStyle=()=>({}),requestAnimationFrame=()=>{},addEventListener=()=>{},setTimeout=()=>{};
 ${source}
 const candidateRect=PixelSurface.prototype.rect,adaptedPose=pxPose;
 const candidateBlit=PixelSurface.prototype.blit;
 const adaptedDomainPose=pxDomainPose;
-const ordinaryCost=${ordinaryCost},quakeCost=${quakeCost},animationCost=${animationCost},blitCost=${blitCost},maximumCost=${maximumCost},convergenceCost=${convergenceCost};let reaction=null,maximum=null,quake=null,ordinary=null;
-const artifactPrefix=ordinaryCost?'v134':quakeCost?'v132':convergenceCost?'v130':maximumCost?'v128':blitCost?'v124':animationCost?'v120':'v118';
+const beamCost=${beamCost},ordinaryCost=${ordinaryCost},quakeCost=${quakeCost},animationCost=${animationCost},blitCost=${blitCost},maximumCost=${maximumCost},convergenceCost=${convergenceCost};let reaction=null,maximum=null,quake=null,ordinary=null;
+const artifactPrefix=beamCost?'v138':ordinaryCost?'v134':quakeCost?'v132':convergenceCost?'v130':maximumCost?'v128':blitCost?'v124':animationCost?'v120':'v118';
 G.mode='host';G.running=true;FX.silent=true;
 let randomSeed=118;Math.random=()=>{randomSeed=(Math.imul(randomSeed,1664525)+1013904223)>>>0;return randomSeed/4294967296;};
 function setup(ch=0,owner=0,clash=false,busy=true,domain=true,mirror=false){
@@ -64,6 +65,7 @@ function age(n){FX.clock=n;G.S.t=136+n;if(G.S.dom)G.S.dom.t=48+n;for(const key o
 const scenarios=[{name:'quiet-fight',ch:0,busy:false,domain:false},{name:'p1-domain-busy',ch:0,owner:0},{name:'p2-domain-busy',ch:1,owner:1},{name:'both-domain-clash-busy',ch:0,clash:true}];
 if(blitCost)scenarios.push({name:'busy-domain-shake',ch:0,shake:9});
 if(animationCost)scenarios.push({name:'busy-ground-hit',ch:0,reaction:'hit'},{name:'busy-summon',ch:3,reaction:'summon'});
+if(beamCost)for(const owner of [0,1])for(const id of ['apshot','piercing'])scenarios.push({name:'busy-'+id+'-p'+(owner+1),ch:CH.findIndex(c=>c.arts.some(a=>a.id===id)),owner,mirror:true,domain:false,ordinary:{owner,id,ages:id==='apshot'?[7,11,14,17,25]:[13,20,26,29,38,40,44]}});
 if(ordinaryCost)for(const owner of [0,1])for(const id of ['quake','thunderclap'])scenarios.push({name:'busy-'+id+'-p'+(owner+1),ch:CH.findIndex(c=>c.arts.some(a=>a.id===id)),owner,mirror:true,domain:false,ordinary:{owner,id,ages:id==='quake'?[9,10,19,20,23,35,41]:[5,6,11,12,14,15,22,23,27]}});
 if(quakeCost)for(const owner of [0,1])scenarios.push({name:'busy-quake-p'+(owner+1),ch:CH.findIndex(c=>c.arts.some(a=>a.id==='quake')),owner,mirror:true,domain:false,quake:{owner,ages:[10,19,20,23,35,41]}});
 if(convergenceCost)scenarios.push({name:'busy-convergence-body',ch:CH.findIndex(c=>c.dom.kind==='bloodsweep'),maximum:[20,25,31,32,35,39]},{name:'busy-convergence-mirror',ch:CH.findIndex(c=>c.dom.kind==='bloodsweep'),owner:1,mirror:true,maximum:[20,25,31,32,35,39]});
@@ -75,9 +77,9 @@ for(const scenario of scenarios){
   FX.shake=scenario.shake||0;
   const times={before:[],after:[]};
   for(let block=0;block<6;block++)for(const kind of block%2?['after','before']:['before','after']){
-    PixelSurface.prototype.rect=animationCost||blitCost||maximumCost||convergenceCost||quakeCost||ordinaryCost?candidateRect:kind==='before'?originalRect:candidateRect;
+    PixelSurface.prototype.rect=animationCost||blitCost||maximumCost||convergenceCost||quakeCost||ordinaryCost||beamCost?candidateRect:kind==='before'?originalRect:candidateRect;
     PixelSurface.prototype.blit=blitCost&&kind==='before'?originalBlit:candidateBlit;
-    pxPose=ordinaryCost&&kind==='before'?preOrdinaryPose:quakeCost&&kind==='before'?preQuakePose:animationCost&&kind==='before'?unadaptedPose:adaptedPose;
+    pxPose=beamCost&&kind==='before'?preBeamPose:ordinaryCost&&kind==='before'?preOrdinaryPose:quakeCost&&kind==='before'?preQuakePose:animationCost&&kind==='before'?unadaptedPose:adaptedPose;
     pxDomainPose=convergenceCost&&kind==='before'?preConvergenceDomainPose:maximumCost&&kind==='before'?unadaptedDomainPose:adaptedDomainPose;
     for(let n=0;n<24;n++){age(n);render();}
     for(let n=0;n<20;n++){age(n);const t=performance.now();render();times[kind].push(performance.now()-t);}
@@ -149,8 +151,8 @@ try{methods=run(document,performance,assert,require('./png.cjs'),out,r=>{reports
 const environment={environment:{node:process.version,platform:process.platform,arch:process.arch,cpu:os.cpus()[0].model},uploads,draws,note:'Node CPU raster/control work; no browser layout, canvas upload, GPU, phone FPS or input latency measured'};
 console.log(JSON.stringify(environment));reports.push(environment);
 if(out){
-  fs.writeFileSync(path.join(out,(ordinaryCost?'v134-ordinary':quakeCost?'v132-quake':convergenceCost?'v130-convergence':maximumCost?'v128-maximum':blitCost?'v124-blit':animationCost?'v120-animation':'v118-'+(baseline?'baseline':'candidate'))+'-timings.json'),JSON.stringify(reports,null,2)+'\n');
-  if(animationCost||maximumCost||convergenceCost||quakeCost||ordinaryCost){console.log('Animation cost: both variants keep the fast raster; only fighter pose selection differs.');process.exit(0);}
+  fs.writeFileSync(path.join(out,(beamCost?'v138-beam':ordinaryCost?'v134-ordinary':quakeCost?'v132-quake':convergenceCost?'v130-convergence':maximumCost?'v128-maximum':blitCost?'v124-blit':animationCost?'v120-animation':'v118-'+(baseline?'baseline':'candidate'))+'-timings.json'),JSON.stringify(reports,null,2)+'\n');
+  if(animationCost||maximumCost||convergenceCost||quakeCost||ordinaryCost||beamCost){console.log('Animation cost: both variants keep the fast raster; only fighter pose selection differs.');process.exit(0);}
   // Existing real-pointer harness supplies its phone layout model. Compare
   // complete models, including touch labels, using each selected primitive.
   const vm=require('node:vm'),{context}=require('./mobile.cjs'),png=require('./png.cjs');

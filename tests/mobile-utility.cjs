@@ -49,7 +49,7 @@ mobileLayout=utilityCurrentLayout;
 if(utilityFailed&&!utilityPreviewOnly)throw Error('mobile utility audit failed: '+utilityFailed);
 `,context,{filename:'mobile-utility-audit.js'});
 const html=fs.readFileSync(path.join(root,'mobile/index.html'),'utf8'),css=fs.readFileSync(path.join(root,'mobile/mobile.css'),'utf8');
-if(!baseline){assert(/id="mobileBuild"[^>]*>Mobile v136/.test(html));assert(/#touchMute[^}]*white-space:\s*nowrap/.test(css));}
+if(!baseline){assert(/id="mobileBuild"[^>]*>Mobile v138/.test(html));assert(/#touchMute[^}]*white-space:\s*nowrap/.test(css));}
 if(out){
   const layout=baseline?context.utilityPriorLayout:vm.runInContext('mobileLayout',context),samples=[];
   for(const [w,h] of [[812,375],[812,320],[812,219],[667,375],[568,219],[375,812]]){
