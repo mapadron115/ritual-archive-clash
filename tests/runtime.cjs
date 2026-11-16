@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,14);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,15);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -647,6 +647,28 @@ for(const owner of [0,1])for(const [t,pose] of [[11,'speechw'],[12,'voiceinhale'
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS desktop Resounding Voice inhale/brace/word through AI/local/host keys and sixteen event-free guest snapshots');
+
+// Desktop-only Convergence must reach actual keyboard casts and event-free guests.
+aiInput=()=>0;pxPaintFighter=function(s,S,f,impact){if(S.dom&&S.dom.o===f.i&&f.st==='cast')maximumPaints.push({t:S.dom.t,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+const convergenceCh=CH.findIndex(c=>c.dom.kind==='bloodsweep');
+for(const mode of ['ai','local','host']) {
+  G.mode=mode;G.pick=[convergenceCh,convergenceCh];startFight();G.S.phase='fight';G.S.t=120;G.last=1000;G.acc=0;
+  const slot=mode==='local'?1:0;G.S.f[slot].gauge=100;G.S.f[0].x=380;G.S.f[1].x=710;maximumPaints.length=0;
+  const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.DOM[0];
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+  for(let n=1;n<=170;n++)frame(1000+n*17);
+  for(const [a,b,pose] of [[20,32,'convergencefold'],[32,40,'convergenceaim'],[40,45,'cannon'],[45,53,'cannonre']])
+    assert(maximumPaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' Convergence missed '+pose);
+  assert.equal(G.S.f[slot].domUsed,1);assert.equal(G.S.f[slot].hp,CH[convergenceCh].hp);assert.equal(G.S.f[1-slot].hp,CH[convergenceCh].hp-240);toMenu();
+}
+G.mode='guest';const convergenceConn=mockConnection();netWire(convergenceConn,'guest');convergenceConn.events.open();G.pick=[convergenceCh,convergenceCh];startFight();
+for(const owner of [0,1])for(const [t,pose] of [[19,'cannonw'],[20,'convergencefold'],[31,'convergencefold'],[32,'convergenceaim'],[39,'convergenceaim'],[40,'cannon'],[45,'cannonre'],[53,'cannonsettle']]) {
+  const snapshot=newMatch(convergenceCh,convergenceCh,129);snapshot.phase='fight';snapshot.f[owner].gauge=100;startDomain(snapshot,snapshot.f[owner],snapshot.f[1-owner]);snapshot.freeze=0;snapshot.dom.t=t;snapshot.ev=[];
+  maximumPaints.length=0;convergenceConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+  assert(maximumPaints.some(p=>p.t===t&&p.pose===pose));
+}
+pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop Convergence fold/aim/beam through AI/local/host keys and sixteen event-free guest snapshots');
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
