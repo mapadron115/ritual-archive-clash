@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,27);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,28);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -948,6 +948,29 @@ for(const owner of [0,1])for(const [mt,pose] of [[7,'cannonw'],[8,'guidedcradle'
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS desktop Guided Shell cradle/lift/launch/guide/recovery through AI/local/host keys and twenty-six event-free guest snapshots');
+
+// A clap initiates Round of Applause; a separate delayed fist must make contact.
+aiInput=()=>0;const applausePaints=[];
+pxPaintFighter=function(s,S,f,impact){if(f.st==='atk'&&moveDef(f)?.id==='applause')applausePaints.push({t:f.mt,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+const applauseCh=CH.findIndex(c=>c.arts.some(a=>a.id==='applause'));
+for(const mode of ['ai','local','host']) {
+ G.mode=mode;G.pick=[applauseCh,applauseCh];startFight();G.S.phase='fight';G.S.t=121;G.last=1000;G.acc=0;
+ const slot=mode==='local'?1:0;G.S.f[0].x=420;G.S.f[1].x=580;G.S.f[slot].ce=100;applausePaints.length=0;
+ const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.A3[0];
+ events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+ for(let n=1;n<=65;n++)frame(1000+n*17);
+ for(const [a,b,pose] of [[6,9,'clap'],[9,13,'applauserush'],[13,16,'applausestrike'],[16,21,'applausefollow'],[21,25,'applausepull'],[25,28,'applausesettle']])
+  assert(applausePaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' Round of Applause missed '+pose);
+ assert.equal(G.S.f[slot].hp,CH[applauseCh].hp);assert.equal(G.S.f[1-slot].hp,CH[applauseCh].hp-99.75);toMenu();
+}
+G.mode='guest';const applauseConn=mockConnection();netWire(applauseConn,'guest');applauseConn.events.open();G.pick=[applauseCh,applauseCh];startFight();
+for(const owner of [0,1])for(const [mt,pose] of [[6,'clap'],[8,'clap'],[9,'applauserush'],[12,'applauserush'],[13,'applausestrike'],[15,'applausestrike'],[16,'applausefollow'],[20,'applausefollow'],[21,'applausepull'],[24,'applausepull'],[25,'applausesettle'],[27,'applausesettle']]) {
+ const snapshot=newMatch(applauseCh,applauseCh,155);snapshot.phase='fight';startMove(snapshot.f[owner],'a2');snapshot.f[owner].mt=mt;snapshot.ev=[];
+ applausePaints.length=0;applauseConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+ assert(applausePaints.some(p=>p.t===mt&&p.pose===pose));
+}
+pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop Round of Applause clap/lunge/punch/follow-through/recovery through AI/local/host keys and twenty-four event-free guest snapshots');
 
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
