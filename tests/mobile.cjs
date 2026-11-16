@@ -128,10 +128,10 @@ for(const t of timeouts.splice(0))t.f();assert.equal($('over').style.display,'fl
 rematch();assert(!G.over);assert.equal(G.S.round,1);assert.equal(input(),0);toMenu();assert(!G.running);drawWorld=savedWorld;drawHUD=savedHUD;
 console.log('PASS complete CPU match through touch/main loop:',matchTicks,'frames, results, rematch and title return');
 // Phone layout: every hit target >=48 px, separated by >=6 px, inside safe
-// bounds. New controls overlay the lower arena and clear all upper meters.
+// bounds. Controls may use black side margins and must clear all upper meters.
 for(const [w,h,safe] of [[844,390,{top:0,right:0,bottom:0,left:0}],[667,375,{top:0,right:0,bottom:0,left:0}],[844,390,{top:0,right:44,bottom:21,left:44}]]) {
   const l=mobileLayout(w,h,safe),rects=Object.values(l.buttons);assert(!l.portrait);
-  for(const b of rects){assert(b.w>=48&&b.h>=48);assert(b.x>=safe.left&&b.x+b.w<=w-safe.right);assert(b.y>=(baseline?l.canvas.y+l.canvas.h:l.canvas.y+78*l.canvas.h/360));assert(b.y+b.h<=h-safe.bottom);if(!baseline){assert(b.x>=l.canvas.x&&b.x+b.w<=l.canvas.x+l.canvas.w);assert(b.y+b.h<=l.canvas.y+l.canvas.h);}}
+  for(const b of rects){assert(b.w>=48&&b.h>=48);assert(b.x>=safe.left&&b.x+b.w<=w-safe.right);assert(b.y>=(baseline?l.canvas.y+l.canvas.h:l.canvas.y+78*l.canvas.h/360));assert(b.y+b.h<=h-safe.bottom);}
   for(let i=0;i<rects.length;i++)for(let j=0;j<i;j++){const a=rects[i],b=rects[j],gap=baseline?0:6;assert(a.x+a.w+gap<=b.x||b.x+b.w+gap<=a.x||a.y+a.h+gap<=b.y||b.y+b.h+gap<=a.y);}
   if(!baseline){assert(l.canvas.h>=h-safe.top-safe.bottom-1);console.log('Arena',w+'x'+h,JSON.stringify(l.canvas));}
 }

@@ -7,12 +7,26 @@ function mobileLayout(width,height,safe={top:0,right:0,bottom:0,left:0}) {
   const sw=Math.floor(Math.min(w,h*16/9));
   const sh=Math.floor(sw*9/16),buttons={};
   const canvas={x:Math.floor(x+(w-sw)/2),y:Math.floor(y+(h-sh)/2),w:sw,h:sh};
-  const lx=canvas.x+8,bottom=canvas.y+sh-8,dy=bottom-2*bh-gap;
+  // Controls use the safe viewport, including the arena's black side margins.
+  // A short Safari viewport can make the 16:9 arena narrower than the deck.
+  const lx=x+8,bottom=y+h-8,dy=bottom-2*bh-gap;
   const put=(k,bx,by,bwidth=bw,bheight=bh)=>buttons[k]={x:bx,y:by,w:bwidth,h:bheight};
   put('U',lx+bw+gap,dy);put('L',lx,bottom-bh);put('G',lx+bw+gap,bottom-bh);put('R',lx+2*(bw+gap),bottom-bh);
-  const aw=82,ah=64,rx=canvas.x+sw-8-3*aw-2*gap;
+  const movementWidth=3*bw+2*gap;
+  const aw=Math.min(82,Math.max(48,Math.floor((w-16-movementWidth-3*gap)/3)));
+  const hudBottom=canvas.y+78*canvas.h/360;
+  const ah=Math.min(64,Math.max(48,Math.floor((bottom-hudBottom-gap)/2))),rx=x+w-8-3*aw-2*gap;
   ['P','K','DOM','A1','A2','A3'].forEach((k,n)=>put(k,rx+(n%3)*(aw+gap),bottom-2*ah-gap+Math.floor(n/3)*(ah+gap),aw,ah));
-  put('pause',Math.floor(canvas.x+sw/2)-56,bottom-bh);put('mute',Math.floor(canvas.x+sw/2)+4,bottom-bh);
+  // Width determines this upper slot across the phone's toolbar heights.
+  // A vertically letterboxed tablet must also clear its lower HUD position.
+  const utilityTop=Math.max(y+Math.ceil(w*78/640)+8,Math.ceil(hudBottom)+8);
+  if(rx-(lx+movementWidth)>=112+2*gap) {
+    const middle=Math.floor(Math.min(x+w/2,rx-gap-56));
+    put('pause',middle-56,utilityTop);put('mute',middle+4,utilityTop);
+  } else {
+    // Narrow safe areas have no center gap: flank the jump column instead.
+    put('pause',lx,utilityTop);put('mute',lx+2*(bw+gap),utilityTop);
+  }
   return {portrait:height>width,canvas,buttons};
 }
 const MOBILE={pointers:new Map(),slides:new Map(),feedback:new Map(),portrait:false,views:new Map(),selectTab:0,away:false,remoteAt:null};
