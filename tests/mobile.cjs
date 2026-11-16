@@ -28,7 +28,7 @@ const document=Object.assign(doc,{visibilityState:'visible',getElementById(id){i
 const context=vm.createContext({console,assert,document,window:{},performance:{now:()=>0},innerWidth:844,innerHeight:390,getComputedStyle(){return {};},requestAnimationFrame(){},addEventListener:(k,f)=>win.addEventListener(k,f),setTimeout(f,ms){timeouts.push({f,ms});}});
 Object.assign(context,{win,buttons,timeouts,baseline,feedbackBaseline});
 const scripts=[...html.matchAll(/<script src="([^?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,12);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,13);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(baselineTouch&&m[1]==='touch.js'?baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});
 vm.runInContext(`
 let now=0;
