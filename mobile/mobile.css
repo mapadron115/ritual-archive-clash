@@ -69,3 +69,6 @@ summary::before { content: "+"; margin-right: 8px; color: #b5dce5; } details[ope
 #rotate { display: none; position: fixed; inset: 0; z-index: 10; padding: 24px; background: #101927; align-items: center; justify-content: center; flex-direction: column; gap: 16px; text-align: center; }
 #safeArea { position: fixed; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
 @media (orientation: portrait) { #rotate { display: flex; } }
+#mobileError { position: fixed; z-index: 100; top: max(8px, env(safe-area-inset-top, 0px)); left: max(8px, env(safe-area-inset-left, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); max-height: 65vh; overflow: auto; padding: 10px; border: 2px solid #f1ad91; background: #111623; color: #fff0ca; text-align: left; font: 12px/1.4 monospace; }
+#mobileError[hidden] { display: none; }
+#mobileError pre { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }

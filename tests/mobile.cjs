@@ -29,7 +29,8 @@ const document=Object.assign(doc,{visibilityState:'visible',getElementById(id){i
 const context=vm.createContext({console,assert,document,window:{},performance:{now:()=>0},innerWidth:844,innerHeight:390,getComputedStyle(){return {};},requestAnimationFrame(){},addEventListener:(k,f)=>win.addEventListener(k,f),setTimeout(f,ms){timeouts.push({f,ms});}});
 Object.assign(context,{win,buttons,timeouts,baseline,feedbackBaseline});
 const scripts=[...html.matchAll(/<script src="([^?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,14);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,15);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts[0][1],'diagnostics.js');
 assert(scripts.findIndex(m=>m[1]==='../src/desktop-animation.js')>scripts.findIndex(m=>m[1]==='../src/pixel.js'));
 for(const m of scripts){if(animationBaseline&&m[1]==='../src/desktop-animation.js')continue;vm.runInContext(baselineTouch&&m[1]==='touch.js'?baselineTouch:fs.readFileSync(path.resolve(root,'mobile',m[1]),'utf8'),context,{filename:m[1]});}
 vm.runInContext(`
