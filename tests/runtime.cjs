@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,16);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,17);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -672,7 +672,7 @@ console.log('PASS desktop Convergence fold/aim/beam through AI/local/host keys a
 
 // Ordinary Gamma Quake must use the floor-strike body through the actual loop.
 aiInput=()=>0;const quakePaints=[];
-pxPaintFighter=function(s,S,f,impact){if(f.st==='atk'&&moveDef(f)?.id==='quake')quakePaints.push({t:f.mt,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+pxPaintFighter=function(s,S,f,impact){if(f.st==='atk'&&['quake','thunderclap'].includes(moveDef(f)?.id))quakePaints.push({t:f.mt,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
 const quakeCh=CH.findIndex(c=>c.arts.some(a=>a.id==='quake'));
 for(const mode of ['ai','local','host']) {
   G.mode=mode;G.pick=[quakeCh,quakeCh];startFight();G.S.phase='fight';G.S.t=120;G.last=1000;G.acc=0;
@@ -680,18 +680,40 @@ for(const mode of ['ai','local','host']) {
   const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.A3[0];
   events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
   for(let n=1;n<=100;n++)frame(1000+n*17);
-  for(const [a,b,pose] of [[10,20,'quakecoil'],[20,23,'quakeimpact'],[23,35,'quakepull'],[35,42,'quakerise']])
+  for(const [a,b,pose] of [[10,20,'quakeopen'],[20,23,'quakeimpact'],[23,35,'quakepull'],[35,42,'quakerise']])
     assert(quakePaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' Gamma Quake missed '+pose);
   assert.equal(G.S.f[slot].hp,CH[quakeCh].hp);assert.equal(G.S.f[1-slot].hp,CH[quakeCh].hp-80);toMenu();
 }
 G.mode='guest';const quakeConn=mockConnection();netWire(quakeConn,'guest');quakeConn.events.open();G.pick=[quakeCh,quakeCh];startFight();
-for(const owner of [0,1])for(const [mt,pose] of [[9,'hookw'],[10,'quakecoil'],[19,'quakecoil'],[20,'quakeimpact'],[22,'quakeimpact'],[23,'quakepull'],[34,'quakepull'],[35,'quakerise'],[41,'quakerise']]) {
+for(const owner of [0,1])for(const [mt,pose] of [[9,'hookw'],[10,'quakeopen'],[19,'quakeopen'],[20,'quakeimpact'],[22,'quakeimpact'],[23,'quakepull'],[34,'quakepull'],[35,'quakerise'],[41,'quakerise']]) {
   const snapshot=newMatch(quakeCh,quakeCh,131);snapshot.phase='fight';startMove(snapshot.f[owner],'a2');snapshot.f[owner].mt=mt;snapshot.ev=[];
   quakePaints.length=0;quakeConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
   assert(quakePaints.some(p=>p.t===mt&&p.pose===pose));
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
 console.log('PASS desktop Gamma Quake coil/ground strike/recovery through AI/local/host keys and eighteen event-free guest snapshots');
+
+// Thunder Clap uses the same real main-loop routes; event-free guests keep the open/close/pull ages.
+aiInput=()=>0;pxPaintFighter=function(s,S,f,impact){if(f.st==='atk'&&moveDef(f)?.id==='thunderclap')quakePaints.push({t:f.mt,pose:pxPose(S,f)});return maximumPaintBase(s,S,f,impact);};
+for(const mode of ['ai','local','host']) {
+  G.mode=mode;G.pick=[quakeCh,quakeCh];startFight();G.S.phase='fight';G.S.t=120;G.last=1000;G.acc=0;
+  const slot=mode==='local'?1:0;G.S.f[0].x=420;G.S.f[1].x=640;G.S.f[slot].ce=100;quakePaints.length=0;
+  const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.A1[0];
+  events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
+  for(let n=1;n<=100;n++)frame(1000+n*17);
+  for(const [a,b,pose] of [[6,12,'thunderopen'],[12,15,'thunderclose'],[15,23,'thunderpull'],[23,28,'clapseparate']])
+    assert(quakePaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' Thunder Clap missed '+pose);
+  assert.equal(G.S.f[slot].hp,CH[quakeCh].hp);assert.equal(G.S.f[1-slot].hp,CH[quakeCh].hp-75);toMenu();
+}
+G.mode='guest';const thunderConn=mockConnection();netWire(thunderConn,'guest');thunderConn.events.open();G.pick=[quakeCh,quakeCh];startFight();
+for(const owner of [0,1])for(const [mt,pose] of [[5,'clapw'],[6,'thunderopen'],[11,'thunderopen'],[12,'thunderclose'],[14,'thunderclose'],[15,'thunderpull'],[22,'thunderpull'],[23,'clapseparate'],[27,'clapseparate']]) {
+  const snapshot=newMatch(quakeCh,quakeCh,133);snapshot.phase='fight';startMove(snapshot.f[owner],'a0');snapshot.f[owner].mt=mt;snapshot.ev=[];
+  quakePaints.length=0;thunderConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
+  assert(quakePaints.some(p=>p.t===mt&&p.pose===pose));
+}
+pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
+console.log('PASS desktop Thunder Clap anticipation/contact/recoil through AI/local/host keys and eighteen event-free guest snapshots');
+
 `,context);
 for(let i=3;i<cv.pixels().length;i+=4)assert.equal(cv.pixels()[i],255);
 if(process.argv[2])writePNG(path.join(process.argv[2],process.argv[3]||'runtime-frame.png'),{w:cv.width,h:cv.height,data:cv.pixels()});
