@@ -6,8 +6,9 @@ const out=process.argv.find(a=>a.startsWith('--out='))?.slice(6);
 if(out)fs.mkdirSync(out,{recursive:true});
 const shared=['sim','fighters','fighters2','pixel','pixel-stage','pixel-domain','pixel-world','pixel-hud','render','desktop-animation'];
 const source=shared.map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8')).join('\n');
-context.prior=Function(source+'\nreturn {pose:pxPose,domain:pxDomainPose,world:pxWorldSurface};')();
-context.desktop=Function(source+'\n'+fs.readFileSync(path.join(root,'src/desktop-maximum.js'),'utf8')+'\nreturn {pose:pxPose,world:pxWorldSurface};')();
+const convergence=fs.readFileSync(path.join(root,'src/desktop-convergence.js'),'utf8');
+context.prior=Function(source+'\n'+convergence+'\nreturn {pose:pxPose,domain:pxDomainPose,world:pxWorldSurface};')();
+context.desktop=Function(source+'\n'+fs.readFileSync(path.join(root,'src/desktop-maximum.js'),'utf8')+'\n'+convergence+'\nreturn {pose:pxPose,world:pxWorldSurface};')();
 Object.assign(context,{out,writePNG:require('./png.cjs'),previewOnly:process.argv.includes('--preview-only')});
 vm.runInContext(`
 const maximumPose=pxDomainPose;
