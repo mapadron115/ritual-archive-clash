@@ -1,21 +1,18 @@
 # Handoff: Ritual Archive: Clash
 
-## 2026-11-19 16:06:19 UTC - v165 DESKTOP: Thunder Clap planted preparation and recovery ready
+## 2026-11-19 16:26:20 UTC - v166 DESKTOP: Gamma Quake preparation ready
 
-Read AGENTS.md, HANDOFF.md and mailbox through Coordinator 31's 10:52 order. Owner directly requested this autonomous check-in/report. Acknowledged accepted v164 commit 975f812; earlier orders were already recorded as acted on. Completed one desktop ordinary-art/feel audit version; stopping for review.
+Coordinator 31 accepted v165 as c62d641 and ordered the next desktop ordinary-art/feel audit item. Owner directly requested this autonomous check-in/report. Earlier entries are recorded as handled. One version only; commits remain with coordinator, never push.
 
-Thunder Clap's reviewed wide open/close/pull previously snapped into narrower generic feet during preparation and late recovery. Added two original poses in src/desktop-thunder.js: thunderready at ticks 0-5 and thundersettle at 23-27, keeping the same planted soles as ticks 6-22. The palms draw back into guard during recovery. Existing release, hit timing, shockwave, damage, costs and all combat sources unchanged. All 33 desktop scripts use cache v=168. Mobile remains v164/cache v=167, entirely unchanged.
+Added src/desktop-quake-ready.js: planted low fist gather at ticks 0-4, then fist rise at 5-9. Feet match the reviewed quakeopen/impact/pull/rise. Ticks 10 onward, combat sources and mobile remain unchanged. Desktop: 34 scripts, cache v=169. Mobile stays v164/cache v=167.
 
-Commit: none; base/HEAD 975f812442d8d6d5c38f3243bc49d4655363477b. No add/commit/push attempted: latest coordinator order retains commits. Seven files for review: HANDOFF.md, README.md, index.html, tests/runtime.cjs, src/desktop-thunder.js (new), tests/thunder-body.cjs (new), tests/thunder-runtime.cjs (new).
+Focused tests/quake-ready.cjs passes five groups: 1,600 paired simulation ticks, 960 raster checks, 1,728 frozen holds, 11,098 unchanged pose/sprite checks, 48 changed native scenes. Baseline preview reproduces two expected missing-pose/footing failures; other three groups pass. Both slots/facings, cost/cooldown/release/damage, hit/rear/guard/jump, event-free snapshots, interruptions, Domains, resets, all-stage body-only changes and unchanged HUD covered. FULL tests/runtime.cjs PASS, exit 0, through final Bungee Gum and canvas-alpha checks. Focused tests/quake-ready-runtime.cjs PASS: actual HTML/main-loop AI/local/host keyboard routes and 24 event-free guest snapshots. No implementation edits after the full suite started.
 
-Verification:
-- FULL tests/runtime.cjs PASS, exit 0, through final Bungee Gum group and final canvas-alpha assertions. Updated script count and Thunder Clap expectations. Log: codex/v165-runtime.log.
-- thunder-body: five groups PASS; 1,600 paired simulation ticks, 720 raster checks, 1,296 frozen holds, 11,036 unchanged pose/sprite checks and 36 changed native scenes. Actual inputs, both slots/facings, hit/rear/guard/jump outcomes, cost/cooldown/release parity, event-free snapshots, freezes, interruptions, round resets, unrelated arts and Domains. All-stage changes confined to body pixels; HUD, floor, bounded hard-alpha sprites unchanged. Final log: codex/v165-thunder.log.
-- thunder-runtime PASS: actual HTML/script order and main loop; AI/local/host keyboard routes and 20 event-free guest snapshots. Baseline --baseline --preview-only reproduced two expected missing-body/footing failures; remaining three groups passed. Diagnostic failures permitted only in preview mode.
-- 44 PNGs in codex/v165: before/after nine-frame native scenes and body strips, both costumes/facings. Viewed old/new P1 strips, new mirrored P2 strip and native tick-23 recovery. Feet stay wide through the move, hands return to guard, no observed clipping. These are generated renderer stills, not browser screenshots or live motion.
-- New JavaScript syntax checks, all 33 local script URLs/cache tags and git diff --check pass. Mobile and combat-source diff empty. No implementation edits after the full runtime started.
+56 generated PNGs and focused logs in mailbox codex/v166 and v166-*.log. Viewed before/after P1 strips, mirrored P2 strip and native tick-5 scene: fist rises clearly and feet stay planted, no observed clipping. Renderer stills, not browser screenshots or human play. Syntax, all 34 script path/cache checks and git diff --check pass. Mobile and combat-source diff empty.
 
-Limits/next: no browser/phone session, physical touch, live FPS/latency, audio listening, two-device WebRTC or owner play. The v136 iPhone 12 mini/iOS 26.5 MUTE/MOVES toolbar retest remains pending and jumps the queue. Ready for coordinator review/commit/publication decision; never pushed. Recommended next after acceptance: bring the unchanged Thunder Clap adapter to mobile, then resume the desktop ordinary-art/feel audit. Rapid Slash, arenas, cluster opacity and library-name audit remain deferred. No decision needed; no next version started.
+Commit: none; base/HEAD c62d64158965c1c667d1676c66ea8134e224bf38. No add/commit/push attempted: coordinator retains commits. Seven review files: HANDOFF.md, README.md, index.html, tests/runtime.cjs, src/desktop-quake-ready.js (new), tests/quake-ready.cjs (new), tests/quake-ready-runtime.cjs (new). Ready for coordinator review/commit/publication decision; stopping after this version.
+
+No browser/phone session, physical touch, live FPS/latency, audio listening, two-device WebRTC or owner play. The v136 iPhone 12 mini/iOS 26.5 MUTE/MOVES toolbar retest remains pending and jumps the queue. Next after acceptance: port reviewed Thunder Clap and Gamma Quake preparation to mobile; then continue desktop audit. Rapid Slash, arenas, cluster opacity and library-name audit remain deferred.
 
 ## Code and run
 

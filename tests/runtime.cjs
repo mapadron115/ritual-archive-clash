@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,33);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,34);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -688,7 +688,7 @@ for(const mode of ['ai','local','host']) {
   assert.equal(G.S.f[slot].hp,CH[quakeCh].hp);assert.equal(G.S.f[1-slot].hp,CH[quakeCh].hp-80);toMenu();
 }
 G.mode='guest';const quakeConn=mockConnection();netWire(quakeConn,'guest');quakeConn.events.open();G.pick=[quakeCh,quakeCh];startFight();
-for(const owner of [0,1])for(const [mt,pose] of [[9,'hookw'],[10,'quakeopen'],[19,'quakeopen'],[20,'quakeimpact'],[22,'quakeimpact'],[23,'quakepull'],[34,'quakepull'],[35,'quakerise'],[41,'quakerise']]) {
+for(const owner of [0,1])for(const [mt,pose] of [[1,'quakegather'],[4,'quakegather'],[5,'quakeraise'],[9,'quakeraise'],[10,'quakeopen'],[19,'quakeopen'],[20,'quakeimpact'],[22,'quakeimpact'],[23,'quakepull'],[34,'quakepull'],[35,'quakerise'],[41,'quakerise']]) {
   const snapshot=newMatch(quakeCh,quakeCh,131);snapshot.phase='fight';startMove(snapshot.f[owner],'a2');snapshot.f[owner].mt=mt;snapshot.ev=[];
   quakePaints.length=0;quakeConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
   assert(quakePaints.some(p=>p.t===mt&&p.pose===pose));
