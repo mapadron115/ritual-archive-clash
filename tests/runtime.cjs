@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,32);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,33);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -704,12 +704,12 @@ for(const mode of ['ai','local','host']) {
   const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.A1[0];
   events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
   for(let n=1;n<=100;n++)frame(1000+n*17);
-  for(const [a,b,pose] of [[6,12,'thunderopen'],[12,15,'thunderclose'],[15,23,'thunderpull'],[23,28,'clapseparate']])
+  for(const [a,b,pose] of [[6,12,'thunderopen'],[12,15,'thunderclose'],[15,23,'thunderpull'],[23,28,'thundersettle']])
     assert(quakePaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' Thunder Clap missed '+pose);
   assert.equal(G.S.f[slot].hp,CH[quakeCh].hp);assert.equal(G.S.f[1-slot].hp,CH[quakeCh].hp-75);toMenu();
 }
 G.mode='guest';const thunderConn=mockConnection();netWire(thunderConn,'guest');thunderConn.events.open();G.pick=[quakeCh,quakeCh];startFight();
-for(const owner of [0,1])for(const [mt,pose] of [[5,'clapw'],[6,'thunderopen'],[11,'thunderopen'],[12,'thunderclose'],[14,'thunderclose'],[15,'thunderpull'],[22,'thunderpull'],[23,'clapseparate'],[27,'clapseparate']]) {
+for(const owner of [0,1])for(const [mt,pose] of [[5,'thunderready'],[6,'thunderopen'],[11,'thunderopen'],[12,'thunderclose'],[14,'thunderclose'],[15,'thunderpull'],[22,'thunderpull'],[23,'thundersettle'],[27,'thundersettle']]) {
   const snapshot=newMatch(quakeCh,quakeCh,133);snapshot.phase='fight';startMove(snapshot.f[owner],'a0');snapshot.f[owner].mt=mt;snapshot.ev=[];
   quakePaints.length=0;thunderConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
   assert(quakePaints.some(p=>p.t===mt&&p.pose===pose));
