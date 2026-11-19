@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,34);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,35);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -821,18 +821,18 @@ for(const mode of ['ai','local','host']) {
   const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.A1[0];
   events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
   for(let n=1;n<=100;n++)frame(1000+n*17);
-  for(const [a,b,pose] of [[8,12,'granitecoil'],[12,15,'graniteaim'],[15,18,'granitefire'],[18,31,'granitebrace'],[31,35,'granitewithdraw'],[35,41,'cannonsettle']])
+  for(const [a,b,pose] of [[1,8,'graniteready'],[8,12,'granitecoil'],[12,15,'graniteaim'],[15,18,'granitefire'],[18,31,'granitebrace'],[31,35,'granitewithdraw'],[35,41,'granitesettle']])
     assert(granitePaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' Granite Blast missed '+pose);
   assert.equal(G.S.f[slot].hp,CH[graniteCh].hp);assert.equal(G.S.f[1-slot].hp,CH[graniteCh].hp-115);toMenu();
 }
 G.mode='guest';const graniteConn=mockConnection();netWire(graniteConn,'guest');graniteConn.events.open();G.pick=[graniteCh,graniteCh];startFight();
-for(const owner of [0,1])for(const [mt,pose] of [[7,'cannonw'],[8,'granitecoil'],[11,'granitecoil'],[12,'graniteaim'],[14,'graniteaim'],[15,'granitefire'],[17,'granitefire'],[18,'granitebrace'],[24,'granitebrace'],[29,'granitebrace'],[30,'granitebrace'],[31,'granitewithdraw'],[34,'granitewithdraw'],[35,'cannonsettle'],[40,'cannonsettle']]) {
+for(const owner of [0,1])for(const [mt,pose] of [[1,'graniteready'],[7,'graniteready'],[8,'granitecoil'],[11,'granitecoil'],[12,'graniteaim'],[14,'graniteaim'],[15,'granitefire'],[17,'granitefire'],[18,'granitebrace'],[24,'granitebrace'],[29,'granitebrace'],[30,'granitebrace'],[31,'granitewithdraw'],[34,'granitewithdraw'],[35,'granitesettle'],[40,'granitesettle']]) {
   const snapshot=newMatch(graniteCh,graniteCh,143);snapshot.phase='fight';startMove(snapshot.f[owner],'a0');snapshot.f[owner].mt=mt;snapshot.ev=[];
   granitePaints.length=0;graniteConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
   assert(granitePaints.some(p=>p.t===mt&&p.pose===pose));
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
-console.log('PASS desktop Granite Blast coil/aim/fire/brace/withdraw through AI/local/host keys and thirty event-free guest snapshots');
+console.log('PASS desktop Granite Blast coil/aim/fire/brace/withdraw through AI/local/host keys and thirty-two event-free guest snapshots');
 
 // Reversal Red follows keyboard taps and the first event-free guest snapshot.
 aiInput=()=>0;const redPaints=[];

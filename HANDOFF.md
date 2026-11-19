@@ -1,18 +1,21 @@
 # Handoff: Ritual Archive: Clash
 
-## 2026-11-19 16:26:20 UTC - v166 DESKTOP: Gamma Quake preparation ready
+## 2026-11-19 16:47:45 UTC - v167 DESKTOP: Granite Blast planted preparation and recovery ready
 
-Coordinator 31 accepted v165 as c62d641 and ordered the next desktop ordinary-art/feel audit item. Owner directly requested this autonomous check-in/report. Earlier entries are recorded as handled. One version only; commits remain with coordinator, never push.
+Read AGENTS.md, HANDOFF.md and mailbox through Coordinator 31's 11:32 order; rechecked before version and report. Owner directly requested this autonomous check-in/report. Accepted v166 commit c122903 acknowledged. Earlier entries are recorded as handled; completed the latest desktop audit order, one version only.
 
-Added src/desktop-quake-ready.js: planted low fist gather at ticks 0-4, then fist rise at 5-9. Feet match the reviewed quakeopen/impact/pull/rise. Ticks 10 onward, combat sources and mobile remain unchanged. Desktop: 34 scripts, cache v=169. Mobile stays v164/cache v=167.
+Added src/desktop-granite-ready.js: Granite Blast now keeps its wide firing soles during preparation (ticks 0-7) and final recovery (35-40), with hands returning to guard. Previously these windows used narrower generic cannon poses. Ticks 8-34, beam release/duration, costs, damage, combat sources and mobile stay unchanged. Desktop: 35 scripts, cache v=170. Mobile stays v164/cache v=167.
 
-Focused tests/quake-ready.cjs passes five groups: 1,600 paired simulation ticks, 960 raster checks, 1,728 frozen holds, 11,098 unchanged pose/sprite checks, 48 changed native scenes. Baseline preview reproduces two expected missing-pose/footing failures; other three groups pass. Both slots/facings, cost/cooldown/release/damage, hit/rear/guard/jump, event-free snapshots, interruptions, Domains, resets, all-stage body-only changes and unchanged HUD covered. FULL tests/runtime.cjs PASS, exit 0, through final Bungee Gum and canvas-alpha checks. Focused tests/quake-ready-runtime.cjs PASS: actual HTML/main-loop AI/local/host keyboard routes and 24 event-free guest snapshots. No implementation edits after the full suite started.
+Commit: none; base/HEAD c122903201a32f7547a7eaca7ae170975d020a6b. No add/commit/push attempted; coordinator retains commits. Seven review files: HANDOFF.md, README.md, index.html, tests/runtime.cjs, src/desktop-granite-ready.js (new), tests/granite-ready.cjs (new), tests/granite-ready-runtime.cjs (new).
 
-56 generated PNGs and focused logs in mailbox codex/v166 and v166-*.log. Viewed before/after P1 strips, mirrored P2 strip and native tick-5 scene: fist rises clearly and feet stay planted, no observed clipping. Renderer stills, not browser screenshots or human play. Syntax, all 34 script path/cache checks and git diff --check pass. Mobile and combat-source diff empty.
+Verification:
+- FULL tests/runtime.cjs PASS, exit 0, through final Bungee Gum and canvas-alpha checks. No implementation edits after suite start. Log: codex/v167-runtime.log.
+- granite-ready: six groups PASS, 3,200 paired simulation ticks, 2,080 raster checks, 4,608 frozen holds, 11,150 unchanged pose/sprite checks, 48 changed native scenes. Both slots/facings, full/low HP, hit/rear/guard/jump, beam attachment, event-free snapshots, freezes, interruptions, resets, unrelated moves and Domains covered. All-stage differences confined to body pixels; HUD, floor, hard-alpha sprite bounds unchanged.
+- granite-ready-runtime PASS: actual HTML/main-loop AI/local/host keyboard routes and 32 event-free guest snapshots. Baseline preview reproduces two expected missing-pose/footing failures; remaining four groups pass. Diagnostic failures allowed only in preview mode.
+- 72 PNGs in codex/v167: before/after sixteen-frame body/native scene strips, both costumes/facings. Viewed old/new P1 strips, mirrored P2 strip and native tick-35 scene. Wide feet hold through move; hands rise to guard, no observed clipping. Generated renderer stills, not browser screenshots or human play.
+- Syntax, 35 script path/cache checks, git diff --check pass. Mobile and combat-source diff empty. Focused logs: codex/v167-granite.log, v167-baseline.log, v167-granite-runtime.log. Initial preview export lacked its output directory and initial focused harness extraction had a syntax error; both corrected, reruns passed. No system installation. Existing report bytes preserved when prepending.
 
-Commit: none; base/HEAD c62d64158965c1c667d1676c66ea8134e224bf38. No add/commit/push attempted: coordinator retains commits. Seven review files: HANDOFF.md, README.md, index.html, tests/runtime.cjs, src/desktop-quake-ready.js (new), tests/quake-ready.cjs (new), tests/quake-ready-runtime.cjs (new). Ready for coordinator review/commit/publication decision; stopping after this version.
-
-No browser/phone session, physical touch, live FPS/latency, audio listening, two-device WebRTC or owner play. The v136 iPhone 12 mini/iOS 26.5 MUTE/MOVES toolbar retest remains pending and jumps the queue. Next after acceptance: port reviewed Thunder Clap and Gamma Quake preparation to mobile; then continue desktop audit. Rapid Slash, arenas, cluster opacity and library-name audit remain deferred.
+Limits/next: no browser/phone session, physical touch, live FPS/latency, audio listening, two-device WebRTC or owner play. The v136 iPhone 12 mini/iOS 26.5 MUTE/MOVES toolbar retest remains pending and jumps the queue. Ready for coordinator review/commit/publication decision; stopping after this version. Recommend bringing reviewed Thunder Clap, Gamma Quake and Granite Blast preparation/recovery to mobile after acceptance, then continue desktop audit. Rapid Slash, arenas, cluster opacity and library-name audit remain deferred. No decision needed.
 
 ## Code and run
 
