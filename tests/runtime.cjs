@@ -34,7 +34,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 context.html=html;
 const previewTag=(process.argv[3]||'').match(/^(v\d+)-/)?.[1]||'preview';context.previewTag=previewTag;
 const scripts=[...html.matchAll(/<script src="([^"?]+)\?v=(\d+)"><\/script>/g)];
-assert.equal(scripts.length,36);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
+assert.equal(scripts.length,37);assert.equal(new Set(scripts.map(m=>m[2])).size,1);
 for(const m of scripts)vm.runInContext(fs.readFileSync(path.join(root,m[1]),'utf8'),context,{filename:m[1]});
 // Execute the four actual HTML button routes, rather than a duplicate menu mapping.
 const titleHTML=html.slice(html.indexOf('id="title"'),html.indexOf('id="select"'));
@@ -867,18 +867,18 @@ for(const mode of ['ai','local','host']) {
   const binding=mode==='local'?BIND.p2:BIND.solo,code=binding.A1[0];
   events.keydown({code,repeat:false,preventDefault(){}});events.keyup({code});
   for(let n=1;n<=100;n++)frame(1000+n*17);
-  for(const [a,b,pose] of [[6,12,'bluereach'],[12,15,'blueset'],[15,19,'bluedraw'],[19,24,'bluerecover'],[24,30,'castsettle']])
+  for(const [a,b,pose] of [[1,6,'blueready'],[6,12,'bluereach'],[12,15,'blueset'],[15,19,'bluedraw'],[19,24,'bluerecover'],[24,30,'bluesettle']])
     assert(bluePaints.some(p=>p.t>=a&&p.t<b&&p.pose===pose),mode+' Lapse Blue missed '+pose);
   assert.equal(G.S.f[slot].hp,CH[blueCh].hp);assert.equal(G.S.f[1-slot].hp,CH[blueCh].hp-85);toMenu();
 }
 G.mode='guest';const blueConn=mockConnection();netWire(blueConn,'guest');blueConn.events.open();G.pick=[blueCh,blueCh];startFight();
-for(const owner of [0,1])for(const [mt,pose] of [[5,'castw'],[6,'bluereach'],[11,'bluereach'],[12,'blueset'],[14,'blueset'],[15,'bluedraw'],[18,'bluedraw'],[19,'bluerecover'],[23,'bluerecover'],[24,'castsettle'],[29,'castsettle']]) {
+for(const owner of [0,1])for(const [mt,pose] of [[1,'blueready'],[5,'blueready'],[6,'bluereach'],[11,'bluereach'],[12,'blueset'],[14,'blueset'],[15,'bluedraw'],[18,'bluedraw'],[19,'bluerecover'],[23,'bluerecover'],[24,'bluesettle'],[29,'bluesettle']]) {
   const snapshot=newMatch(blueCh,blueCh,147);snapshot.phase='fight';startMove(snapshot.f[owner],'a0');snapshot.f[owner].mt=mt;snapshot.ev=[];
   bluePaints.length=0;blueConn.events.data({t:'s',s:snapshot,e:[]});G.acc=0;G.last=1000;frame(1017);
   assert(bluePaints.some(p=>p.t===mt&&p.pose===pose));
 }
 pxPaintFighter=maximumPaintBase;aiInput=normalAI;netClose();G.mode='ai';toMenu();
-console.log('PASS desktop Lapse Blue reach/close/draw/recovery through AI/local/host keys and twenty-two event-free guest snapshots');
+console.log('PASS desktop Lapse Blue reach/close/draw/recovery through AI/local/host keys and twenty-four event-free guest snapshots');
 
 // Divine Flame follows keyboard taps and the first event-free guest snapshot.
 aiInput=()=>0;const flamePaints=[];
